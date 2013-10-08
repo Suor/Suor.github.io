@@ -9,9 +9,9 @@ categories: [Control Flow, Python]
 
 Any programmer, even if she doesn't see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.
 
-That recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeed go on else ...", which usually involve repetitive `if ... else` or `try ... catch` code. How about abstracting all these control flow?
+Those recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeeded go on else ... free resources and pass an error", which commonly look like repetitive `if ... else` or `try ... catch` code. How about abstracting all that control flow?
 
-In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.
+In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.
 
 
 ## Abstractions
@@ -25,7 +25,7 @@ Let's start from the beginning. What do we do to build new abstraction?
 
 Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.
 
-In case your language can't handle it, skip implementation and just describe your technique, make it popular, giving birth to new design pattern. This way you can continue writing repetitive code without feeling bad about it.
+In case your language can't handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.
 
 
 ## Back to real-life
@@ -48,7 +48,7 @@ for url in urls:
                 raise
 ```
 
-There are many aspects to this code: iteration over `urls`, image download, collecting images into `photos`, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.
+There are many aspects to this code: iterating over `urls`, downloading images, collecting images into `photos`, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.
 
 And some of them already exist separately. For example, iteration plus result gathering make `map`:
 
@@ -72,14 +72,14 @@ for url in urls:
         photos.append(download_image(url))
 ```
 
-Looks good. However this can't be composed with `map` easily. But let's put it off for now and deal with network errors. We can try abstracting it same way we handled `ignore`:
+Looks good. However this can't be composed with `map` easily. But let's put it off for now and deal with network errors. We can try abstracting it the same way we handled `ignore`:
 
 ``` python
 with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)):
     # ... do stuff
 ```
 
-Only that can't be implemented. Pythons `with` statement can't run it's block more than once. We just ran against language constraint. It's important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that will probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:
+Only that can't be implemented. Python `with` statement can't run it's block more than once. We just ran against language constraint. It's important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:
 
 ``` python
 @decorator
@@ -121,7 +121,7 @@ Seems like we have more code now and it still involves all the same aspects. The
 - it can be taken out and brought back easily,
 - it can be reused.
 
-The essential code takes only 4 last lines and after getting used to functional control flow has probably become more readable. Or not, that's subjective, still I hope this post will help somebody to write better code.
+The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that's subjective, still I hope this post will help somebody to write better code.
 
 **P.S.** I packed `@decorator`, `ignore` and `retry` into [one practical library][funcy].
 
