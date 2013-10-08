@@ -6,32 +6,31 @@ comments: true
 categories: [Control Flow, Python]
 ---
 
+
 Any programmer, even if she doesn't see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.
 
-That recurring patterns usually involve rules like "close everything you open", "free resourses then pass error father", "if that succeed go on else ...", which usually involve repetitive `if ... else` or `try ... catch` code. How about abstracting all these control flow?
+That recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeed go on else ...", which usually involve repetitive `if ... else` or `try ... catch` code. How about abstracting all these control flow?
 
 In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.
 
 
 ## Abstractions
 
-Начнём с начала. Что нужно сделать, чтобы построить новую абстракцию?
+Let's start from the beginning. What do we do to build new abstraction?
 
-- Выделить какой-то кусок функциональности или поведения.
-- Дать ему имя.
-- Реализовать его.
-- Спрятать реализацию за выбранным именем.
+1. Select a piece of functionality or behavior.
+2. Name it.
+3. Implement it.
+4. Hide our implementation behind chosen name.
 
-Надо сказать, что третий пункт выполним далеко не всегда. Возможность реализации сильно зависит от гибкости языка и от того, что вы абстрагируете.
+Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.
 
-Что делать если ваш язык недостаточно гибок? Ничего страшного, вместо реализации вы можете просто подробно описать свой приём, сделать его популярным и, таким образом, породить новый "паттерн проектирования". Или просто перейти на более мощный язык, если создание паттернов вас не прельщает.
-
-Но довольно теории, займёмся делом...
+In case your language can't handle it, skip implementation and just describe your technique, make it popular, giving birth to new design pattern. This way you can continue writing repetitive code without feeling bad about it.
 
 
-### Пример из жизни
+## Back to real-life
 
-Обычный код на питоне (взят из реального проекта с минимальными изменениями):
+This is common python code, taken from real-life project with minimal changes:
 
 ``` python
 urls = ...
@@ -43,42 +42,44 @@ for url in urls:
             photos.append(download_image(url))
             break
         except ImageTooSmall:
-            pass # пропускаем урл мелкой картинки
+            pass # skip small images
         except (urllib2.URLError, httplib.BadStatusLine, socket.error), e:
             if attempt + 1 == DOWNLOAD_TRIES:
                 raise
 ```
 
-У этого кода множество аспектов: итерация по списку url, загрузка изображений, сбор загруженных изображений в photos, пропуск мелких картинок, повторные попытки загрузки при возникновении сетевых ошибок. Все эти аспекты запутаны в единый кусок кода, хотя многие из них были бы полезны и сами по себе, если бы только мы могли их вычленить.
+There are many aspects to this code: iteration over `urls`, image download, collecting images into `photos`, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.
 
-В частности итерация + сбор результатов реализованы во встроенной функции <code>map</code>:
+And some of them already exist separately. For example, iteration plus result gathering make `map`:
 
 ``` python
 photos = map(download_image, urls)
 ```
-Попробуем выудить и остальные аспекты. Начнём с пропуска мелких картинок, он мог бы выглядеть так:
+
+Let's try fishing out other aspects, starting with skipping small images. That could be done like:
 
 ``` python
 @contextmanager
-def skip(error):
+def ignore(error):
     try:
         yield
     except error:
         pass
 
+photos = []
 for url in urls:
-    with skip(ImageTooSmall):
+    with ignore(ImageTooSmall):
         photos.append(download_image(url))
 ```
-Неплохо, но есть недостаток - пришлось отказаться от использования <code>map</code>. Оставим пока эту проблему и перейдём к аспекту устойчивости к сетевым ошибкам. Аналогично предыдущей абстракции можно было бы написать:
+
+Looks good. However this can't be composed with `map` easily. But let's put it off for now and deal with network errors. We can try abstracting it same way we handled `ignore`:
 
 ``` python
 with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)):
     # ... do stuff
 ```
-Только вот это не будет работать, <code>with</code> в питоне не может выполнить свой блок кода более одного раза. Мы уткнулись в ограничения языка и теперь вынуждены либо свернуть и использовать альтернативные решения, либо породить ещё один "паттерн". Замечать подобные ситуации важно, если вы хотите понять различия в языках, и чем один может быть мощнее другого, несмотря на то, что они все полны по Тьюрингу. В ruby и с меньшим удобством в perl мы могли продолжить манипулировать блоками, в лиспе - блоками или кодом (последнее в данном случае, видимо, ни к чему), в питоне нам придётся использовать альтернативный вариант.
 
-Вернёмся к функциям высшего порядка, а точнее к их особой разновидности - декораторам:
+Only that can't be implemented. Pythons `with` statement can't run it's block more than once. We just ran against language constraint. It's important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that will probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:
 
 ``` python
 @decorator
@@ -91,41 +92,43 @@ def retry(call, tries, errors=Exception):
                 raise
 
 http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
-harder_download_image = http_retry(download_image)
-photos = map(harder_download_image, urls)
+photos = map(http_retry(download_image), urls)
 ```
-Как мы видим, подобный подход хорошо стыкуется с использованием <code>map</code>, также мы получили пару штучек, которые нам ещё когда-нибудь пригодятся - <code>retry</code> и <code>http_retry</code>.
 
-Перепишем <code>skip</code> в том же стиле:
+As we can see, it even works with map naturally. And more than that, we got a pair of potentially reusable tools: `retry` and `http_retry`. Unfortunately our `ignore` context manager can't be easily added here. It's not composable. Let's just rewrite it as decorator:
 
 ``` python
 @decorator
-def skip(call, errors=Exception):
+def ignore(call, errors=Exception):
     try:
         return call()
     except errors:
         return None
 
-skip_small = skip(ImageTooSmall)
+ignore_small = ignore(ImageTooSmall)
 http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
-download = http_retry(skip_small(download_image))
+download = http_retry(ignore_small(download_image))
 photos = filter(None, map(download, urls))
 ```
-<code>filter</code> понадобился, чтобы пропустить отброшенные картинки. На самом деле, шаблон <code>filter(None, map(f, seq))</code> настолько часто встречается, что в некоторых языках есть <a href="http://clojuredocs.org/clojure_core/clojure.core/keep">встроенная функция для такого случая</a>.
 
-Мы тоже можем такую реализовать:
 
-``` python
-def keep(f, seq):
-    return filter(None, map(f, seq))
+## How is this better?
 
-photos = keep(download, urls)
-```
-Что в итоге? Теперь все аспекты нашего кода на виду, легко различимы, изменяемы, заменяемы и удаляемы. А в качестве бонуса мы получили набор абстракций, которые могут быть использованы в дальнейшем. А ещё, надеюсь, я заставил кого-нибудь увидеть новый способ сделать свой код лучше.
+Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. That means several things:
 
-<b>P.S.</b> Реализацию <code>@decorator</code> можно взять <a href="https://github.com/Suor/funcy/blob/master/funcy/decorators.py">здесь</a>.
+- every single aspect is visible,
+- it's named,
+- it can be taken out and brought back easily,
+- it can be reused.
 
-<b>P.P.S.</b> Другие примеры абстрагирования потока управления: <a href="http://underscorejs.org/#functions">манипуляции с функциями в underscore.js</a>, списковые и генераторные выражения, <a href="https://github.com/Suor/overload">перегрузка функций</a>, кеширующие обёртки для функций и многое другое.
+The essential code takes only 4 last lines and after getting used to functional control flow has probably become more readable. Or not, that's subjective, still I hope this post will help somebody to write better code.
 
-<b>P.P.P.S.</b> Серьёзно, нужно придумать перевод получше для выражения "control flow".
+**P.S.** I packed `@decorator`, `ignore` and `retry` into [one practical library][funcy].
+
+**P.P.S.** Other examples of control flow abstractions include: [function manipulations in underscore.js][underscore], list comprehensions and generator expressions, [pattern matching][patterns], [function overload][overload], caching decorators and much more.
+
+[funcy]: https://github.com/Suor/funcy
+[underscore]: http://underscorejs.org/#functions
+[patterns]: https://github.com/Suor/patterns
+[overload]: https://github.com/Suor/overload
 
