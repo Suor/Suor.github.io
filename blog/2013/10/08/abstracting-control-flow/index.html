@@ -38,7 +38,7 @@
 
     (function() {
       var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
       var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
     })();
   </script>
@@ -105,9 +105,9 @@
 
 <div class="entry-content"><p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.</p>
 
-<p>That recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeed go on else &hellip;&rdquo;, which usually involve repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all these control flow?</p>
+<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip; free resources and pass an error&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
 
-<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.</p>
+<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
 
 <h2>Abstractions</h2>
 
@@ -123,7 +123,7 @@
 
 <p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p>
 
-<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
+<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
 
 <h2>Back to real-life</h2>
 
@@ -158,7 +158,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>There are many aspects to this code: iteration over <code>urls</code>, image download, collecting images into <code>photos</code>, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
+<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
 
 <p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
 
@@ -194,7 +194,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it same way we handled <code>ignore</code>:</p>
+<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it the same way we handled <code>ignore</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -203,7 +203,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Only that can&rsquo;t be implemented. Pythons <code>with</code> statement can&rsquo;t run it&rsquo;s block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that will probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
+<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run it&rsquo;s block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -269,7 +269,7 @@
 </ul>
 
 
-<p>The essential code takes only 4 last lines and after getting used to functional control flow has probably become more readable. Or not, that&rsquo;s subjective, still I hope this post will help somebody to write better code.</p>
+<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective, still I hope this post will help somebody to write better code.</p>
 
 <p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
 
@@ -319,8 +319,6 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/10/07/functional-python-made-easy/" title="Previous Post: Functional Python Made Easy">&laquo; Functional Python Made Easy</a>
-      
       
     </p>
   </footer>
@@ -342,10 +340,6 @@
     
       <li class="post">
         <a href="/blog/2013/10/08/abstracting-control-flow/">Abstracting Control Flow</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/07/functional-python-made-easy/">Functional Python Made Easy</a>
       </li>
     
   </ul>
