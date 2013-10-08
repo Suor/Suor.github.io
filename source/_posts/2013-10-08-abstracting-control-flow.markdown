@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Abstracting control flow"
+title: "Abstracting Control Flow"
 date: 2013-10-08 12:13
 comments: true
 categories: [Control Flow, Python]
@@ -8,11 +8,9 @@ categories: [Control Flow, Python]
 
 Any programmer, even if she doesn't see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.
 
-What does abstracting control flow mean? In conventional code (where nobody plays too smart "showing off"?) control structures do control flow. Sometimes they don't do that well and then we through in our own, which is simple in lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.
+That recurring patterns usually involve rules like "close everything you open", "free resourses then pass error father", "if that succeed go on else ...", which usually involve repetitive `if ... else` or `try ... catch` code. How about abstracting all these control flow?
 
-..cut
-
-Что значит абстрагирование потока управления или "control flow", как выражаются наши заморские друзья? В случае, когда никто не выпендривается, потоком занимаются управляющие конструкции. Иногда этих управляющих конструкций недостаточно и мы дописываем свои, абстрагирующие нужное нам поведение программы. Это просто в языках вроде lisp, ruby или perl, но и в других языках это возможно, например, с помощью функций высшего порядка.<habracut />
+In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.
 
 
 ## Abstractions
