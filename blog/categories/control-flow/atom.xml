@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Control Flow | Hackflow]]></title>
+  <link href="http://hackflow.com/blog/categories/control-flow/atom.xml" rel="self"/>
+  <link href="http://hackflow.com/"/>
+  <updated>2013-10-08T18:01:30+08:00</updated>
+  <id>http://hackflow.com/</id>
+  <author>
+    <name><![CDATA[Alexander Schepanovski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Abstracting Control Flow]]></title>
+    <link href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/"/>
+    <updated>2013-10-08T12:13:00+08:00</updated>
+    <id>http://hackflow.com/blog/2013/10/08/abstracting-control-flow</id>
+    <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.</p>
+
+<p>That recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeed go on else &hellip;&rdquo;, which usually involve repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all these control flow?</p>
+
+<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but also possible in a way in any language featuring higher order functions.</p>
+
+<h2>Abstractions</h2>
+
+<p>Let&rsquo;s start from the beginning. What do we do to build new abstraction?</p>
+
+<ol>
+<li>Select a piece of functionality or behavior.</li>
+<li>Name it.</li>
+<li>Implement it.</li>
+<li>Hide our implementation behind chosen name.</li>
+</ol>
+
+
+<p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p>
+
+<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
+
+<h2>Back to real-life</h2>
+
+<p>This is common python code, taken from real-life project with minimal changes:</p>
+
+<p>``` python
+urls = &hellip;
+photos = []</p>
+
+<p>for url in urls:</p>
+
+<pre><code>for attempt in range(DOWNLOAD_TRIES):
+    try:
+        photos.append(download_image(url))
+        break
+    except ImageTooSmall:
+        pass # skip small images
+    except (urllib2.URLError, httplib.BadStatusLine, socket.error), e:
+        if attempt + 1 == DOWNLOAD_TRIES:
+            raise
+</code></pre>
+
+<p>```</p>
+
+<p>There are many aspects to this code: iteration over <code>urls</code>, image download, collecting images into <code>photos</code>, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
+
+<p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
+
+<p><code>python
+photos = map(download_image, urls)
+</code></p>
+
+<p>Let&rsquo;s try fishing out other aspects, starting with skipping small images. That could be done like:</p>
+
+<p>``` python
+@contextmanager
+def ignore(error):</p>
+
+<pre><code>try:
+    yield
+except error:
+    pass
+</code></pre>
+
+<p>photos = []
+for url in urls:</p>
+
+<pre><code>with ignore(ImageTooSmall):
+    photos.append(download_image(url))
+</code></pre>
+
+<p>```</p>
+
+<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it same way we handled <code>ignore</code>:</p>
+
+<p>``` python
+with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)):</p>
+
+<pre><code># ... do stuff
+</code></pre>
+
+<p>```</p>
+
+<p>Only that can&rsquo;t be implemented. Pythons <code>with</code> statement can&rsquo;t run it&rsquo;s block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that will probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
+
+<p>``` python
+@decorator
+def retry(call, tries, errors=Exception):</p>
+
+<pre><code>for attempt in range(tries):
+    try:
+        return call()
+    except errors:
+        if attempt + 1 == tries:
+            raise
+</code></pre>
+
+<p>http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
+photos = map(http_retry(download_image), urls)
+```</p>
+
+<p>As we can see, it even works with map naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
+
+<p>``` python
+@decorator
+def ignore(call, errors=Exception):</p>
+
+<pre><code>try:
+    return call()
+except errors:
+    return None
+</code></pre>
+
+<p>ignore_small = ignore(ImageTooSmall)
+http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
+download = http_retry(ignore_small(download_image))
+photos = filter(None, map(download, urls))
+```</p>
+
+<h2>How is this better?</h2>
+
+<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. That means several things:</p>
+
+<ul>
+<li>every single aspect is visible,</li>
+<li>it&rsquo;s named,</li>
+<li>it can be taken out and brought back easily,</li>
+<li>it can be reused.</li>
+</ul>
+
+
+<p>The essential code takes only 4 last lines and after getting used to functional control flow has probably become more readable. Or not, that&rsquo;s subjective, still I hope this post will help somebody to write better code.</p>
+
+<p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
+
+<p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href="http://underscorejs.org/#functions">function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href="https://github.com/Suor/patterns">pattern matching</a>, <a href="https://github.com/Suor/overload">function overload</a>, caching decorators and much more.</p>
+]]></content>
+  </entry>
+  
+</feed>
