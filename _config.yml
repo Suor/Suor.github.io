@@ -68,6 +68,7 @@ github_user: Suor
 github_repo_count: 3
 github_show_profile_link: true
 github_skip_forks: true
+github_skip_repos: ['Suor.github.io', 'sublime-text-2-User']
 
 # Twitter
 twitter_user: hackflow
