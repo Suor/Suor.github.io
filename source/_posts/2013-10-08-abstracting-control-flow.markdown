@@ -11,6 +11,8 @@ Any programmer, even if she doesn't see it this way, constantly creates abstract
 
 Those recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeeded go on else ... free resources and pass an error", which commonly look like repetitive `if ... else` or `try ... catch` code. How about abstracting all that control flow?
 
+ <!--more-->
+
 In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.
 
 
