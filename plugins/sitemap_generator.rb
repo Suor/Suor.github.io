@@ -81,6 +81,10 @@ module Jekyll
       location = "#{site.config['url']}#{@dir}#{url}"
       location.gsub(/index.html$/, "")
     end
+
+    def is_draft
+      @dir == "/drafts"
+    end
   end
 
   class Layout
@@ -161,7 +165,7 @@ module Jekyll
     # Returns last_modified_date of index page
     def fill_pages(site, urlset)
       site.pages.each do |page|
-        if !excluded?(page.name)
+        if !excluded?(page.name) and !page.is_draft
           path = page.full_path_to_source
           if File.exists?(path)
             url = fill_url(site, page)
