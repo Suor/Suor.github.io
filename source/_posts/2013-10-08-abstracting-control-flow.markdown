@@ -7,9 +7,9 @@ categories: [Control Flow, Python]
 ---
 
 
-Any programmer, even if she doesn't see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.
+Any programmer, even if she doesn't see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.
 
-Those recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeeded go on else ... free resources and pass an error", which commonly look like repetitive `if ... else` or `try ... catch` code. How about abstracting all that control flow?
+Those recurring patterns usually involve rules like "close everything you open", "free resources then pass error farther", "if that succeeded go on else ...", which commonly look like repetitive `if ... else` or `try ... catch` code. How about abstracting all that control flow?
 
  <!--more-->
 
@@ -18,7 +18,7 @@ In conventional code, where nobody plays too smart, control structures do contro
 
 ## Abstractions
 
-Let's start from the beginning. What do we do to build new abstraction?
+Let's start from the beginning. What do we do to build a new abstraction?
 
 1. Select a piece of functionality or behavior.
 2. Name it.
@@ -32,7 +32,7 @@ In case your language can't handle it, skip implementation and just describe you
 
 ## Back to real-life
 
-This is common python code, taken from real-life project with minimal changes:
+This is a piece of common python code, taken from real-life project with minimal changes:
 
 ``` python
 urls = ...
@@ -50,7 +50,7 @@ for url in urls:
                 raise
 ```
 
-There are many aspects to this code: iterating over `urls`, downloading images, collecting images into `photos`, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.
+There are many aspects to this code: iterating over `urls`, downloading images, collecting images into `photos`, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.
 
 And some of them already exist separately. For example, iteration plus result gathering make `map`:
 
@@ -81,7 +81,7 @@ with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.erro
     # ... do stuff
 ```
 
-Only that can't be implemented. Python `with` statement can't run it's block more than once. We just ran against language constraint. It's important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:
+Only that can't be implemented. Python `with` statement can't run its block more than once. We just ran against language constraint. It's important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:
 
 ``` python
 @decorator
@@ -97,7 +97,7 @@ http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, soc
 photos = map(http_retry(download_image), urls)
 ```
 
-As we can see, it even works with map naturally. And more than that, we got a pair of potentially reusable tools: `retry` and `http_retry`. Unfortunately our `ignore` context manager can't be easily added here. It's not composable. Let's just rewrite it as decorator:
+As we can see, it even works with `map` naturally. And more than that, we got a pair of potentially reusable tools: `retry` and `http_retry`. Unfortunately our `ignore` context manager can't be easily added here. It's not composable. Let's just rewrite it as decorator:
 
 ``` python
 @decorator
@@ -116,14 +116,15 @@ photos = filter(None, map(download, urls))
 
 ## How is this better?
 
-Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. That means several things:
+Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:
 
 - every single aspect is visible,
 - it's named,
 - it can be taken out and brought back easily,
 - it can be reused.
 
-The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that's subjective, still I hope this post will help somebody to write better code.
+The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that's subjective. Still I hope this post will help somebody to write better code.
+
 
 **P.S.** I packed `@decorator`, `ignore` and `retry` into [one practical library][funcy].
 
