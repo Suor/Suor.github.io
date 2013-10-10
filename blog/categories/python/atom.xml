@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2013-10-09T23:49:48+08:00</updated>
+  <updated>2013-10-10T08:35:10+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -18,9 +18,9 @@
     <link href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/"/>
     <updated>2013-10-08T12:13:00+08:00</updated>
     <id>http://hackflow.com/blog/2013/10/08/abstracting-control-flow</id>
-    <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially, in error handling, resource management and optimizations.</p>
+    <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p>
 
-<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip; free resources and pass an error&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
+<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
 
 <p> <!--more--></p>
 
@@ -28,7 +28,7 @@
 
 <h2>Abstractions</h2>
 
-<p>Let&rsquo;s start from the beginning. What do we do to build new abstraction?</p>
+<p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
 
 <ol>
 <li>Select a piece of functionality or behavior.</li>
@@ -44,7 +44,7 @@
 
 <h2>Back to real-life</h2>
 
-<p>This is common python code, taken from real-life project with minimal changes:</p>
+<p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
 
 <p>``` python
 urls = &hellip;
@@ -65,7 +65,7 @@ photos = []</p>
 
 <p>```</p>
 
-<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images, retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
+<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
 
 <p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
 
@@ -104,7 +104,7 @@ with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.erro
 
 <p>```</p>
 
-<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run it&rsquo;s block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
+<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run its block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
 
 <p>``` python
 @decorator
@@ -122,7 +122,7 @@ def retry(call, tries, errors=Exception):</p>
 photos = map(http_retry(download_image), urls)
 ```</p>
 
-<p>As we can see, it even works with map naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
+<p>As we can see, it even works with <code>map</code> naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
 
 <p>``` python
 @decorator
@@ -142,7 +142,7 @@ photos = filter(None, map(download, urls))
 
 <h2>How is this better?</h2>
 
-<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. That means several things:</p>
+<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>
 
 <ul>
 <li>every single aspect is visible,</li>
@@ -152,7 +152,7 @@ photos = filter(None, map(download, urls))
 </ul>
 
 
-<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective, still I hope this post will help somebody to write better code.</p>
+<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective. Still I hope this post will help somebody to write better code.</p>
 
 <p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
 
