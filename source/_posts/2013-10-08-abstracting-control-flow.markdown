@@ -3,7 +3,7 @@ layout: post
 title: "Abstracting Control Flow"
 date: 2013-10-08 12:13
 comments: true
-categories: [Control Flow, Python]
+categories: [Functional Programming, Python]
 ---
 
 
