@@ -4,6 +4,7 @@ title: "Abstracting Control Flow"
 date: 2013-10-08 12:13
 comments: true
 categories: [Functional Programming, Python]
+hn_id: 6527441
 ---
 
 
@@ -134,4 +135,3 @@ The essential code takes only 4 last lines and after getting used to functional 
 [underscore]: http://underscorejs.org/#functions
 [patterns]: https://github.com/Suor/patterns
 [overload]: https://github.com/Suor/overload
-
