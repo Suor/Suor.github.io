@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Functional Programming | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/functional-programming/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2013-10-10T23:29:21+08:00</updated>
+  <updated>2013-10-11T22:08:07+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -157,8 +157,6 @@ photos = filter(None, map(download, urls))
 <p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
 
 <p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href="http://underscorejs.org/#functions">function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href="https://github.com/Suor/patterns">pattern matching</a>, <a href="https://github.com/Suor/overload">function overload</a>, caching decorators and much more.</p>
-
-<p>See also <a href="https://news.ycombinator.com/item?id=6527441">discussion on Hacker News</a>.</p>
 ]]></content>
   </entry>
   
