@@ -3,7 +3,7 @@ layout: post
 title: "Functional Python Made Easy"
 comments: true
 published: false
-categories: [Python, FP]
+categories: [FP, Python]
 ---
 
 A draft
