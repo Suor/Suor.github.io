@@ -6,57 +6,62 @@ published: false
 categories: [FP, Python]
 ---
 
-A draft
 
-Вот уже несколько лет функциональное программирование набирает популярность. Это, конечно, не значит, что люди забрасывают свои старые языки и ООП и массово переходят на Haskell, Lisp или Erlang. Нет. Функциональная парадигма проникает в наш код через лазейки мультипарадигменных языков, а вышеупомянутые языки чаще служат флагами в этом наступлении, чем используются непосредственно.
+There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.
 
-Я собирался продолжить в том же духе и во второй части статьи представить <a href="http://github.com/Suor/funcy">свою библиотеку</a>, добавляющую пару функциональных трюков в python, но потом понял, что фокус моей библиотеки не на функциональном программировании, а на практичности. На этом я и сосредоточюсь, приведу несколько жизненных примеров полезности funcy.
-<habracut />
-Разработка funcy началась с попытки собрать в кучу несколько утилит для манипулирования данными и реже функциями, поэтому большинство моих примеров будут сосредоточены именно на этом. Возможно, некоторые (или многие) примеры покажутся тривиальными, но удивительно сколько времени могут сэкономить такие простые функции и насколько более выразительным они могут сделать ваш код.
+I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it's not about FP, it's about utility. And that's what I will focus on below trying to show you real-life value of [funcy][].
 
-Я пройдусь по нескольким типичным задачам, которые встречаются в питоньей практике, и несмотря на свою незамысловатость, вызывают постоянные вопросы. Итак, поехали.
+<!--more-->
+
+Funcy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they'll just save your time, still good.
+
+I'll go through the typical tasks any python programmer face during her day.
 
 
-## Несложные манипуляции с данными
+## Everyday data manipulation
 
-*1. Объединить список списков. Традиционно я делал это таким образом:*
+*1. Flatten list of lists. That's how you usually do it:*
 
 ``` python
 from operator import concat
 reduce(concat, list_of_lists)
 
-# Или таким:
+# or that:
 sum(list_of_lists, [])
 
-# Или таким:
+# or that:
 from itertools import chain
 list(chain.from_iterable(list_of_lists))
 ```
 
-Все они неплохи, но требуют либо лишних телодвижений: импорты и дополнительные вызовы, либо накладывают ограничения: объединять можно только списки со списками и туплы с туплами, для суммы нужно ещё знать заранее какой тип придёт. В funcy это делается так:
+They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:
 
 ``` python
 from funcy import cat
 cat(list_of_lists)
 ```
-<code>cat()</code> объединяет список списков, кортежей, итераторов да и вообще любых итерируемых в один список. Если нужно объединить списки результатов вызова функции, то можно воспользоваться <code>mapcat()</code>, например:
+
+`cat` joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to `cat` results of `map` call. For example, this
 
 ``` python
 from funcy import mapcat
 mapcat(str.splitlines, bunch_of_texts)
 ```
-разберёт все строки в текстах в один плоский список. Для обеих функций есть ленивые версии: <code>icat()</code> и <code>imapcat()</code>.
 
-*2. Сложить несколько словарей. В питоне есть несколько неуклюжих способов объединять словари:*
+will result in flat list of all lines of all the texts. There are lazy versions of both functions: `icat` and `imapcat`.
+
+
+*2. Merge some dicts. There are several clumsy ways in python:*
 
 ``` python
-d1.update(d2)  # Изменяет d1
-dict(d1, **d2) # Неудобно для > 2 словарей
+d1.update(d2)  # Changes d1
+dict(d1, **d2) # Really awkward for more than 2 dicts
 
 d = d1.copy()
 d.update(d2)
 ```
-Я всегда удивлялся почему их нельзя просто сложить? Но имеем то, что имеем. В любом случае, с funcy это делается легко:
+
+I always wondered why one can't just add them up, but that's what we have. Anyway, this is also easy in funcy:
 
 ``` python
 from funcy import merge, join
@@ -64,90 +69,102 @@ merge(d1, d2)
 merge(d1, d2, d3)
 join(sequence_of_dicts)
 ```
-Но <code>merge()</code> и <code>join()</code> могут объединять не только словари, они работают практически для любых коллекций: словарей, упорядоченных словарей, множеств, списков, кортежей, итераторов и даже строк.
 
-*3. Захват подстроки с помощью регулярного выражения. Обычно это делается так:*
+The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.
+
+
+*3. Capturing something with regular expression. A usual way:*
 
 ``` python
 m = re.search(some_re, s)
 if m:
-    actual_match = m.group() # или m.group(i), или m.groups()
+    actual_match = m.group() # or m.group(i) or m.groups()
     ...
 ```
-С funcy это превращается в:
+
+Much more straightforward with funcy:
 
 ``` python
 from funcy import re_find
 actual_match = re_find(some_re, s)
 ```
-Если это не кажется вам достаточно впечатляющим, то взгляните на это:
+
+Still not impressed? Then look here:
 
 ``` python
 from funcy import re_finder, re_all, partial, mapcat
 
-# Вычленяем числа из каждого слова
+# Get a number out of every word
 map(re_finder('\d+'), words)
 
-# Парсим ini файл (re_finder() возвращает кортежи когда в выражении > 1 захвата)
+# Parse simple ini file into dict
+# (re_finder returns tuples when there is more that one capture in regexp)
 dict(imap(re_finder('(\w+)=(\w+)'), ini.splitlines()))
 
-# Вычленяем числа из строк (возможно по нескольку из каждой) и объединяем в плоский список
+# Find all numbers in all the strings and return as flat list
 mapcat(partial(re_all, r'\d+'), bunch_of_strings)
 ```
 
-## Отступление про импорты и практичность
+## About imports and practicality
 
-Как вы могли заметить, я импортирую функции напрямую из funcy, не используя какие-либо подпакеты. Причина, по которой я остановился на таком интерфейсе, - практичность; было бы довольно занудным требовать от всех пользователей моей библиотеки помнить откуда нужно импортировать walk() из funcy.colls или funcy.seqs, кроме того, многострочные импорты в начале каждого файла и без меня есть кому набивать.
+As you can see I import everything directly from funcy, not using any sub-packages. The reason it's designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.
 
-Дополнительным преимуществом такого решения является возможность просто написать:
+This also enables you to write:
 
 ``` python
 from funcy import *
 ```
 
-И наслаждаться всеми функциональными прелестями и удобством, что приносит funcy, более не возвращаясь в начало файла за добавкой. Что ж, теперь, когда вы знаете где лежит всё добро, я больше не буду явно указывать импорты из funcy. Продолжим.
+And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won't repeat imports in every new example.
 
 
-## Кое-какие более функциональные штучки
+## A bit more functional things
 
-Мы уже видели пару примеров использования функций высшего порядка - <code>re_finder()</code> и <code>partial()</code>. Стоит добавить, что сама функция <code>re_finder()</code> является частичным применением <code>re_find()</code> созданным для удобства применения в <code>map()</code> и ей подобных. И естественным образом, с <code>filter()</code> удобно использовать <code>re_tester()</code>:
+We've seen a pair of examples of higher order functions earlier, particularly `re_finder` and `partial`. One thing to note is that `re_finder` itself is a partial application of `re_find` meant to be used with `map` and friends. Naturally, there is a similar utility to be used with `filter`:
 
 ``` python
-# Выбираем все приватные атрибуты объекта
+# Choose all private attributes of an object
 is_private = re_tester('^_')
 filter(is_private, dir(some_obj))
 ```
 
-Отлично, мы можем задать несколько предикатов, таких как <code>is_private()</code>, и фильтровать атрибуты объекта по ним:
+We can create a bunch of predicates and filter with them:
 
 ``` python
 is_special = re_tester('^__.+__$')
 is_const = re_tester('^[A-Z_]+$')
 filter(...)
 ```
-Но, что если мы хотим получить список публичных атрибутов или приватных констант, что-то задействующее комбинацию предикатов? Легко:
+
+But what if we want to apply several of them at once or use some predicate logic. That's easy:
 
 ``` python
 is_public = complement(is_private)
 is_private_const = all_fn(is_private, is_const)
 either_const_or_public = any_fn(is_const, is_public)
 ```
-Для удобства также есть функция, дополняющая <code>filter()</code>:
+
+Or you can use convenience function complementary to `filter`:
 
 ``` python
-remove(is_private, ...) # то же, что filter(is_public)
+remove(is_private, ...) # same as filter(is_public)
 ```
-Надеюсь все утолили свой функциональный аппетит, потому пора перейти к чему-нибудь менее абстрактному.
 
-## Работа с коллекциями
+I hope everyone have their functional appetite satisfied so we can switch to something less abstract.
 
-Кроме утилит для работы с последовательностями, <a href="http://funcy.readthedocs.org/en/latest/seqs.html">коих много больше</a>, чем я тут описал, funcy также помогает работать с коллекциями. Основу составляют функции <code>walk()</code> и <code>select()</code>, которые аналогичны <code>map()</code> и <code>filter()</code>, но сохраняют тип обрабатываемой коллекции:
+
+## Collections
+
+Aside from [sequence utilities][docs.seqs], funcy provides lots of ones to work with collections.
+And the two fundamental are `walk` and `select`, a versions of `map` and `filter` preserving collection type:
+
+[docs.seqs]: http://funcy.readthedocs.org/en/latest/seqs.html
 
 ``` python
 walk(inc, {1, 2, 3}) # -> {2, 3, 4}
 walk(inc, (1, 2, 3)) # -> (2, 3, 4)
 
-# при обработке словаря мы работаем с парами ключ-значение
+# Mapping function receives pairs when walking dicts
 swap = lambda (k, v): (v, k)
 walk(swap, {1: 10, 2: 20})
 # -> {10: 1, 20: 2}
@@ -158,64 +175,84 @@ select(even, {1, 2, 3, 10, 20})
 select(lambda (k, v): k == v, {1: 1, 2: 3})
 # -> {1: 1}
 ```
-Эта пара функций подкрепляется набором для работы со словарями: <code>walk_keys(), walk_values(), select_keys(), select_values()</code>:
+
+This pair of functions is backed up with a set of ones to work with dicts: `walk_keys`, `walk_values`, `select_keys`, `select_values`:
 
 ``` python
-# выберем публичную часть словаря атрибутов объекта
+# Get a dict of public attributes of an instance
 select_keys(is_public, instance.__dict__)
 
-# выбросим ложные значения из словаря
+# Clean dict of falsy values
 select_values(bool, some_dict)
 ```
-Последний пример из этой серии будет использовать сразу несколько новых функций: <code>silent()</code> - глушит все исключения, бросаемые оборачиваемой функцией, возвращая <code>None</code>; <code>compact()</code> - убирает из коллекции значения <code>None</code>; <code>walk_values()</code> - обходит значения переданного словаря, конструируя новый словарь с значениями, преобразованными переданной функцией. В целом эта строка выбирает словарь целочисленных параметров из параметров запроса:
+
+The last example in this section will include several new functions at once: `silent` - catches all exceptions in passed function, returning `None`; `compact` - removes falsy values from collection; `walk_values` - maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:
 
 ``` python
 compact(walk_values(silent(int), request_dict))
 ```
-## Манипулирование данными
 
-О! Мы добрались до самого интересного, сюда часть примеров я включил просто потому, что они кажутся мне клёвыми. Хотя, если честно, я делал это и выше. Сейчас мы будем разделять и группировать:
+
+## Back to working with data
+
+Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let's split and group:
 
 ``` python
-# отделим абсолютные URL от относительных
+# split absolute and relative urls
 absolute, relative = split(re_tester(r'^http://'), urls)
 
-# группируем посты по категории
+# group posts by category
 group_by(lambda post: post.category, posts)
 ```
-Собирать плоские данные во вложенные структуры:
+
+Partition and chunk:
 
 ``` python
-# строим словарь из плоского списка пар
+# make a dict from flat list of pairs
 dict(partition(2, flat_list_of_pairs))
 
-# строим структуру учётных данных
+# make a structures from flat list
 {id: (name, password) for id, name, password in partition(3, users)}
 
-# проверяем, что список версий последователен
+# check versions are consecutive
 assert all(prev + 1 == next for prev, next in partition(2, 1, versions)):
 
-# обрабатываем данные кусками
+# process data by chunks
 for chunk in chunks(CHUNK_SIZE, lots_of_data):
     process(chunk)
 ```
-И ещё пара примеров, просто до кучи:
+
+And a couple more, just for fun:
 
 ``` python
-# выделяем абзацы красной строкой
+# add new line indents at the beginning of each paragraph
 for line, prev in with_prev(text.splitlines()):
     if not prev:
         print '    ',
     print line
 
-# выбираем пьесы Шекспира за 1611 год
+# select Shakespeare's play written in 1611
 where(plays, author="Shakespeare", year=1611)
 # => [{"title": "Cymbeline", "author": "Shakespeare", "year": 1611},
 #     {"title": "The Tempest", "author": "Shakespeare", "year": 1611}]
 ```
 
-## Не просто библиотека
+## More than just a library
 
-Возможно, некоторые из вас встретили знакомые функции из Clojure и Underscore.js (кстати, пример с Шекспиром нагло содран из документации последней), - ничего удивительного, я во многом черпал вдохновение из этих источников. При этом я старался следовать питоньему стилю, сохранять консистентность библиотеки и нигде не жертвовать практичностью, поэтому не все функции полностью соответствуют своим прототипам, они скорее соответствуют друг другу и стандартной библиотеке.
+Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.
 
-И ещё одна мысль. Мы привыкли называть языки программирования языками, при этом редко осознаём, что синтаксические конструкции и стандартные функции - это слова этих языков. Мы можем добавлять свои слова, определяя функции, но обычно такие слова слишком специфичны, чтобы попасть в повседневный языковой словарь. Утилиты из funcy, напротив, заточены под широкую область применения, поэтому эту библиотеку можно воспринимать как расширение python, также как underscore или jQuery - расширение JavaScript. Итак, всем кто хочет пополнить свой словарный запас - <a href="http://github.com/Suor/funcy">добро пожаловать</a>.
+And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it's standard library.
+
+So, does anyone here look to [extend her vocabulary][funcy]?
+
+So, who looks to extend one's vocabulary?
+
+So, do you look to extend your vocabulary?
+
+So, if you are willing to extend you vocabulary ...
+
+So, are you willing to extend your vocabulary?
+
+So, how about extending your vocabulary?
+
+[funcy]: https://github.com/Suor/funcy
