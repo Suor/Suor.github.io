@@ -9,7 +9,7 @@
   <meta name="author" content="Alexander Schepanovski">
 
   
-  <meta name="description" content="A draft Вот уже несколько лет функциональное программирование набирает популярность. Это, конечно, не значит, что люди забрасывают свои старые языки &hellip;">
+  <meta name="description" content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -99,19 +99,20 @@
   </header>
 
 
-<div class="entry-content"><p>A draft</p>
+<div class="entry-content"><p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
 
-<p>Вот уже несколько лет функциональное программирование набирает популярность. Это, конечно, не значит, что люди забрасывают свои старые языки и ООП и массово переходят на Haskell, Lisp или Erlang. Нет. Функциональная парадигма проникает в наш код через лазейки мультипарадигменных языков, а вышеупомянутые языки чаще служат флагами в этом наступлении, чем используются непосредственно.</p>
+<p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
 
-<p>Я собирался продолжить в том же духе и во второй части статьи представить <a href="http://github.com/Suor/funcy">свою библиотеку</a>, добавляющую пару функциональных трюков в python, но потом понял, что фокус моей библиотеки не на функциональном программировании, а на практичности. На этом я и сосредоточюсь, приведу несколько жизненных примеров полезности funcy.
-<habracut />
-Разработка funcy началась с попытки собрать в кучу несколько утилит для манипулирования данными и реже функциями, поэтому большинство моих примеров будут сосредоточены именно на этом. Возможно, некоторые (или многие) примеры покажутся тривиальными, но удивительно сколько времени могут сэкономить такие простые функции и насколько более выразительным они могут сделать ваш код.</p>
+<!--more-->
 
-<p>Я пройдусь по нескольким типичным задачам, которые встречаются в питоньей практике, и несмотря на свою незамысловатость, вызывают постоянные вопросы. Итак, поехали.</p>
 
-<h2>Несложные манипуляции с данными</h2>
+<p>Funcy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they&rsquo;ll just save your time, still good.</p>
 
-<p><em>1. Объединить список списков. Традиционно я делал это таким образом:</em></p>
+<p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
+
+<h2>Everyday data manipulation</h2>
+
+<p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -125,16 +126,16 @@
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">concat</span>
 </span><span class='line'><span class="nb">reduce</span><span class="p">(</span><span class="n">concat</span><span class="p">,</span> <span class="n">list_of_lists</span><span class="p">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># Или таким:</span>
+</span><span class='line'><span class="c"># or that:</span>
 </span><span class='line'><span class="nb">sum</span><span class="p">(</span><span class="n">list_of_lists</span><span class="p">,</span> <span class="p">[])</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># Или таким:</span>
+</span><span class='line'><span class="c"># or that:</span>
 </span><span class='line'><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
 </span><span class='line'><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">list_of_lists</span><span class="p">))</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Все они неплохи, но требуют либо лишних телодвижений: импорты и дополнительные вызовы, либо накладывают ограничения: объединять можно только списки со списками и туплы с туплами, для суммы нужно ещё знать заранее какой тип придёт. В funcy это делается так:</p>
+<p>They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -143,7 +144,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p><code>cat()</code> объединяет список списков, кортежей, итераторов да и вообще любых итерируемых в один список. Если нужно объединить списки результатов вызова функции, то можно воспользоваться <code>mapcat()</code>, например:</p>
+<p><code>cat</code> joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to <code>cat</code> results of <code>map</code> call. For example, this</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -152,24 +153,24 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>разберёт все строки в текстах в один плоский список. Для обеих функций есть ленивые версии: <code>icat()</code> и <code>imapcat()</code>.</p>
+<p>will result in flat list of all lines of all the texts. There are lazy versions of both functions: <code>icat</code> and <code>imapcat</code>.</p>
 
-<p><em>2. Сложить несколько словарей. В питоне есть несколько неуклюжих способов объединять словари:</em></p>
+<p><em>2. Merge some dicts. There are several clumsy ways in python:</em></p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d1</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>  <span class="c"># Изменяет d1</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="o">**</span><span class="n">d2</span><span class="p">)</span> <span class="c"># Неудобно для &gt; 2 словарей</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d1</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>  <span class="c"># Changes d1</span>
+</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="o">**</span><span class="n">d2</span><span class="p">)</span> <span class="c"># Really awkward for more than 2 dicts</span>
 </span><span class='line'>
 </span><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 </span><span class='line'><span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Я всегда удивлялся почему их нельзя просто сложить? Но имеем то, что имеем. В любом случае, с funcy это делается легко:</p>
+<p>I always wondered why one can&rsquo;t just add them up, but that&rsquo;s what we have. Anyway, this is also easy in funcy:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -182,9 +183,9 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Но <code>merge()</code> и <code>join()</code> могут объединять не только словари, они работают практически для любых коллекций: словарей, упорядоченных словарей, множеств, списков, кортежей, итераторов и даже строк.</p>
+<p>The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.</p>
 
-<p><em>3. Захват подстроки с помощью регулярного выражения. Обычно это делается так:</em></p>
+<p><em>3. Capturing something with regular expression. A usual way:</em></p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -192,12 +193,12 @@
 <span class='line-number'>4</span>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">some_re</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
 </span><span class='line'><span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">actual_match</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="c"># или m.group(i), или m.groups()</span>
+</span><span class='line'>    <span class="n">actual_match</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="c"># or m.group(i) or m.groups()</span>
 </span><span class='line'>    <span class="o">...</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>С funcy это превращается в:</p>
+<p>Much more straightforward with funcy:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -206,7 +207,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Если это не кажется вам достаточно впечатляющим, то взгляните на это:</p>
+<p>Still not impressed? Then look here:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -218,46 +219,48 @@
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
+<span class='line-number'>11</span>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">re_finder</span><span class="p">,</span> <span class="n">re_all</span><span class="p">,</span> <span class="n">partial</span><span class="p">,</span> <span class="n">mapcat</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># Вычленяем числа из каждого слова</span>
+</span><span class='line'><span class="c"># Get a number out of every word</span>
 </span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># Парсим ini файл (re_finder() возвращает кортежи когда в выражении &gt; 1 захвата)</span>
+</span><span class='line'><span class="c"># Parse simple ini file into dict</span>
+</span><span class='line'><span class="c"># (re_finder returns tuples when there is more that one capture in regexp)</span>
 </span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># Вычленяем числа из строк (возможно по нескольку из каждой) и объединяем в плоский список</span>
+</span><span class='line'><span class="c"># Find all numbers in all the strings and return as flat list</span>
 </span><span class='line'><span class="n">mapcat</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">re_all</span><span class="p">,</span> <span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">bunch_of_strings</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Отступление про импорты и практичность</h2>
+<h2>About imports and practicality</h2>
 
-<p>Как вы могли заметить, я импортирую функции напрямую из funcy, не используя какие-либо подпакеты. Причина, по которой я остановился на таком интерфейсе, &ndash; практичность; было бы довольно занудным требовать от всех пользователей моей библиотеки помнить откуда нужно импортировать walk() из funcy.colls или funcy.seqs, кроме того, многострочные импорты в начале каждого файла и без меня есть кому набивать.</p>
+<p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
 
-<p>Дополнительным преимуществом такого решения является возможность просто написать:</p>
+<p>This also enables you to write:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="o">*</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>И наслаждаться всеми функциональными прелестями и удобством, что приносит funcy, более не возвращаясь в начало файла за добавкой. Что ж, теперь, когда вы знаете где лежит всё добро, я больше не буду явно указывать импорты из funcy. Продолжим.</p>
+<p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
 
-<h2>Кое-какие более функциональные штучки</h2>
+<h2>A bit more functional things</h2>
 
-<p>Мы уже видели пару примеров использования функций высшего порядка &ndash; <code>re_finder()</code> и <code>partial()</code>. Стоит добавить, что сама функция <code>re_finder()</code> является частичным применением <code>re_find()</code> созданным для удобства применения в <code>map()</code> и ей подобных. И естественным образом, с <code>filter()</code> удобно использовать <code>re_tester()</code>:</p>
+<p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Выбираем все приватные атрибуты объекта</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Choose all private attributes of an object</span>
 </span><span class='line'><span class="n">is_private</span> <span class="o">=</span> <span class="n">re_tester</span><span class="p">(</span><span class="s">&#39;^_&#39;</span><span class="p">)</span>
 </span><span class='line'><span class="nb">filter</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="nb">dir</span><span class="p">(</span><span class="n">some_obj</span><span class="p">))</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Отлично, мы можем задать несколько предикатов, таких как <code>is_private()</code>, и фильтровать атрибуты объекта по ним:</p>
+<p>We can create a bunch of predicates and filter with them:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -268,7 +271,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Но, что если мы хотим получить список публичных атрибутов или приватных констант, что-то задействующее комбинацию предикатов? Легко:</p>
+<p>But what if we want to apply several of them at once or use some predicate logic. That&rsquo;s easy:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -279,18 +282,19 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Для удобства также есть функция, дополняющая <code>filter()</code>:</p>
+<p>Or you can use convenience function complementary to <code>filter</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">remove</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="c"># то же, что filter(is_public)</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">remove</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="c"># same as filter(is_public)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Надеюсь все утолили свой функциональный аппетит, потому пора перейти к чему-нибудь менее абстрактному.</p>
+<p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
 
-<h2>Работа с коллекциями</h2>
+<h2>Collections</h2>
 
-<p>Кроме утилит для работы с последовательностями, <a href="http://funcy.readthedocs.org/en/latest/seqs.html">коих много больше</a>, чем я тут описал, funcy также помогает работать с коллекциями. Основу составляют функции <code>walk()</code> и <code>select()</code>, которые аналогичны <code>map()</code> и <code>filter()</code>, но сохраняют тип обрабатываемой коллекции:</p>
+<p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
+And the two fundamental are <code>walk</code> and <code>select</code>, a versions of <code>map</code> and <code>filter</code> preserving collection type:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -308,7 +312,7 @@
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span> <span class="c"># -&gt; {2, 3, 4}</span>
 </span><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="c"># -&gt; (2, 3, 4)</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># при обработке словаря мы работаем с парами ключ-значение</span>
+</span><span class='line'><span class="c"># Mapping function receives pairs when walking dicts</span>
 </span><span class='line'><span class="n">swap</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
 </span><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">swap</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span>
 </span><span class='line'><span class="c"># -&gt; {10: 1, 20: 2}</span>
@@ -321,46 +325,46 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Эта пара функций подкрепляется набором для работы со словарями: <code>walk_keys(), walk_values(), select_keys(), select_values()</code>:</p>
+<p>This pair of functions is backed up with a set of ones to work with dicts: <code>walk_keys</code>, <code>walk_values</code>, <code>select_keys</code>, <code>select_values</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># выберем публичную часть словаря атрибутов объекта</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Get a dict of public attributes of an instance</span>
 </span><span class='line'><span class="n">select_keys</span><span class="p">(</span><span class="n">is_public</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># выбросим ложные значения из словаря</span>
+</span><span class='line'><span class="c"># Clean dict of falsy values</span>
 </span><span class='line'><span class="n">select_values</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">some_dict</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Последний пример из этой серии будет использовать сразу несколько новых функций: <code>silent()</code> &ndash; глушит все исключения, бросаемые оборачиваемой функцией, возвращая <code>None</code>; <code>compact()</code> &ndash; убирает из коллекции значения <code>None</code>; <code>walk_values()</code> &ndash; обходит значения переданного словаря, конструируя новый словарь с значениями, преобразованными переданной функцией. В целом эта строка выбирает словарь целочисленных параметров из параметров запроса:</p>
+<p>The last example in this section will include several new functions at once: <code>silent</code> &ndash; catches all exceptions in passed function, returning <code>None</code>; <code>compact</code> &ndash; removes falsy values from collection; <code>walk_values</code> &ndash; maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">compact</span><span class="p">(</span><span class="n">walk_values</span><span class="p">(</span><span class="n">silent</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">request_dict</span><span class="p">))</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Манипулирование данными</h2>
+<h2>Back to working with data</h2>
 
-<p>О! Мы добрались до самого интересного, сюда часть примеров я включил просто потому, что они кажутся мне клёвыми. Хотя, если честно, я делал это и выше. Сейчас мы будем разделять и группировать:</p>
+<p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># отделим абсолютные URL от относительных</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># split absolute and relative urls</span>
 </span><span class='line'><span class="n">absolute</span><span class="p">,</span> <span class="n">relative</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">re_tester</span><span class="p">(</span><span class="s">r&#39;^http://&#39;</span><span class="p">),</span> <span class="n">urls</span><span class="p">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># группируем посты по категории</span>
+</span><span class='line'><span class="c"># group posts by category</span>
 </span><span class='line'><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">post</span><span class="p">:</span> <span class="n">post</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">posts</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Собирать плоские данные во вложенные структуры:</p>
+<p>Partition and chunk:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -374,22 +378,22 @@
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># строим словарь из плоского списка пар</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># make a dict from flat list of pairs</span>
 </span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">partition</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">flat_list_of_pairs</span><span class="p">))</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># строим структуру учётных данных</span>
+</span><span class='line'><span class="c"># make a structures from flat list</span>
 </span><span class='line'><span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">password</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">users</span><span class="p">)}</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># проверяем, что список версий последователен</span>
+</span><span class='line'><span class="c"># check versions are consecutive</span>
 </span><span class='line'><span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">prev</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">next</span> <span class="k">for</span> <span class="n">prev</span><span class="p">,</span> <span class="nb">next</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">versions</span><span class="p">)):</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># обрабатываем данные кусками</span>
+</span><span class='line'><span class="c"># process data by chunks</span>
 </span><span class='line'><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">(</span><span class="n">CHUNK_SIZE</span><span class="p">,</span> <span class="n">lots_of_data</span><span class="p">):</span>
 </span><span class='line'>    <span class="n">process</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>И ещё пара примеров, просто до кучи:</p>
+<p>And a couple more, just for fun:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -401,24 +405,36 @@
 <span class='line-number'>8</span>
 <span class='line-number'>9</span>
 <span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># выделяем абзацы красной строкой</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># add new line indents at the beginning of each paragraph</span>
 </span><span class='line'><span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">prev</span> <span class="ow">in</span> <span class="n">with_prev</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()):</span>
 </span><span class='line'>    <span class="k">if</span> <span class="ow">not</span> <span class="n">prev</span><span class="p">:</span>
 </span><span class='line'>        <span class="k">print</span> <span class="s">&#39;    &#39;</span><span class="p">,</span>
 </span><span class='line'>    <span class="k">print</span> <span class="n">line</span>
 </span><span class='line'>
-</span><span class='line'><span class="c"># выбираем пьесы Шекспира за 1611 год</span>
+</span><span class='line'><span class="c"># select Shakespeare&#39;s play written in 1611</span>
 </span><span class='line'><span class="n">where</span><span class="p">(</span><span class="n">plays</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="s">&quot;Shakespeare&quot;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">1611</span><span class="p">)</span>
 </span><span class='line'><span class="c"># =&gt; [{&quot;title&quot;: &quot;Cymbeline&quot;, &quot;author&quot;: &quot;Shakespeare&quot;, &quot;year&quot;: 1611},</span>
 </span><span class='line'><span class="c">#     {&quot;title&quot;: &quot;The Tempest&quot;, &quot;author&quot;: &quot;Shakespeare&quot;, &quot;year&quot;: 1611}]</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Не просто библиотека</h2>
+<h2>More than just a library</h2>
 
-<p>Возможно, некоторые из вас встретили знакомые функции из Clojure и Underscore.js (кстати, пример с Шекспиром нагло содран из документации последней), &ndash; ничего удивительного, я во многом черпал вдохновение из этих источников. При этом я старался следовать питоньему стилю, сохранять консистентность библиотеки и нигде не жертвовать практичностью, поэтому не все функции полностью соответствуют своим прототипам, они скорее соответствуют друг другу и стандартной библиотеке.</p>
+<p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>
 
-<p>И ещё одна мысль. Мы привыкли называть языки программирования языками, при этом редко осознаём, что синтаксические конструкции и стандартные функции &ndash; это слова этих языков. Мы можем добавлять свои слова, определяя функции, но обычно такие слова слишком специфичны, чтобы попасть в повседневный языковой словарь. Утилиты из funcy, напротив, заточены под широкую область применения, поэтому эту библиотеку можно воспринимать как расширение python, также как underscore или jQuery &ndash; расширение JavaScript. Итак, всем кто хочет пополнить свой словарный запас &ndash; <a href="http://github.com/Suor/funcy">добро пожаловать</a>.</p>
+<p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p>
+
+<p>So, does anyone here look to <a href="https://github.com/Suor/funcy">extend her vocabulary</a>?</p>
+
+<p>So, who looks to extend one&rsquo;s vocabulary?</p>
+
+<p>So, do you look to extend your vocabulary?</p>
+
+<p>So, if you are willing to extend you vocabulary &hellip;</p>
+
+<p>So, are you willing to extend your vocabulary?</p>
+
+<p>So, how about extending your vocabulary?</p>
 </div>
 
 

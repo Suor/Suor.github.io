@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Functional Programming | Hackflow]]></title>
-  <link href="http://hackflow.com/blog/categories/functional-programming/atom.xml" rel="self"/>
+  <title><![CDATA[Category: FP | Hackflow]]></title>
+  <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2013-10-11T22:08:07+08:00</updated>
+  <updated>2013-10-13T15:19:37+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
