@@ -1,24 +1,105 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Hackflow]]></title>
-  <link href="http://hackflow.com/atom.xml" rel="self"/>
-  <link href="http://hackflow.com/"/>
-  <updated>2013-10-13T19:27:00+08:00</updated>
-  <id>http://hackflow.com/</id>
-  <author>
-    <name><![CDATA[Alexander Schepanovski]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Functional Python Made Easy - Hackflow</title>
+  <meta name="author" content="Alexander Schepanovski">
 
   
-  <entry>
-    <title type="html"><![CDATA[Functional Python Made Easy]]></title>
-    <link href="http://hackflow.com/blog/2013/10/13/functional-python-made-easy/"/>
-    <updated>2013-10-13T19:22:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/13/functional-python-made-easy</id>
-    <content type="html"><![CDATA[<p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
+  <meta name="description" content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hackflow.com/drafts/functional-python-made-easy.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37289902-3']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Hackflow</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hackflow.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Functional Python Made Easy</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
 
 <p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
 
@@ -344,188 +425,186 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 <p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p>
 
 <p>So, how about <a href="https://github.com/Suor/funcy">extending your vocabulary</a>?</p>
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[Abstracting Control Flow]]></title>
-    <link href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/"/>
-    <updated>2013-10-08T12:13:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/08/abstracting-control-flow</id>
-    <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p>
 
-<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
+<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
 
-<p> <!--more--></p>
-
-<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
-
-<h2>Abstractions</h2>
-
-<p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
-
-<ol>
-<li>Select a piece of functionality or behavior.</li>
-<li>Name it.</li>
-<li>Implement it.</li>
-<li>Hide our implementation behind chosen name.</li>
-</ol>
+      
 
 
-<p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p>
-
-<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
-
-<h2>Back to real-life</h2>
-
-<p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">urls</span> <span class="o">=</span> <span class="o">...</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>            <span class="n">photos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">download_image</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
-</span><span class='line'>            <span class="k">break</span>
-</span><span class='line'>        <span class="k">except</span> <span class="n">ImageTooSmall</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">pass</span> <span class="c"># skip small images</span>
-</span><span class='line'>        <span class="k">except</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">),</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">DOWNLOAD_TRIES</span><span class="p">:</span>
-</span><span class='line'>                <span class="k">raise</span>
-</span></code></pre></td></tr></table></div></figure>
 
 
-<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
-
-<p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">download_image</span><span class="p">,</span> <span class="n">urls</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
 
 
-<p>Let&rsquo;s try fishing out other aspects, starting with skipping small images. That could be done like:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@contextmanager</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">ignore</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">yield</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">error</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">pass</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span class='line'><span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">with</span> <span class="n">ignore</span><span class="p">(</span><span class="n">ImageTooSmall</span><span class="p">):</span>
-</span><span class='line'>        <span class="n">photos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">download_image</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
 
 
-<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it the same way we handled <code>ignore</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">with</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)):</span>
-</span><span class='line'>    <span class="c"># ... do stuff</span>
-</span></code></pre></td></tr></table></div></figure>
 
 
-<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run its block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
+      
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">tries</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="ne">Exception</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tries</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
-</span><span class='line'>        <span class="k">except</span> <span class="n">errors</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">tries</span><span class="p">:</span>
-</span><span class='line'>                <span class="k">raise</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">))</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">http_retry</span><span class="p">(</span><span class="n">download_image</span><span class="p">),</span> <span class="n">urls</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>As we can see, it even works with <code>map</code> naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">ignore</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="ne">Exception</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">errors</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">return</span> <span class="bp">None</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">ignore_small</span> <span class="o">=</span> <span class="n">ignore</span><span class="p">(</span><span class="n">ImageTooSmall</span><span class="p">)</span>
-</span><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">))</span>
-</span><span class='line'><span class="n">download</span> <span class="o">=</span> <span class="n">http_retry</span><span class="p">(</span><span class="n">ignore_small</span><span class="p">(</span><span class="n">download_image</span><span class="p">))</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">download</span><span class="p">,</span> <span class="n">urls</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>How is this better?</h2>
-
-<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>
-
-<ul>
-<li>every single aspect is visible,</li>
-<li>it&rsquo;s named,</li>
-<li>it can be taken out and brought back easily,</li>
-<li>it can be reused.</li>
-</ul>
-
-
-<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective. Still I hope this post will help somebody to write better code.</p>
-
-<p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
-
-<p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href="http://underscorejs.org/#functions">function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href="https://github.com/Suor/patterns">pattern matching</a>, <a href="https://github.com/Suor/overload">function overload</a>, caching decorators and much more.</p>
-]]></content>
-  </entry>
+<span class="categories">
   
-</feed>
+    <a class='category' href='/blog/categories/fp/'>FP</a>, <a class='category' href='/blog/categories/python/'>Python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+    <div style="float: left; height: 20px; line-height: 20px; font-size: 20px; margin-right: 30px">
+      <a href="https://news.ycombinator.com/item?id=6542224">HN comments</a>
+    </div>
+  
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://hackflow.com/drafts/functional-python-made-easy.html" data-via="hackflow" data-counturl="http://hackflow.com/drafts/functional-python-made-easy.html" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+</div>
+<style type="text/css">
+  .sharing * {float: left !important;}
+</style>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <a style="float: right; line-height: 27px" href="https://twitter.com/hackflow" target="_blank">@hackflow</a>
+  <h1>About Me</h1>
+  <p>
+    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
+    I write in python, js and occasionally english.
+    I also <a href="https://twitter.com/CoolSuor" target="_blank">tweet</a> and <a href="http://habrahabr.ru/users/suor/topics/" target="_blank">blog</a> in russian.
+  </p>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/13/functional-python-made-easy/">Functional Python Made Easy</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/08/abstracting-control-flow/">Abstracting Control Flow</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/Suor">@Suor</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'Suor',
+            count: 3,
+            skip_forks: true,
+            skip: 'Suor.github.io,sublime-text-2-User',
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Alexander Schepanovski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'hackflow';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://hackflow.com/drafts/functional-python-made-easy.html';
+        var disqus_url = 'http://hackflow.com/drafts/functional-python-made-easy.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
