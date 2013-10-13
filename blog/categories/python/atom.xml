@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2013-10-13T15:19:37+08:00</updated>
+  <updated>2013-10-13T19:22:59+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,282 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Functional Python Made Easy]]></title>
+    <link href="http://hackflow.com/blog/2013/10/13/functional-python-made-easy/"/>
+    <updated>2013-10-13T19:22:00+08:00</updated>
+    <id>http://hackflow.com/blog/2013/10/13/functional-python-made-easy</id>
+    <content type="html"><![CDATA[<p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
+
+<p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
+
+<!--more-->
+
+
+<p>Funcy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they&rsquo;ll just save your time, still good.</p>
+
+<p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
+
+<h2>Everyday data manipulation</h2>
+
+<p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
+
+<p>``` python
+from operator import concat
+reduce(concat, list_of_lists)</p>
+
+<h1>or that:</h1>
+
+<p>sum(list_of_lists, [])</p>
+
+<h1>or that:</h1>
+
+<p>from itertools import chain
+list(chain.from_iterable(list_of_lists))
+```</p>
+
+<p>They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:</p>
+
+<p><code>python
+from funcy import cat
+cat(list_of_lists)
+</code></p>
+
+<p><code>cat</code> joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to <code>cat</code> results of <code>map</code> call. For example, this</p>
+
+<p><code>python
+from funcy import mapcat
+mapcat(str.splitlines, bunch_of_texts)
+</code></p>
+
+<p>will result in flat list of all lines of all the texts. There are lazy versions of both functions: <code>icat</code> and <code>imapcat</code>.</p>
+
+<p><em>2. Merge some dicts. There are several clumsy ways in python:</em></p>
+
+<p>``` python
+d1.update(d2)  # Changes d1
+dict(d1, **d2) # Really awkward for more than 2 dicts</p>
+
+<p>d = d1.copy()
+d.update(d2)
+```</p>
+
+<p>I always wondered why one can&rsquo;t just add them up, but that&rsquo;s what we have. Anyway, this is also easy in funcy:</p>
+
+<p><code>python
+from funcy import merge, join
+merge(d1, d2)
+merge(d1, d2, d3)
+join(sequence_of_dicts)
+</code></p>
+
+<p>The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.</p>
+
+<p><em>3. Capturing something with regular expression. A usual way:</em></p>
+
+<p>``` python
+m = re.search(some_re, s)
+if m:</p>
+
+<pre><code>actual_match = m.group() # or m.group(i) or m.groups()
+...
+</code></pre>
+
+<p>```</p>
+
+<p>Much more straightforward with funcy:</p>
+
+<p><code>python
+from funcy import re_find
+actual_match = re_find(some_re, s)
+</code></p>
+
+<p>Still not impressed? Then look here:</p>
+
+<p>``` python
+from funcy import re_finder, re_all, partial, mapcat</p>
+
+<h1>Get a number out of every word</h1>
+
+<p>map(re_finder(&lsquo;\d+&rsquo;), words)</p>
+
+<h1>Parse simple ini file into dict</h1>
+
+<h1>(re_finder returns tuples when there is more that one capture in regexp)</h1>
+
+<p>dict(imap(re_finder(&lsquo;(\w+)=(\w+)&rsquo;), ini.splitlines()))</p>
+
+<h1>Find all numbers in all the strings and return as flat list</h1>
+
+<p>mapcat(partial(re_all, r'\d+&lsquo;), bunch_of_strings)
+```</p>
+
+<h2>About imports and practicality</h2>
+
+<p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
+
+<p>This also enables you to write:</p>
+
+<p><code>python
+from funcy import *
+</code></p>
+
+<p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
+
+<h2>A bit more functional things</h2>
+
+<p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
+
+<p>``` python</p>
+
+<h1>Choose all private attributes of an object</h1>
+
+<p>is_private = re_tester(&lsquo;^_&rsquo;)
+filter(is_private, dir(some_obj))
+```</p>
+
+<p>We can create a bunch of predicates and filter with them:</p>
+
+<p><code>python
+is_special = re_tester('^__.+__$')
+is_const = re_tester('^[A-Z_]+$')
+filter(...)
+</code></p>
+
+<p>But what if we want to apply several of them at once or use some predicate logic. That&rsquo;s easy:</p>
+
+<p><code>python
+is_public = complement(is_private)
+is_private_const = all_fn(is_private, is_const)
+either_const_or_public = any_fn(is_const, is_public)
+</code></p>
+
+<p>Or you can use convenience function complementary to <code>filter</code>:</p>
+
+<p><code>python
+remove(is_private, ...) # same as filter(is_public)
+</code></p>
+
+<p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
+
+<h2>Collections</h2>
+
+<p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
+And the two fundamental are <code>walk</code> and <code>select</code>, a versions of <code>map</code> and <code>filter</code> preserving collection type:</p>
+
+<p>``` python
+walk(inc, {1, 2, 3}) # &ndash;> {2, 3, 4}
+walk(inc, (1, 2, 3)) # &ndash;> (2, 3, 4)</p>
+
+<h1>Mapping function receives pairs when walking dicts</h1>
+
+<p>swap = lambda (k, v): (v, k)
+walk(swap, {1: 10, 2: 20})</p>
+
+<h1>&ndash;> {10: 1, 20: 2}</h1>
+
+<p>select(even, {1, 2, 3, 10, 20})</p>
+
+<h1>&ndash;> {2, 10, 20}</h1>
+
+<p>select(lambda (k, v): k == v, {1: 1, 2: 3})</p>
+
+<h1>&ndash;> {1: 1}</h1>
+
+<p>```</p>
+
+<p>This pair of functions is backed up with a set of ones to work with dicts: <code>walk_keys</code>, <code>walk_values</code>, <code>select_keys</code>, <code>select_values</code>:</p>
+
+<p>``` python</p>
+
+<h1>Get a dict of public attributes of an instance</h1>
+
+<p>select_keys(is_public, instance.<strong>dict</strong>)</p>
+
+<h1>Clean dict of falsy values</h1>
+
+<p>select_values(bool, some_dict)
+```</p>
+
+<p>The last example in this section will include several new functions at once: <code>silent</code> &ndash; catches all exceptions in passed function, returning <code>None</code>; <code>compact</code> &ndash; removes falsy values from collection; <code>walk_values</code> &ndash; maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:</p>
+
+<p><code>python
+compact(walk_values(silent(int), request_dict))
+</code></p>
+
+<h2>Back to data manipulation</h2>
+
+<p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
+
+<p>``` python</p>
+
+<h1>split absolute and relative urls</h1>
+
+<p>absolute, relative = split(re_tester(r'^<a href="http://">http://</a>&lsquo;), urls)</p>
+
+<h1>group posts by category</h1>
+
+<p>group_by(lambda post: post.category, posts)
+```</p>
+
+<p>Partition and chunk:</p>
+
+<p>``` python</p>
+
+<h1>make a dict from flat list of pairs</h1>
+
+<p>dict(partition(2, flat_list_of_pairs))</p>
+
+<h1>make a structures from flat list</h1>
+
+<p>{id: (name, password) for id, name, password in partition(3, users)}</p>
+
+<h1>check versions are consecutive</h1>
+
+<p>assert all(prev + 1 == next for prev, next in partition(2, 1, versions)):</p>
+
+<h1>process data by chunks</h1>
+
+<p>for chunk in chunks(CHUNK_SIZE, lots_of_data):</p>
+
+<pre><code>process(chunk)
+</code></pre>
+
+<p>```</p>
+
+<p>And a couple more, just for fun:</p>
+
+<p>``` python</p>
+
+<h1>add new line indents at the beginning of each paragraph</h1>
+
+<p>for line, prev in with_prev(text.splitlines()):</p>
+
+<pre><code>if not prev:
+    print '    ',
+print line
+</code></pre>
+
+<h1>select Shakespeare&rsquo;s play written in 1611</h1>
+
+<p>where(plays, author=&ldquo;Shakespeare&rdquo;, year=1611)</p>
+
+<h1>=> [{&ldquo;title&rdquo;: &ldquo;Cymbeline&rdquo;, &ldquo;author&rdquo;: &ldquo;Shakespeare&rdquo;, &ldquo;year&rdquo;: 1611},</h1>
+
+<h1>{&ldquo;title&rdquo;: &ldquo;The Tempest&rdquo;, &ldquo;author&rdquo;: &ldquo;Shakespeare&rdquo;, &ldquo;year&rdquo;: 1611}]</h1>
+
+<p>```</p>
+
+<h2>More than just a library</h2>
+
+<p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>
+
+<p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p>
+
+<p>So, how about <a href="https://github.com/Suor/funcy">extending your vocabulary</a>?</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Abstracting Control Flow]]></title>
