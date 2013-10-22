@@ -2,8 +2,9 @@
 layout: post
 title: "Functional Python Made Easy"
 comments: true
-published: false
+date: 2013-10-13 19:22
 categories: [FP, Python]
+hn_id: 6542224
 ---
 
 
@@ -193,7 +194,7 @@ compact(walk_values(silent(int), request_dict))
 ```
 
 
-## Back to working with data
+## Back to data manipulation
 
 Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let's split and group:
 
@@ -243,16 +244,6 @@ Maybe some of you recognized some functions from Clojure or Underscore.js (Shake
 
 And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it's standard library.
 
-So, does anyone here look to [extend her vocabulary][funcy]?
-
-So, who looks to extend one's vocabulary?
-
-So, do you look to extend your vocabulary?
-
-So, if you are willing to extend you vocabulary ...
-
-So, are you willing to extend your vocabulary?
-
-So, how about extending your vocabulary?
+So, how about [extending your vocabulary][funcy]?
 
 [funcy]: https://github.com/Suor/funcy
