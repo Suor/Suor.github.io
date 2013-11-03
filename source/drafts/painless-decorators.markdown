@@ -6,14 +6,9 @@ published: false
 categories: [Python]
 ---
 
-I assume you all understand a value of decorators.
+This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing another `def wrapper(...)`. Here I am trying to find a better way to write decorators.
 
-This post is for those who enjoy using decorators and hate writing them.
-
-Oh, wonderful decorators, if only they were easier to write.
-
-
-I want to be clear, this is not a decorators tutorial, this one is for those who have written enough of them to feel pain typing another `def wrapper(...)`.
+<!--more-->
 
 
 ## Current state
@@ -29,7 +24,7 @@ def some_decorator(func):
     def wrapper(*args, **kwargs):
         # ... do something before
         result = func(*args, **kwargs)
-        # ... do something before
+        # ... do something after
         return result
     return wrapper
 ```
@@ -53,8 +48,6 @@ Look at that code for a minute. What a mess! And this is not about typing, it's 
 
 Let's see what is meaningful and what is a boilerplate here. What we care about is concentrated in `wrapper` function, it's `before` and `after` calls, how they surround original function call, what arguments are passed to it and what is returned. The name `some_decorator` and its arguments also matter. Anything else - nested functions and returns, `@wraps` and all extra indent - is just code pattern waiting [to be abstracted][acf].
 
-[acf]: http://hackflow.com/blog/2013/10/08/abstracting-control-flow/
-
 
 ## Removing a boilerplate
 
@@ -64,67 +57,114 @@ What we probably want to see (or write) is some flat syntax with code showing on
 def some_decorator(...):
     # ... do something before
     result = func(*args, **kwargs)
-    # ... do something before
+    # ... do something after
     return result
 ```
 
-Obviously `func`, `args` and `kwargs` should come from somewhere as well as all the magic turning plain function into decorator:
+Obviously `func`, `args` and `kwargs` should come from somewhere as well as all the magic turning plain function into decorator. Suppose we have `@decorator` to handle the conversion and the easiest way to provide all values is just enclosing them as `some_decorator` arguments:
 
 ``` python
-@decorator # apply magic
+@decorator
 def some_decorator(func, args, kwargs):
     # ... do something before
     result = func(*args, **kwargs)
-    # ... do something before
+    # ... do something after
     return result
 ```
 
-
-You can also do something with arguments passed or result value.
-
-
-An easy way to create decorators. Here is a simple logging decorator::
+Calling decorated function with the same arguments as its wrapper is a pattern so common that we should abstract that too. Also, our decorator may become too cluttered once we start adding its own arguments. To keep this clean we can substitute three call related arguments with a single `call` object:
 
 ``` python
-    @decorator
-    def log(call):
-        print call._func.__name__, call._args, call._kwargs
+@decorator
+def some_decorator(call):
+    # ... do something before
+    result = call()
+    # ... do something after
+    return result
+```
+
+Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually you can already [download it from pypi][funcy-pypi] and import it with `from funcy import decorator`.
+
+
+## Advanced usage
+
+We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and decorators with arguments. But that's not the case really, we can pack all these into `call` object and I'll go through everything with better examples than you saw so far.
+
+
+### Accessing function arguments
+
+You didn't expect a post about decorators without logging example, did you? Anyway, it's an excellent way to show how you can access not only call arguments but function itself:
+
+``` python
+@decorator
+def log(call):
+    print "Calling %s with args %s and kwargs %s"         \
+        % (call._func.__name__, call._args, call._kwargs)
+    return call()
+```
+
+As you can see, everything is underscore-prefixed, this is done to avoid clashes with function argument names, the values of which are binded to `call` object as attributes. Pretty handy if you are writing something more specific than logging decorator. Look at this simplified `login_required` decorator to get a foretaste:
+
+``` python
+@decorator
+def login_required(call):
+    if call.request.user.is_authenticated():
         return call()
+    else:
+        return redirect(LOGIN_URL)
 ```
 
+
+### Altering calls
+
+Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is using plain function carefully stored in `call._func`:
 
 ``` python
-    @decorator
-    def log(call):
-        print call._func.__name__, call._args, call._kwargs
-        return call()
+@decorator
+def int_args(call):
+    """Coerces any function arguments to ints"""
+    return call._func(*map(int, call._args))
 ```
 
-`call` object also supports by name arg introspection and passing additional arguments to decorated function:
+But a common use-case of passing some extra data to function could be written with more elegance:
 
 ``` python
-    @decorator
-    def with_phone(call):
-        # call.request gets actual request value upon function call
-        phone = Phone.objects.get(number=call.request.GET['phone'])
-        # phone arg is added to *args passed to decorated function
-        return call(phone)
+@decorator
+def with_phone(call):
+    phone = Phone.objects.get(number=call.request.GET['phone'])
+    return call(phone) # phone is added to *args passed to decorated function
 
-    @with_phone
-    def some_view(request, phone):
-        # ... some code using phone
-        return # ...
+@with_phone
+def some_view(request, phone):
+    # ... some code using phone
 ```
 
-You can easily create decorators with arguments too:
+This works with named arguments too, and is probably a better way since you won't run into problems with arguments order.
+
+
+### Decorators with arguments
+
+To get these you just add your arguments after `call` as in this [control flow abstracting][acf] retry decorator:
 
 ``` python
-    @decorator
-    def joining(call, sep):
-        return sep.join(imap(sep.__class__, call()))
+@decorator
+def retry(call, tries, errors=Exception):
+    for attempt in range(tries):
+        try:
+            return call()
+        except errors:
+            # Reraise error on last attempt
+            if attempt + 1 == tries:
+                raise
 ```
 
-Usage example shown in :func:`joining` docs.
 
-You can see more examples in :mod:`flow` and :mod:`debug` submodules source code.
+## Why use that?
 
+There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that ...
+
+You can choose for yourself what level is too high. And if python is sometimes not enough high level language for you then you should definitely upgrade it.
+
+
+[acf]: http://hackflow.com/blog/2013/10/08/abstracting-control-flow/
+[funcy-pypi]: https://pypi.python.org/pypi/funcy
