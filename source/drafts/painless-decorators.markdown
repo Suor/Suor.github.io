@@ -1,7 +1,8 @@
 ---
 layout: post
 title: "Painless Decorators"
-comments: true
+sharing: false
+comments: false
 published: false
 categories: [Python]
 ---
