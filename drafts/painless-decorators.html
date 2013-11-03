@@ -9,7 +9,7 @@
   <meta name="author" content="Alexander Schepanovski">
 
   
-  <meta name="description" content="This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing &hellip;">
+  <meta name="description" content="Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and fair amount of bookkeeping. Enough things to &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -99,15 +99,21 @@
   </header>
 
 
-<div class="entry-content"><p>This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing another <code>def wrapper(...)</code>. Here I am trying to find a better way to write decorators.</p>
+<div class="entry-content"><p>Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.</p>
+
+<p>Let&rsquo;s find that out.</p>
+
+<!-- I want to be clear, this is not a decorators tutorial, this one is for those who have written enough of them to feel pain typing another `def wrapper(...)`. -->
+
+
+
 
 <!--more-->
 
 
 <h2>Current state</h2>
 
-<p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it.
-A typical pattern would be:</p>
+<p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
