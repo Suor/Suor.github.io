@@ -1,0 +1,464 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Painless Decorators - Hackflow</title>
+  <meta name="author" content="Alexander Schepanovski">
+
+  
+  <meta name="description" content="This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hackflow.com/drafts/painless-decorators.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37289902-3']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Hackflow</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hackflow.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Painless Decorators</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing another <code>def wrapper(...)</code>. Here I am trying to find a better way to write decorators.</p>
+
+<!--more-->
+
+
+<h2>Current state</h2>
+
+<p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it.
+A typical pattern would be:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">some_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+</span><span class='line'>    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span class='line'>        <span class="c"># ... do something before</span>
+</span><span class='line'>        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span class='line'>        <span class="c"># ... do something after</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">result</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">wrapper</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And if you want decorator with arguments it becomes even harder:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">some_decorator</span><span class="p">(</span><span class="n">before</span><span class="p">,</span> <span class="n">after</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+</span><span class='line'>        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span class='line'>            <span class="n">before</span><span class="p">()</span>
+</span><span class='line'>            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span class='line'>            <span class="n">after</span><span class="p">()</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">result</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">wrapper</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">decorator</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Look at that code for a minute. What a mess! And this is not about typing, it&rsquo;s really hard to see through to the point of it.</p>
+
+<p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just code pattern waiting <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">to be abstracted</a>.</p>
+
+<h2>Removing a boilerplate</h2>
+
+<p>What we probably want to see (or write) is some flat syntax with code showing only wrapper semantics. Something like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">some_decorator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ... do something before</span>
+</span><span class='line'>    <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span class='line'>    <span class="c"># ... do something after</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Obviously <code>func</code>, <code>args</code> and <code>kwargs</code> should come from somewhere as well as all the magic turning plain function into decorator. Suppose we have <code>@decorator</code> to handle the conversion and the easiest way to provide all values is just enclosing them as <code>some_decorator</code> arguments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">some_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ... do something before</span>
+</span><span class='line'>    <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span class='line'>    <span class="c"># ... do something after</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Calling decorated function with the same arguments as its wrapper is a pattern so common that we should abstract that too. Also, our decorator may become too cluttered once we start adding its own arguments. To keep this clean we can substitute three call related arguments with a single <code>call</code> object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">some_decorator</span><span class="p">(</span><span class="n">call</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ... do something before</span>
+</span><span class='line'>    <span class="n">result</span> <span class="o">=</span> <span class="n">call</span><span class="p">()</span>
+</span><span class='line'>    <span class="c"># ... do something after</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">result</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually you can already <a href="https://pypi.python.org/pypi/funcy">download it from pypi</a> and import it with <code>from funcy import decorator</code>.</p>
+
+<h2>Advanced usage</h2>
+
+<p>We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and decorators with arguments. But that&rsquo;s not the case really, we can pack all these into <code>call</code> object and I&rsquo;ll go through everything with better examples than you saw so far.</p>
+
+<h3>Accessing function arguments</h3>
+
+<p>You didn&rsquo;t expect a post about decorators without logging example, did you? Anyway, it&rsquo;s an excellent way to show how you can access not only call arguments but function itself:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="n">call</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">print</span> <span class="s">&quot;Calling </span><span class="si">%s</span><span class="s"> with args </span><span class="si">%s</span><span class="s"> and kwargs </span><span class="si">%s</span><span class="s">&quot;</span>         \
+</span><span class='line'>        <span class="o">%</span> <span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">_func</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">_args</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">_kwargs</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see, everything is underscore-prefixed, this is done to avoid clashes with function argument names, the values of which are binded to <code>call</code> object as attributes. Pretty handy if you are writing something more specific than logging decorator. Look at this simplified <code>login_required</code> decorator to get a foretaste:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">login_required</span><span class="p">(</span><span class="n">call</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">call</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">():</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
+</span><span class='line'>    <span class="k">else</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">LOGIN_URL</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Altering calls</h3>
+
+<p>Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is using plain function carefully stored in <code>call._func</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">int_args</span><span class="p">(</span><span class="n">call</span><span class="p">):</span>
+</span><span class='line'>    <span class="sd">&quot;&quot;&quot;Coerces any function arguments to ints&quot;&quot;&quot;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">call</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">_args</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But a common use-case of passing some extra data to function could be written with more elegance:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">with_phone</span><span class="p">(</span><span class="n">call</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">phone</span> <span class="o">=</span> <span class="n">Phone</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">call</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;phone&#39;</span><span class="p">])</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">call</span><span class="p">(</span><span class="n">phone</span><span class="p">)</span> <span class="c"># phone is added to *args passed to decorated function</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@with_phone</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">some_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">phone</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ... some code using phone</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This works with named arguments too, and is probably a better way since you won&rsquo;t run into problems with arguments order.</p>
+
+<h3>Decorators with arguments</h3>
+
+<p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">tries</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="ne">Exception</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tries</span><span class="p">):</span>
+</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
+</span><span class='line'>        <span class="k">except</span> <span class="n">errors</span><span class="p">:</span>
+</span><span class='line'>            <span class="c"># Reraise error on last attempt</span>
+</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">tries</span><span class="p">:</span>
+</span><span class='line'>                <span class="k">raise</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Why use that?</h2>
+
+<p>There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that &hellip;</p>
+
+<p>You can choose for yourself what level is too high. And if python is sometimes not enough high level language for you then you should definitely upgrade it.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/python/'>Python</a>
+  
+</span>
+
+
+    </p>
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <a style="float: right; line-height: 27px" href="https://twitter.com/hackflow" target="_blank">@hackflow</a>
+  <h1>About Me</h1>
+  <p>
+    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
+    I write in python, js and occasionally english.
+    I also <a href="https://twitter.com/CoolSuor" target="_blank">tweet</a> and <a href="http://habrahabr.ru/users/suor/topics/" target="_blank">blog</a> in russian.
+  </p>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/13/functional-python-made-easy/">Functional Python Made Easy</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/08/abstracting-control-flow/">Abstracting Control Flow</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/Suor">@Suor</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'Suor',
+            count: 5,
+            skip_forks: true,
+            skip: 'Suor.github.io,sublime-text-2-User',
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Alexander Schepanovski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
