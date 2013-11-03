@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2013-11-03T19:20:33+08:00</updated>
+  <updated>2013-11-03T20:08:41+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,199 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Painless Decorators]]></title>
+    <link href="http://hackflow.com/blog/2013/11/03/painless-decorators/"/>
+    <updated>2013-11-03T20:07:00+08:00</updated>
+    <id>http://hackflow.com/blog/2013/11/03/painless-decorators</id>
+    <content type="html"><![CDATA[<p>Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and a fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.</p>
+
+<p>Let&rsquo;s find that out.</p>
+
+<!--more-->
+
+
+<h2>Current state</h2>
+
+<p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:</p>
+
+<p>``` python
+from functools import wraps</p>
+
+<p>def some_decorator(func):</p>
+
+<pre><code>@wraps(func)
+def wrapper(*args, **kwargs):
+    # ... do something before
+    result = func(*args, **kwargs)
+    # ... do something after
+    return result
+return wrapper
+</code></pre>
+
+<p>```</p>
+
+<p>And if you want decorator with arguments it becomes even harder:</p>
+
+<p>``` python
+def some_decorator(before, after):</p>
+
+<pre><code>def decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        before()
+        result = func(*args, **kwargs)
+        after()
+        return result
+    return wrapper
+return decorator
+</code></pre>
+
+<p>```</p>
+
+<p>Look at that code for a minute. What a mess! And this is not about typing, it&rsquo;s really hard to see through to the point of it.</p>
+
+<p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
+
+<h2>Removing a boilerplate</h2>
+
+<p>What we probably want to see (or write) is some flat syntax with code showing only wrapper semantics. Something like:</p>
+
+<p>``` python
+def some_decorator(&hellip;):</p>
+
+<pre><code># ... do something before
+result = func(*args, **kwargs)
+# ... do something after
+return result
+</code></pre>
+
+<p>```</p>
+
+<p>Obviously <code>func</code>, <code>args</code> and <code>kwargs</code> should come from somewhere as well as all the magic turning plain function into decorator. Suppose we have <code>@decorator</code> to handle the conversion and the easiest way to provide all values is just enclosing them as <code>some_decorator</code> arguments:</p>
+
+<p>``` python
+@decorator
+def some_decorator(func, args, kwargs):</p>
+
+<pre><code># ... do something before
+result = func(*args, **kwargs)
+# ... do something after
+return result
+</code></pre>
+
+<p>```</p>
+
+<p>Calling decorated function with the same arguments as its wrapper is a pattern so common that we should abstract that too. Also, our decorator may become too cluttered once we start adding its own arguments. To keep this clean we can substitute three call related arguments with a single <code>call</code> object:</p>
+
+<p>``` python
+@decorator
+def some_decorator(call):</p>
+
+<pre><code># ... do something before
+result = call()
+# ... do something after
+return result
+</code></pre>
+
+<p>```</p>
+
+<p>Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually, you can <a href="https://pypi.python.org/pypi/funcy">download it from pypi</a> right now and import it with <code>from funcy import decorator</code>.</p>
+
+<h2>Advanced usage</h2>
+
+<p>We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and create decorators with arguments. But that&rsquo;s not the case really, we can pack all these into <code>call</code> object. I&rsquo;ll go through everything with better examples than you saw so far.</p>
+
+<h3>Accessing function arguments</h3>
+
+<p>You didn&rsquo;t expect a post about decorators without logging example, did you? Anyway, it&rsquo;s an excellent way to show how you can access not only call arguments but decorated function itself:</p>
+
+<p>``` python
+@decorator
+def log(call):</p>
+
+<pre><code>print "Calling %s with args %s and kwargs %s"         \
+    % (call._func.__name__, call._args, call._kwargs)
+return call()
+</code></pre>
+
+<p>```</p>
+
+<p>As you can see, everything is underscore-prefixed, this is done to avoid clashes with function argument names, the values of which are binded to <code>call</code> object as attributes. Pretty handy if you are writing something more specific than logging decorator. Look at this simplified <code>login_required</code> decorator to get a foretaste:</p>
+
+<p>``` python
+@decorator
+def login_required(call):</p>
+
+<pre><code>if call.request.user.is_authenticated():
+    return call()
+else:
+    return redirect(LOGIN_URL)
+</code></pre>
+
+<p>```</p>
+
+<h3>Altering calls</h3>
+
+<p>Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is just using plain function carefully stored in <code>call._func</code>:</p>
+
+<p>``` python
+@decorator
+def int_args(call):</p>
+
+<pre><code>"""Coerces any function arguments to ints"""
+return call._func(*map(int, call._args))
+</code></pre>
+
+<p>```</p>
+
+<p>But a common use-case of passing some extra data to function could be written with more elegance:</p>
+
+<p>``` python
+@decorator
+def with_phone(call):</p>
+
+<pre><code>phone = Phone.objects.get(number=call.request.GET['phone'])
+return call(phone) # phone is added to *args passed to decorated function
+</code></pre>
+
+<p>@with_phone
+def some_view(request, phone):</p>
+
+<pre><code># ... some code using phone
+</code></pre>
+
+<p>```</p>
+
+<p>This works with named arguments too, and is probably a better way since you won&rsquo;t run into problems with arguments order.</p>
+
+<h3>Decorators with arguments</h3>
+
+<p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
+
+<p>``` python
+@decorator
+def retry(call, tries, errors=Exception):</p>
+
+<pre><code>for attempt in range(tries):
+    try:
+        return call()
+    except errors:
+        # Reraise error on last attempt
+        if attempt + 1 == tries:
+            raise
+</code></pre>
+
+<p>```</p>
+
+<h2>Why use that?</h2>
+
+<p>There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that &hellip;</p>
+
+<p>You can choose for yourself what level is too high. And if python is sometimes not enough high level language for you then you should definitely upgrade it.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Functional Python Made Easy]]></title>
