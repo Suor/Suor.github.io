@@ -7,15 +7,20 @@ published: false
 categories: [Python]
 ---
 
-This is not a decorator tutorial or promotion post. It assumes you have some experience writing them and came to the point where you feel pain typing another `def wrapper(...)`. Here I am trying to find a better way to write decorators.
+
+Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.
+
+Let's find that out.
+
+<!-- I want to be clear, this is not a decorators tutorial, this one is for those who have written enough of them to feel pain typing another `def wrapper(...)`. -->
 
 <!--more-->
 
 
 ## Current state
 
-Currently in a decorator you need to create a wrapper, update it's metadata and then return it.
-A typical pattern would be:
+Currently in a decorator you need to create a wrapper, update it's metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:
+
 
 ``` python
 from functools import wraps
