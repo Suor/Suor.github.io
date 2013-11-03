@@ -8,11 +8,9 @@ categories: [Python]
 ---
 
 
-Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.
+Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and a fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.
 
 Let's find that out.
-
-<!-- I want to be clear, this is not a decorators tutorial, this one is for those who have written enough of them to feel pain typing another `def wrapper(...)`. -->
 
 <!--more-->
 
@@ -52,7 +50,7 @@ def some_decorator(before, after):
 
 Look at that code for a minute. What a mess! And this is not about typing, it's really hard to see through to the point of it.
 
-Let's see what is meaningful and what is a boilerplate here. What we care about is concentrated in `wrapper` function, it's `before` and `after` calls, how they surround original function call, what arguments are passed to it and what is returned. The name `some_decorator` and its arguments also matter. Anything else - nested functions and returns, `@wraps` and all extra indent - is just code pattern waiting [to be abstracted][acf].
+Let's see what is meaningful and what is a boilerplate here. What we care about is concentrated in `wrapper` function, it's `before` and `after` calls, how they surround original function call, what arguments are passed to it and what is returned. The name `some_decorator` and its arguments also matter. Anything else - nested functions and returns, `@wraps` and all extra indent - is just [code pattern waiting to be abstracted][acf].
 
 
 ## Removing a boilerplate
@@ -89,17 +87,17 @@ def some_decorator(call):
     return result
 ```
 
-Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually you can already [download it from pypi][funcy-pypi] and import it with `from funcy import decorator`.
+Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually, you can [download it from pypi][funcy-pypi] right now and import it with `from funcy import decorator`.
 
 
 ## Advanced usage
 
-We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and decorators with arguments. But that's not the case really, we can pack all these into `call` object and I'll go through everything with better examples than you saw so far.
+We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and create decorators with arguments. But that's not the case really, we can pack all these into `call` object. I'll go through everything with better examples than you saw so far.
 
 
 ### Accessing function arguments
 
-You didn't expect a post about decorators without logging example, did you? Anyway, it's an excellent way to show how you can access not only call arguments but function itself:
+You didn't expect a post about decorators without logging example, did you? Anyway, it's an excellent way to show how you can access not only call arguments but decorated function itself:
 
 ``` python
 @decorator
@@ -123,7 +121,7 @@ def login_required(call):
 
 ### Altering calls
 
-Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is using plain function carefully stored in `call._func`:
+Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is just using plain function carefully stored in `call._func`:
 
 ``` python
 @decorator
