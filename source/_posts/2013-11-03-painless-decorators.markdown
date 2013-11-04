@@ -1,10 +1,11 @@
 ---
 layout: post
 title: "Painless Decorators"
-sharing: false
-comments: false
-published: false
+sharing: true
+comments: true
+date: 2013-11-03 20:07
 categories: [Python]
+hn_id: 6662926
 ---
 
 
