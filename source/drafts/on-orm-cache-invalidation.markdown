@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "A Word On Cache Invalidation"
+title: "On ORM Cache Invalidation"
 comments: false
 sharing: false
 published: false
