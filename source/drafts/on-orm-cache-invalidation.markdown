@@ -7,11 +7,18 @@ published: false
 categories: [Algorithms]
 ---
 
-Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in context of caching SQL queries built via ORM.
+Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in context of caching queries built via ORM.
 
 <!--more-->
 
-... write here that we will start from basics and only use ORM power when we start needing it.
+I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.
+
+<!--
+
+to complex ones using more and more specifics
+
+ -->
+<!-- ... write here that we will start from basics and only use ORM power when we start needing it. -->
 
 
 ## Completeness and redundancy
@@ -20,7 +27,7 @@ Let's start from some general considerations. I define abovesaid completeness as
 
 An example will help us perceive these two concepts better. Let's look at common time-invalidated cache. On one hand, it inevitably leads to dirty data between update and cache timeout, making this algorithm inherently incomplete. On other hand, we can easily reduce incompleteness by reducing cache timeout, which, in it's turn, will increase redundancy - clean cache data will be invalidated more frequently, which will lead to more cache misses. And for ideal completeness (no dirty data) we need to set timeout to zero.
 
-There are lots of scenarios where it's ok to use stale data: most read articles list doesn't change fast and it's not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.
+There are lots of scenarios where it's ok to use stale data: popular articles list doesn't change fast and it's not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.
 
 
 ## Event-driven invalidation
@@ -108,103 +115,116 @@ register_cached_thing('post_by_id', fetch=post_by_id, arg=lambda p: p.id)
 
 Looks like we've come up with pretty solid system. It's dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.
 
-<!-- , let's utilize a power of ORM.
 
- utilizing a power of ORM.
+## Automatic invalidation
 
-We not even started utilizing a power of ORM. There got to be a smarter way.
- -->
+We not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.
 
-
-## Automatic ORM queries invalidation
-
-We not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it's a structure including condition tree. And some smart code could use that information to determine when query cache should be invalidated.
-
-Вспомним, что у нас есть ORM, а для него каждый запрос представляет не просто текст, а определённую структуру - модели, дерево условий и прочее. Так что, по идее, ORM может и кешировать и вешать инвалидационные обработчики прямо при кешировании по мере надобности. Чертовски привлекательное решение для ленивых ребят, вроде меня.
-
-Небольшой пример. Допустим мы выполняем запрос:
+Suppose we cache a query:
 
 ``` sql
-select * from post where category_id=2 and published
+select * from post where category_id = 2 and published
 ```
 
-и кешируем его. Очевидно, нам нужно сбросить запрос если при добавлении/обновлении/удалении поста для его старой или новой версии выполняется условие `category_id=2 and published=true`. Через некоторое время для каждой модели образуются списки инвалидаторов, каждый из которых хранит список запросов, которые должен сбрасывать:
+We should drop that cache when we add, update or delete post with its old or new state satisfying `category_id = 2 and published` condition. So the time we save that cache we write along "invalidator" like that:
 
 ``` sql
-post:
-    category_id=2 and published=true:
-        select * from post where category_id=2 and published
-        select count(*) from post where category_id=2 and published
-        select * from post where category_id=2 and published limit 20
-    category_id=3 and published=true:
-        select * from post where category_id=3 and published limit 20 offset 20
-    category_id=3 and published=false:
-        select count(*) from post where category_id=3 and not published
-foo:
-    a=1 or b=10:
-        or_sql
-    a in (2,3) and b=10:
-        in_sql
-    a&gt;1 and b=10:
-        gt_sql
+category_id = 2 and published: K1 -- K1 is above query cache key
 ```
 
-и т.д. В реальности в инвалидаторах удобнее хранить списки ключей кеша, а не тексты запросов, тексты здесь для наглядности.
+Then if some post changes we look up all invalidators and check their conditions with post at hand, deleting cache keys corresponding to holding ones. That could become very inefficient once we'll have lots of queries cached.
 
-Посмотрим, что будет происходить при добавлении объекта. Мы должны пройти по всему списку инвалидаторов и стереть ключи кеша для условий, выполняющихся для добавленного объекта. Но инвалидаторов может быть много, и храниться они должны там же где сам кеш, т.е. скорее всего не в памяти процесса и загружать их все каждый раз не хотелось бы, да и последовательная проверка всех условий больно долга.
-
-Очевидно, нужно как-то группировать и отсеивать инвалидаторы без их полной проверки. Заметим, что картина когда условия различаются только значениями. Например, инвалидаторы в модели `post` все имеют вид `category_id=? and published=?`. Сгруппируем инвалидаторы из примера по схемам:
+The reason we will end up with lots of invalidators is that we have cache lots of different queries. In common use, however, most queries will differ only in parameters not structure. Maybe separating those will help us? Let's try on larger example. Here be the queries:
 
 ``` sql
-post:
-    category_id=? and published=?:
-        2, true:
-            select * from post where category_id=2 and published
-            select count(*) from post where category_id=2 and published
-            select * from post where category_id=2 and published limit 20
-        3, true:
-            select * from post where category_id=3 and published limit 20 offset 20
-        3, false:
-            select count(*) from post where category_id=3 and not published
-foo:
-    a=? or b=?:
-        1, 10:
-            or_sql
-    a in ? and b=?:
-        (2,3), 10:
-            in_sql
-    a &gt; ? and b=?:
-        1, 10:
-            gt_sql
+select * from post where category_id = 2 and published           -- K1
+select * from post where category_id = 2 and published limit 20  -- K2
+select * from post where category_id = 3 and published           -- K3
+select * from post where category_id = 3 and not published       -- K4
+select * from post where id > 7                                  -- K5
+select * from post where category_id = 2 and published or id > 7 -- K6
+select * from post where category_id in (2, 3) and published     -- K7
+select * from post where category_id = 2 and id < 7              -- K8
 ```
 
-Обратим внимание на условие `category_id=?` and `published=?`, зная значения полей добавляемого поста, мы можем однозначно заполнить метки "`?`". Если объект:
+Unseparated invalidators first:
 
-```
-{id: 42, title: "...", content: "...", category_id: 2, published: true}
-```
-
-, то единственный подходящий инвалидатор из семейства будет `category_id=2` and `published=true` и, следовательно нужно стереть соответствующие ему 3 ключа кеша. Т.е. не требуется последовательная проверка условий мы сразу получаем нужный инвалидатор по схеме и данным объекта.
-
-Однако, что делать с более сложными условиями? В отдельных случаях кое-что можно сделать: `or` разложить на два инвалидатора, `in` развернуть в `or`. В остальных случаях либо придётся всё усложнить, либо сделать инвалидацию избыточной, отбросив такие условия. Приведём то, какими будут инвалидаторы для `foo` после таких преобразований:
-
-```
-foo:
-    a = ?:
-        1: or_sql
-    b = ?:
-        10: or_sql, gt_sql
-    a = ? and b = ?:
-        2, 10: in_sql
-        3, 10: in_sql
+``` sql
+category_id = 2 and published:           K1, K2
+category_id = 3 and published:           K3
+category_id = 3 and not published:       K4
+id > 7:                                  K5
+category_id = 2 and published or id > 7: K6
+category_id in (2, 3) and published:     K7
+category_id = 3 and id < 7:              K8
 ```
 
-Таким образом, нам нужно для каждой модели только хранить схемы (просто списки полей), по которым при надобности мы строим инвалидаторы и запрашиваем списки ключей, которые следует стереть.
+We can use some tricks to make this more regular. `or`ed conditions could be split into two, `in` is basically syntax sugar for `or` and boolean tests could be substituted with equalities. Applying these we get to:
 
-Приведу пример процедуры инвалидации для foo. Пусть мы запросили из базы объект `{id: 42, a: 1, b: 10}` сменили значение `a` на `2` и записали обратно. При обновлении процедуру инвалидации следует прогонять и для старого, и для нового состояния объекта. Итак, инвалидаторы для старого состояния: `a=1, b=10, a=1 and b=10`, соответствующие ключи `or_sql` и `gt_sql` (последний инвалидатор отсутсвует, можно считать пустым). Для нового состояния получаем инвалидаторы `a=2, b=10, a=2 and b=10`, что добавляет ключ `in_sql`. В итоге стираются все 3 запроса.
+``` sql
+category_id = 2 and published = true:  K1, K2, K6, K7
+category_id = 3 and published = true:  K3, K7
+category_id = 3 and published = false: K4
+id > 7:                                K5, K6
+category_id = 3 and id < 7:            K8
+```
+
+Note that after this transformation all conditions became simple conjunctions. And we are finally ready to separate condition scheme from data:
+
+``` sql
+-- Schemes
+category_id = ? and published = ? -- S1
+id > ?                            -- S2
+category_id = ? and id < ?        -- S3
+
+-- Conjunctions
+S1:2,true:  K1, K2, K6, K7
+S1:3,true:  K3, K7
+S1:3,false: K4
+S2:7:       K5, K6
+S3:3,7:     K8
+```
+
+Time to try modeling invalidation procedure. Say we are adding this post to our stock:
+
+``` sql
+{id: 42, category_id: 2, published: true, title: "...", content: "..."}
+```
+
+Looking at `S1` we can see that there is at most one conjunction of that scheme satisfying our state! Even better, we can build it from scheme and object data by looking at field values. Too bad the trick won't work with `S2` cause our post id, 42, is greater than many things. To find what queries of scheme `S2` should be invalidated one needs to look through all `S2:*` conjunctions and that could be a lot.
+
+This is probably a case for trade-off. Dropping all conditions but equalities we will sacrifice invalidation granularity, but simplify and speed up the procedure. Simplified invalidators will look like:
+
+``` sql
+-- Schemes
+category_id = ? and published = ? -- S1
+                                  -- S2, an empty scheme
+category_id = ?                   -- S3
+
+-- Conjunctions
+S1:2,true:  K1, K2, K6, K7
+S1:3,true:  K3, K7
+S1:3,false: K4
+S2::        K5, K6 -- no data for S2
+S3:3:       K8
+```
+
+There are some points worth noting here. First, `S2` is now an empty scheme with a single empty conjunction which is always true, which means `K5` and `K6` will be invalidated on any post change. Second, schemes are now just sets of field names, pretty neat.
+
+So far I tried to stay language and platform agnostic, but that journey came to an end. Welcome to dirty reality in the next section.
 
 
+## Implementation tips
 
-## Реализация
+- A best way to represent scheme is probably alphabetically sorted list of field names, it's easily serializable and it makes building a conjunction for an object pretty straightforward.
 
-Я старался по-возможности абстрагироваться от языка и платформы, однако, рабочая и работающая в довольно нагруженном проекте система тоже существует. Подробнее о ней и о хитростях реализации вообще в следующей статье.
+- Extracting conjunctions from a query tree could be tricky. One might want to employ [fuzzy logic][fuzzy]: look at `not (f > 0 and g != 1)`, if we drop `f > 0` right away, we'll end up with `g = 1`, which is not equivalent to `f <= 0 or g = 1`. Lost empty conjunction along the way!
+
+- Considering invalidator structure (sets) and taking into account that it is generally a good idea to keep all interdependent data together (cache and invalidators) this is an excellent case to use [Redis][]. Using it we can easily add keys to conjunctions, we can even do `SUNION` of conjunctions to fetch all dirty keys in one shot.
+
+Sure, I went ahead and used that tips in my [Django caching solution][cacheops]. Hope it or ideas it embodies would be helpful.
+
+
+[fuzzy]: http://en.wikipedia.org/wiki/Fuzzy_logic
+[redis]: http://redis.io
+[cacheops]: https://github.com/Suor/django-cacheops
