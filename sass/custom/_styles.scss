@@ -4,3 +4,6 @@
 article ol, article ul {
     margin-left: 2em;
 }
+article p+ul {
+    margin-top: -1.5em;
+}

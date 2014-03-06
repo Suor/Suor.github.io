@@ -7,25 +7,118 @@ published: false
 categories: [Algorithms]
 ---
 
-Инвалидация кеша, возможно, одна из самых запутанных вещей в программировании. Тонкость вопроса состоит в компромиссе между полнотой, избыточностью и сложностью этой процедуры. Так о чём же эта статья? Хотелось бы не привязываясь к какой-либо платформе, языку или фреймворку, подумать о том как следует реализовывать систему инвалидации. Ну а чтобы не писать обо всём и ни о чём, сконцентрируемся на кешировании результатов SQL-запросов построенных с помощью ORM, которые в наше время встречаются нередко.
+Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in context of caching SQL queries built via ORM.
 
 <!--more-->
 
-## Полнота и избыточность
-
-Начнём всё же с общих соображений не специфичных ни для SQL-запросов, ни для ORM. Упомянутые полноту и избыточность я определяю следующим образом. Полнота инвалидации - это её характеристика, определяющая насколько часто и в каких случаях может/будет возникать ситуация когда в кеше будут содержаться грязные данные и как долго они там будут оставаться. Избыточностью, в свою очередь, назовём то как часто кеш будет инвалидироваться без необходимости.
-
-Рассмотрим для примера распространённый способ инвалидации по времени. С одной стороны, он практически гарантирует, что сразу после изменения данных кеш грязен. С другой стороны, время которое кеш остаётся грязным, мы можем легко ограничить уменьшив время жизни (что в свою очередь сократит процент попаданий). Т.е. при сокращении времени жизни кеша полнота инвалидации улучшается, а избыточность ухудшается. В итоге, чтобы достигнуть идеальной полноты инвалидации (никаких грязных данных) мы должны выставить таймаут в 0, или, другими словами, отключить кеш. Во многих случаях временное устаревание данных в кеше допустимо. Например, как правило, не так уж и страшно если новость в блоке последних новостей появится там на несколько минут позже или общее количество пользователей вашей социальной сети будет указано с ошибкой в пару-тройку тысяч.
+... write here that we will start from basics and only use ORM power when we start needing it.
 
 
-## Инвалидация по событию
+## Completeness and redundancy
 
-Способ с инвалидацией по времени хорош своей простотой, однако, не всегда применим. Что ж, можно сбрасывать кеш при изменении данных. Одной из проблем при таком подходе является то, что при добавлении нового запроса, который мы кешируем приходиться добавлять код для его инвалидации в при изменении данных. Если мы используем ORM, то данные изменяются (в хорошем случае) в одном месте - при сохранении модели. Наличие одного центрального кода изменения данных облегчает задачу, однако, при большом количестве разнообразных запросов приходиться всё время дописывать туда всё новые и новые строки сброса различных кусочков кеша. Таким образом, мы получаем на свою голову избыточную связность кода. Пора её ослабить.
+Let's start from some general considerations. I define abovesaid completeness as a characteristic of invalidation procedure describing how frequent and under what circumstances data can become dirty and how long it will remain accessible. And redundancy will be a frequency and a volume of cache invalidated needlessly.
 
-Воспользуемся событиями - ORM при сохранении/удалении модели будет события генерировать, а мы при кешировании чего-либо будем тут же и вешать обработчик на соответствующее событие, удаляющий это что-либо из кеша. Всё отлично, однако, написание большого количества похожих обработчиков утомляет, плюс логика приложения зарастает логикой кеширования/инвалидации как свинья жиром.
+An example will help us perceive these two concepts better. Let's look at common time-invalidated cache. On one hand, it inevitably leads to dirty data between update and cache timeout, making this algorithm inherently incomplete. On other hand, we can easily reduce incompleteness by reducing cache timeout, which, in it's turn, will increase redundancy - clean cache data will be invalidated more frequently, which will lead to more cache misses. And for ideal completeness (no dirty data) we need to set timeout to zero.
+
+There are lots of scenarios where it's ok to use stale data: most read articles list doesn't change fast and it's not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.
 
 
-## Автоматическая инвалидация ORM-запросов
+## Event-driven invalidation
+
+Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. There are elements of such system we need to think about:
+
+- cached things,
+- events,
+- a dependency matrix explaining what thing to invalidate on what event.
+
+There are obviously different strategies to define those in your code. I'll start from simplest one - manual definition.
+
+
+## Coding dependencies by hand
+
+First, cached things, they will probably look like this (in sort of python pseudo-code):
+
+``` python
+# An ellipsis means some code or instruction to get corresponding data
+register_cached_item('post_by_id', ...)
+register_cached_item('posts_by_category', ...)
+register_cached_item('recent_posts', ...)
+register_cached_item('posts_by_tag', ...)
+
+# Used like
+post = get('post_by_id', 10)
+invalidate('post_by_id', 10)
+```
+
+Remember this is pseudo-code. `register_cached_item()` don't need to be a function call, it could be a decorator in Python, macro in lisp or class in Java.
+
+Ok, say we have some place in our code that adds post, we then need to add something like this there:
+
+``` python
+# ...
+# Just added post, need to invalidate things
+invalidate('post_by_id', post.id)
+invalidate('posts_by_category', post.category_id)
+
+# It could be recent
+invalidate('recent_posts')
+
+# Invalidate for all tags
+for tag in post.tags:
+    invalidate('posts_by_tag', tag)
+```
+
+And if we delete post somewhere we need to make invalidation there too. We should obviously abstract our code into some `invalidate_post()` function and call it from both places. So far, so good. What about updating? The thing is it's not enough to just call our invalidation procedure from there:
+
+``` python
+post = get('post_by_id', 10)
+assert post.category == 1
+post.category = 2
+
+update_post(post)
+invalidate_post(post) # posts_by_category not invalidated for category 1!
+```
+
+We need to invalidate on both old and new state of a post on update. How we get old state is a separate not an easy question, but suppose we have both states, should we just call `invalidate_post()` twice for each of them? Not so efficient, but that would work.
+
+There is a problem with our code though. It's tightly coupled - update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.
+
+
+## Bringing things together
+
+Fortunately, there is a single solution to both problems - events. We can write fetching and invalidation logic for each thing in one place and then register both cached thing and event listener:
+
+``` python
+def post_by_id(id):
+    # ...
+
+def invalidate_post_by_id(post): # event signature here
+    invalidate('post_by_id', post.id)
+
+register_cached_thing('post_by_id', fetch=post_by_id, invalidate=invalidate_post_by_id)
+```
+
+As invalidate procedures would be tiresomely repetitive we can dry this up to (and even further using particular language sugar features):
+
+``` python
+def post_by_id(id):
+    # ...
+register_cached_thing('post_by_id', fetch=post_by_id, arg=lambda p: p.id)
+```
+
+Looks like we've come up with pretty solid system. It's dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.
+
+<!-- , let's utilize a power of ORM.
+
+ utilizing a power of ORM.
+
+We not even started utilizing a power of ORM. There got to be a smarter way.
+ -->
+
+
+## Automatic ORM queries invalidation
+
+We not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it's a structure including condition tree. And some smart code could use that information to determine when query cache should be invalidated.
 
 Вспомним, что у нас есть ORM, а для него каждый запрос представляет не просто текст, а определённую структуру - модели, дерево условий и прочее. Так что, по идее, ORM может и кешировать и вешать инвалидационные обработчики прямо при кешировании по мере надобности. Чертовски привлекательное решение для ленивых ребят, вроде меня.
 
