@@ -1,0 +1,546 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>On ORM Cache Invalidation - Hackflow</title>
+  <meta name="author" content="Alexander Schepanovski">
+
+  
+  <meta name="description" content="Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hackflow.com/drafts/on-orm-cache-invalidation.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37289902-3']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Hackflow</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hackflow.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">On ORM Cache Invalidation</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in context of caching queries built via ORM.</p>
+
+<!--more-->
+
+
+<p>I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.</p>
+
+<!--
+
+to complex ones using more and more specifics
+
+ -->
+
+
+<!-- ... write here that we will start from basics and only use ORM power when we start needing it. -->
+
+
+<h2>Completeness and redundancy</h2>
+
+<p>Let&rsquo;s start from some general considerations. I define abovesaid completeness as a characteristic of invalidation procedure describing how frequent and under what circumstances data can become dirty and how long it will remain accessible. And redundancy will be a frequency and a volume of cache invalidated needlessly.</p>
+
+<p>An example will help us perceive these two concepts better. Let&rsquo;s look at common time-invalidated cache. On one hand, it inevitably leads to dirty data between update and cache timeout, making this algorithm inherently incomplete. On other hand, we can easily reduce incompleteness by reducing cache timeout, which, in it&rsquo;s turn, will increase redundancy &ndash; clean cache data will be invalidated more frequently, which will lead to more cache misses. And for ideal completeness (no dirty data) we need to set timeout to zero.</p>
+
+<p>There are lots of scenarios where it&rsquo;s ok to use stale data: popular articles list doesn&rsquo;t change fast and it&rsquo;s not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.</p>
+
+<h2>Event-driven invalidation</h2>
+
+<p>Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. There are elements of such system we need to think about:</p>
+
+<ul>
+<li>cached things,</li>
+<li>events,</li>
+<li>a dependency matrix explaining what thing to invalidate on what event.</li>
+</ul>
+
+
+<p>There are obviously different strategies to define those in your code. I&rsquo;ll start from simplest one &ndash; manual definition.</p>
+
+<h2>Coding dependencies by hand</h2>
+
+<p>First, cached things, they will probably look like this (in sort of python pseudo-code):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># An ellipsis means some code or instruction to get corresponding data</span>
+</span><span class='line'><span class="n">register_cached_item</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</span><span class='line'><span class="n">register_cached_item</span><span class="p">(</span><span class="s">&#39;posts_by_category&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</span><span class='line'><span class="n">register_cached_item</span><span class="p">(</span><span class="s">&#39;recent_posts&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</span><span class='line'><span class="n">register_cached_item</span><span class="p">(</span><span class="s">&#39;posts_by_tag&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Used like</span>
+</span><span class='line'><span class="n">post</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span><span class='line'><span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Remember this is pseudo-code. <code>register_cached_item()</code> don&rsquo;t need to be a function call, it could be a decorator in Python, macro in lisp or class in Java.</p>
+
+<p>Ok, say we have some place in our code that adds post, we then need to add something like this there:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># ...</span>
+</span><span class='line'><span class="c"># Just added post, need to invalidate things</span>
+</span><span class='line'><span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span class='line'><span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;posts_by_category&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">category_id</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># It could be recent</span>
+</span><span class='line'><span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;recent_posts&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Invalidate for all tags</span>
+</span><span class='line'><span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">post</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;posts_by_tag&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And if we delete post somewhere we need to make invalidation there too. We should obviously abstract our code into some <code>invalidate_post()</code> function and call it from both places. So far, so good. What about updating? The thing is it&rsquo;s not enough to just call our invalidation procedure from there:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">post</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</span><span class='line'><span class="k">assert</span> <span class="n">post</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="mi">1</span>
+</span><span class='line'><span class="n">post</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="mi">2</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">update_post</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+</span><span class='line'><span class="n">invalidate_post</span><span class="p">(</span><span class="n">post</span><span class="p">)</span> <span class="c"># posts_by_category not invalidated for category 1!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We need to invalidate on both old and new state of a post on update. How we get old state is a separate not an easy question, but suppose we have both states, should we just call <code>invalidate_post()</code> twice for each of them? Not so efficient, but that would work.</p>
+
+<p>There is a problem with our code though. It&rsquo;s tightly coupled &ndash; update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.</p>
+
+<h2>Bringing things together</h2>
+
+<p>Fortunately, there is a single solution to both problems &ndash; events. We can write fetching and invalidation logic for each thing in one place and then register both cached thing and event listener:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">post_by_id</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ...</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">invalidate_post_by_id</span><span class="p">(</span><span class="n">post</span><span class="p">):</span> <span class="c"># event signature here</span>
+</span><span class='line'>    <span class="n">invalidate</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">register_cached_thing</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="n">fetch</span><span class="o">=</span><span class="n">post_by_id</span><span class="p">,</span> <span class="n">invalidate</span><span class="o">=</span><span class="n">invalidate_post_by_id</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As invalidate procedures would be tiresomely repetitive we can dry this up to (and even further using particular language sugar features):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">post_by_id</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># ...</span>
+</span><span class='line'><span class="n">register_cached_thing</span><span class="p">(</span><span class="s">&#39;post_by_id&#39;</span><span class="p">,</span> <span class="n">fetch</span><span class="o">=</span><span class="n">post_by_id</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Looks like we&rsquo;ve come up with pretty solid system. It&rsquo;s dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.</p>
+
+<h2>Automatic invalidation</h2>
+
+<p>We not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.</p>
+
+<p>Suppose we cache a query:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We should drop that cache when we add, update or delete post with its old or new state satisfying <code>category_id = 2 and published</code> condition. So the time we save that cache we write along &ldquo;invalidator&rdquo; like that:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span><span class="p">:</span> <span class="n">K1</span> <span class="c1">-- K1 is above query cache key</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then if some post changes we look up all invalidators and check their conditions with post at hand, deleting cache keys corresponding to holding ones. That could become very inefficient once we&rsquo;ll have lots of queries cached.</p>
+
+<p>The reason we will end up with lots of invalidators is that we have cache lots of different queries. In common use, however, most queries will differ only in parameters not structure. Maybe separating those will help us? Let&rsquo;s try on larger example. Here be the queries:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span>           <span class="c1">-- K1</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span> <span class="k">limit</span> <span class="mi">20</span>  <span class="c1">-- K2</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">published</span>           <span class="c1">-- K3</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="k">not</span> <span class="n">published</span>       <span class="c1">-- K4</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">id</span> <span class="o">&gt;</span> <span class="mi">7</span>                                  <span class="c1">-- K5</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span> <span class="k">or</span> <span class="n">id</span> <span class="o">&gt;</span> <span class="mi">7</span> <span class="c1">-- K6</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="k">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">and</span> <span class="n">published</span>     <span class="c1">-- K7</span>
+</span><span class='line'><span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">post</span> <span class="k">where</span> <span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">id</span> <span class="o">&lt;</span> <span class="mi">7</span>              <span class="c1">-- K8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Unseparated invalidators first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span><span class="p">:</span>           <span class="n">K1</span><span class="p">,</span> <span class="n">K2</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">published</span><span class="p">:</span>           <span class="n">K3</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="k">not</span> <span class="n">published</span><span class="p">:</span>       <span class="n">K4</span>
+</span><span class='line'><span class="n">id</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span>                                  <span class="n">K5</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span> <span class="k">or</span> <span class="n">id</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span> <span class="n">K6</span>
+</span><span class='line'><span class="n">category_id</span> <span class="k">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">and</span> <span class="n">published</span><span class="p">:</span>     <span class="n">K7</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">id</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">:</span>              <span class="n">K8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can use some tricks to make this more regular. <code>or</code>ed conditions could be split into two, <code>in</code> is basically syntax sugar for <code>or</code> and boolean tests could be substituted with equalities. Applying these we get to:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">and</span> <span class="n">published</span> <span class="o">=</span> <span class="k">true</span><span class="p">:</span>  <span class="n">K1</span><span class="p">,</span> <span class="n">K2</span><span class="p">,</span> <span class="n">K6</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">published</span> <span class="o">=</span> <span class="k">true</span><span class="p">:</span>  <span class="n">K3</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">published</span> <span class="o">=</span> <span class="k">false</span><span class="p">:</span> <span class="n">K4</span>
+</span><span class='line'><span class="n">id</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">:</span>                                <span class="n">K5</span><span class="p">,</span> <span class="n">K6</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">and</span> <span class="n">id</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">:</span>            <span class="n">K8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that after this transformation all conditions became simple conjunctions. And we are finally ready to separate condition scheme from data:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="c1">-- Schemes</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="o">?</span> <span class="k">and</span> <span class="n">published</span> <span class="o">=</span> <span class="o">?</span> <span class="c1">-- S1</span>
+</span><span class='line'><span class="n">id</span> <span class="o">&gt;</span> <span class="o">?</span>                            <span class="c1">-- S2</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="o">?</span> <span class="k">and</span> <span class="n">id</span> <span class="o">&lt;</span> <span class="o">?</span>        <span class="c1">-- S3</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">-- Conjunctions</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="k">true</span><span class="p">:</span>  <span class="n">K1</span><span class="p">,</span> <span class="n">K2</span><span class="p">,</span> <span class="n">K6</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="k">true</span><span class="p">:</span>  <span class="n">K3</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="k">false</span><span class="p">:</span> <span class="n">K4</span>
+</span><span class='line'><span class="n">S2</span><span class="p">:</span><span class="mi">7</span><span class="p">:</span>       <span class="n">K5</span><span class="p">,</span> <span class="n">K6</span>
+</span><span class='line'><span class="n">S3</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="mi">7</span><span class="p">:</span>     <span class="n">K8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Time to try modeling invalidation procedure. Say we are adding this post to our stock:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="err">{</span><span class="n">id</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span> <span class="n">category_id</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="n">published</span><span class="p">:</span> <span class="k">true</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="ss">&quot;...&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="ss">&quot;...&quot;</span><span class="err">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Looking at <code>S1</code> we can see that there is at most one conjunction of that scheme satisfying our state! Even better, we can build it from scheme and object data by looking at field values. Too bad the trick won&rsquo;t work with <code>S2</code> cause our post id, 42, is greater than many things. To find what queries of scheme <code>S2</code> should be invalidated one needs to look through all <code>S2:*</code> conjunctions and that could be a lot.</p>
+
+<p>This is probably a case for trade-off. Dropping all conditions but equalities we will sacrifice invalidation granularity, but simplify and speed up the procedure. Simplified invalidators will look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='sql'><span class='line'><span class="c1">-- Schemes</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="o">?</span> <span class="k">and</span> <span class="n">published</span> <span class="o">=</span> <span class="o">?</span> <span class="c1">-- S1</span>
+</span><span class='line'>                                  <span class="c1">-- S2, an empty scheme</span>
+</span><span class='line'><span class="n">category_id</span> <span class="o">=</span> <span class="o">?</span>                   <span class="c1">-- S3</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">-- Conjunctions</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="k">true</span><span class="p">:</span>  <span class="n">K1</span><span class="p">,</span> <span class="n">K2</span><span class="p">,</span> <span class="n">K6</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="k">true</span><span class="p">:</span>  <span class="n">K3</span><span class="p">,</span> <span class="n">K7</span>
+</span><span class='line'><span class="n">S1</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="k">false</span><span class="p">:</span> <span class="n">K4</span>
+</span><span class='line'><span class="n">S2</span><span class="p">::</span>        <span class="n">K5</span><span class="p">,</span> <span class="n">K6</span> <span class="c1">-- no data for S2</span>
+</span><span class='line'><span class="n">S3</span><span class="p">:</span><span class="mi">3</span><span class="p">:</span>       <span class="n">K8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are some points worth noting here. First, <code>S2</code> is now an empty scheme with a single empty conjunction which is always true, which means <code>K5</code> and <code>K6</code> will be invalidated on any post change. Second, schemes are now just sets of field names, pretty neat.</p>
+
+<p>So far I tried to stay language and platform agnostic, but that journey came to an end. Welcome to dirty reality in the next section.</p>
+
+<h2>Implementation tips</h2>
+
+<ul>
+<li><p>A best way to represent scheme is probably alphabetically sorted list of field names, it&rsquo;s easily serializable and it makes building a conjunction for an object pretty straightforward.</p></li>
+<li><p>Extracting conjunctions from a query tree could be tricky. One might want to employ <a href="http://en.wikipedia.org/wiki/Fuzzy_logic">fuzzy logic</a>: look at <code>not (f &gt; 0 and g != 1)</code>, if we drop <code>f &gt; 0</code> right away, we&rsquo;ll end up with <code>g = 1</code>, which is not equivalent to <code>f &lt;= 0 or g = 1</code>. Lost empty conjunction along the way!</p></li>
+<li><p>Considering invalidator structure (sets) and taking into account that it is generally a good idea to keep all interdependent data together (cache and invalidators) this is an excellent case to use <a href="http://redis.io">Redis</a>. Using it we can easily add keys to conjunctions, we can even do <code>SUNION</code> of conjunctions to fetch all dirty keys in one shot.</p></li>
+</ul>
+
+
+<p>Sure, I went ahead and used that tips in my <a href="https://github.com/Suor/django-cacheops">Django caching solution</a>. Hope it or ideas it embodies would be helpful.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithms/'>Algorithms</a>
+  
+</span>
+
+
+    </p>
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <a style="float: right; line-height: 27px" href="https://twitter.com/hackflow" target="_blank">@hackflow</a>
+  <h1>About Me</h1>
+  <p>
+    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
+    I write in python, js and occasionally english.
+    I also <a href="https://twitter.com/CoolSuor" target="_blank">tweet</a> and <a href="http://habrahabr.ru/users/suor/topics/" target="_blank">blog</a> in russian.
+  </p>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/11/03/painless-decorators/">Painless Decorators</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/13/functional-python-made-easy/">Functional Python Made Easy</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/08/abstracting-control-flow/">Abstracting Control Flow</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/Suor">@Suor</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'Suor',
+            count: 5,
+            skip_forks: true,
+            skip: 'Suor.github.io,sublime-text-2-User',
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Alexander Schepanovski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
