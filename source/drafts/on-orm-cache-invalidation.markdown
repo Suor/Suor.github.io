@@ -7,18 +7,11 @@ published: false
 categories: [Algorithms]
 ---
 
-Cache invalidation is probably on of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in context of caching queries built via ORM.
+Cache invalidation is probably one of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in a context of caching queries built via ORM.
 
 <!--more-->
 
 I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.
-
-<!--
-
-to complex ones using more and more specifics
-
- -->
-<!-- ... write here that we will start from basics and only use ORM power when we start needing it. -->
 
 
 ## Completeness and redundancy
@@ -32,7 +25,7 @@ There are lots of scenarios where it's ok to use stale data: popular articles li
 
 ## Event-driven invalidation
 
-Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. There are elements of such system we need to think about:
+Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. These are elements of such system we need to think about:
 
 - cached things,
 - events,
@@ -57,7 +50,7 @@ post = get('post_by_id', 10)
 invalidate('post_by_id', 10)
 ```
 
-Remember this is pseudo-code. `register_cached_item()` don't need to be a function call, it could be a decorator in Python, macro in lisp or class in Java.
+Remember this is pseudo-code. `register_cached_item()` doesn't need to be a function call, it could be a decorator in Python, a macro in lisp or a class in Java.
 
 Ok, say we have some place in our code that adds post, we then need to add something like this there:
 
@@ -83,10 +76,10 @@ assert post.category == 1
 post.category = 2
 
 update_post(post)
-invalidate_post(post) # posts_by_category not invalidated for category 1!
+invalidate_post(post) # 'posts_by_category' not invalidated for category 1!
 ```
 
-We need to invalidate on both old and new state of a post on update. How we get old state is a separate not an easy question, but suppose we have both states, should we just call `invalidate_post()` twice for each of them? Not so efficient, but that would work.
+We need to invalidate on both old and new states of a post on update. How we get old state is a separate not an easy question, but suppose we have both states, should we just call `invalidate_post()` twice for each of them? Not so efficient, but that would work.
 
 There is a problem with our code though. It's tightly coupled - update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.
 
@@ -118,7 +111,7 @@ Looks like we've come up with pretty solid system. It's dry, but retains flexibi
 
 ## Automatic invalidation
 
-We not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.
+We have not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.
 
 Suppose we cache a query:
 
@@ -126,7 +119,7 @@ Suppose we cache a query:
 select * from post where category_id = 2 and published
 ```
 
-We should drop that cache when we add, update or delete post with its old or new state satisfying `category_id = 2 and published` condition. So the time we save that cache we write along "invalidator" like that:
+We should drop that cache when we add, update or delete post with its old or new state satisfying `category_id = 2 and published` condition. So the time we save that cache we should write along "invalidator" like that:
 
 ``` sql
 category_id = 2 and published: K1 -- K1 is above query cache key
@@ -134,7 +127,7 @@ category_id = 2 and published: K1 -- K1 is above query cache key
 
 Then if some post changes we look up all invalidators and check their conditions with post at hand, deleting cache keys corresponding to holding ones. That could become very inefficient once we'll have lots of queries cached.
 
-The reason we will end up with lots of invalidators is that we have cache lots of different queries. In common use, however, most queries will differ only in parameters not structure. Maybe separating those will help us? Let's try on larger example. Here be the queries:
+The reason we will end up with lots of invalidators is that we have cached lots of different queries. In common use, however, most queries will differ only in parameters not structure. Maybe separating those will help us? Let's try on larger example. Here be the queries:
 
 ``` sql
 select * from post where category_id = 2 and published           -- K1
@@ -191,7 +184,7 @@ Time to try modeling invalidation procedure. Say we are adding this post to our 
 {id: 42, category_id: 2, published: true, title: "...", content: "..."}
 ```
 
-Looking at `S1` we can see that there is at most one conjunction of that scheme satisfying our state! Even better, we can build it from scheme and object data by looking at field values. Too bad the trick won't work with `S2` cause our post id, 42, is greater than many things. To find what queries of scheme `S2` should be invalidated one needs to look through all `S2:*` conjunctions and that could be a lot.
+Looking at `S1` we can see that there is at most one conjunction of that scheme satisfying our state! Even better, we can build it from scheme and object data by looking at field values: each known value is equal only to itself. Too bad the trick won't work with `S2` cause our post id, 42, is greater than many things. To find what queries of scheme `S2` should be invalidated one needs to look through all `S2:*` conjunctions and that could be a lot.
 
 This is probably a case for trade-off. Dropping all conditions but equalities we will sacrifice invalidation granularity, but simplify and speed up the procedure. Simplified invalidators will look like:
 
@@ -222,7 +215,7 @@ So far I tried to stay language and platform agnostic, but that journey came to 
 
 - Considering invalidator structure (sets) and taking into account that it is generally a good idea to keep all interdependent data together (cache and invalidators) this is an excellent case to use [Redis][]. Using it we can easily add keys to conjunctions, we can even do `SUNION` of conjunctions to fetch all dirty keys in one shot.
 
-Sure, I went ahead and used that tips in my [Django caching solution][cacheops]. Hope it or ideas it embodies would be helpful.
+Sure, I went ahead and used that tips in my [Django caching solution][cacheops]. Hope it or the ideas it embodies would be helpful.
 
 
 [fuzzy]: http://en.wikipedia.org/wiki/Fuzzy_logic
