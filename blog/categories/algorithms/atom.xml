@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Algorithms | Hackflow]]></title>
+  <link href="http://hackflow.com/blog/categories/algorithms/atom.xml" rel="self"/>
+  <link href="http://hackflow.com/"/>
+  <updated>2014-03-09T19:52:06+08:00</updated>
+  <id>http://hackflow.com/</id>
+  <author>
+    <name><![CDATA[Alexander Schepanovski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[On ORM Cache Invalidation]]></title>
+    <link href="http://hackflow.com/blog/2014/03/09/on-orm-cache-invalidation/"/>
+    <updated>2014-03-09T19:50:00+08:00</updated>
+    <id>http://hackflow.com/blog/2014/03/09/on-orm-cache-invalidation</id>
+    <content type="html"><![CDATA[<p>Cache invalidation is probably one of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in a context of caching queries built via ORM.</p>
+
+<!--more-->
+
+
+<p>I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.</p>
+
+<h2>Completeness and redundancy</h2>
+
+<p>Let&rsquo;s start from some general considerations. I define abovesaid completeness as a characteristic of invalidation procedure describing how frequent and under what circumstances data can become dirty and how long it will remain accessible. And redundancy will be a frequency and a volume of cache invalidated needlessly.</p>
+
+<p>An example will help us perceive these two concepts better. Let&rsquo;s look at common time-invalidated cache. On one hand, it inevitably leads to dirty data between update and cache timeout, making this algorithm inherently incomplete. On other hand, we can easily reduce incompleteness by reducing cache timeout, which, in it&rsquo;s turn, will increase redundancy &ndash; clean cache data will be invalidated more frequently, which will lead to more cache misses. And for ideal completeness (no dirty data) we need to set timeout to zero.</p>
+
+<p>There are lots of scenarios where it&rsquo;s ok to use stale data: popular articles list doesn&rsquo;t change fast and it&rsquo;s not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.</p>
+
+<h2>Event-driven invalidation</h2>
+
+<p>Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. These are elements of such system we need to think about:</p>
+
+<ul>
+<li>cached things,</li>
+<li>events,</li>
+<li>a dependency matrix explaining what thing to invalidate on what event.</li>
+</ul>
+
+
+<p>There are obviously different strategies to define those in your code. I&rsquo;ll start from simplest one &ndash; manual definition.</p>
+
+<h2>Coding dependencies by hand</h2>
+
+<p>First, cached things, they will probably look like this (in sort of python pseudo-code):</p>
+
+<p>``` python</p>
+
+<h1>An ellipsis means some code or instruction to get corresponding data</h1>
+
+<p>register_cached_item(&lsquo;post_by_id&rsquo;, &hellip;)
+register_cached_item(&lsquo;posts_by_category&rsquo;, &hellip;)
+register_cached_item(&lsquo;recent_posts&rsquo;, &hellip;)
+register_cached_item(&lsquo;posts_by_tag&rsquo;, &hellip;)</p>
+
+<h1>Used like</h1>
+
+<p>post = get(&lsquo;post_by_id&rsquo;, 10)
+invalidate(&lsquo;post_by_id&rsquo;, 10)
+```</p>
+
+<p>Remember this is pseudo-code. <code>register_cached_item()</code> doesn&rsquo;t need to be a function call, it could be a decorator in Python, a macro in lisp or a class in Java.</p>
+
+<p>Ok, say we have some place in our code that adds post, we then need to add something like this there:</p>
+
+<p>``` python</p>
+
+<h1>&hellip;</h1>
+
+<h1>Just added post, need to invalidate things</h1>
+
+<p>invalidate(&lsquo;post_by_id&rsquo;, post.id)
+invalidate(&lsquo;posts_by_category&rsquo;, post.category_id)</p>
+
+<h1>It could be recent</h1>
+
+<p>invalidate(&lsquo;recent_posts&rsquo;)</p>
+
+<h1>Invalidate for all tags</h1>
+
+<p>for tag in post.tags:</p>
+
+<pre><code>invalidate('posts_by_tag', tag)
+</code></pre>
+
+<p>```</p>
+
+<p>And if we delete post somewhere we need to make invalidation there too. We should obviously abstract our code into some <code>invalidate_post()</code> function and call it from both places. So far, so good. What about updating? The thing is it&rsquo;s not enough to just call our invalidation procedure from there:</p>
+
+<p>``` python
+post = get(&lsquo;post_by_id&rsquo;, 10)
+assert post.category == 1
+post.category = 2</p>
+
+<p>update_post(post)
+invalidate_post(post) # &lsquo;posts_by_category&rsquo; not invalidated for category 1!
+```</p>
+
+<p>We need to invalidate on both old and new states of a post on update. How we get old state is a separate not an easy question, but suppose we have both states, should we just call <code>invalidate_post()</code> twice for each of them? Not so efficient, but that would work.</p>
+
+<p>There is a problem with our code though. It&rsquo;s tightly coupled &ndash; update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.</p>
+
+<h2>Bringing things together</h2>
+
+<p>Fortunately, there is a single solution to both problems &ndash; events. We can write fetching and invalidation logic for each thing in one place and then register both cached thing and event listener:</p>
+
+<p>``` python
+def post_by_id(id):</p>
+
+<pre><code># ...
+</code></pre>
+
+<p>def invalidate_post_by_id(post): # event signature here</p>
+
+<pre><code>invalidate('post_by_id', post.id)
+</code></pre>
+
+<p>register_cached_thing(&lsquo;post_by_id&rsquo;, fetch=post_by_id, invalidate=invalidate_post_by_id)
+```</p>
+
+<p>As invalidate procedures would be tiresomely repetitive we can dry this up to (and even further using particular language sugar features):</p>
+
+<p>``` python
+def post_by_id(id):</p>
+
+<pre><code># ...
+</code></pre>
+
+<p>register_cached_thing(&lsquo;post_by_id&rsquo;, fetch=post_by_id, arg=lambda p: p.id)
+```</p>
+
+<p>Looks like we&rsquo;ve come up with pretty solid system. It&rsquo;s dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.</p>
+
+<h2>Automatic invalidation</h2>
+
+<p>We have not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.</p>
+
+<p>Suppose we cache a query:</p>
+
+<p><code>sql
+select * from post where category_id = 2 and published
+</code></p>
+
+<p>We should drop that cache when we add, update or delete post with its old or new state satisfying <code>category_id = 2 and published</code> condition. So the time we save that cache we should write along &ldquo;invalidator&rdquo; like that:</p>
+
+<p><code>sql
+category_id = 2 and published: K1 -- K1 is above query cache key
+</code></p>
+
+<p>Then if some post changes we look up all invalidators and check their conditions with post at hand, deleting cache keys corresponding to holding ones. That could become very inefficient once we&rsquo;ll have lots of queries cached.</p>
+
+<p>The reason we will end up with lots of invalidators is that we have cached lots of different queries. In common use, however, most queries will differ only in parameters not structure. Maybe separating those will help us? Let&rsquo;s try on larger example. Here be the queries:</p>
+
+<p><code>sql
+select * from post where category_id = 2 and published           -- K1
+select * from post where category_id = 2 and published limit 20  -- K2
+select * from post where category_id = 3 and published           -- K3
+select * from post where category_id = 3 and not published       -- K4
+select * from post where id &gt; 7                                  -- K5
+select * from post where category_id = 2 and published or id &gt; 7 -- K6
+select * from post where category_id in (2, 3) and published     -- K7
+select * from post where category_id = 2 and id &lt; 7              -- K8
+</code></p>
+
+<p>Unseparated invalidators first:</p>
+
+<p><code>sql
+category_id = 2 and published:           K1, K2
+category_id = 3 and published:           K3
+category_id = 3 and not published:       K4
+id &gt; 7:                                  K5
+category_id = 2 and published or id &gt; 7: K6
+category_id in (2, 3) and published:     K7
+category_id = 3 and id &lt; 7:              K8
+</code></p>
+
+<p>We can use some tricks to make this more regular. <code>or</code>ed conditions could be split into two, <code>in</code> is basically syntax sugar for <code>or</code> and boolean tests could be substituted with equalities. Applying these we get to:</p>
+
+<p><code>sql
+category_id = 2 and published = true:  K1, K2, K6, K7
+category_id = 3 and published = true:  K3, K7
+category_id = 3 and published = false: K4
+id &gt; 7:                                K5, K6
+category_id = 3 and id &lt; 7:            K8
+</code></p>
+
+<p>Note that after this transformation all conditions became simple conjunctions. And we are finally ready to separate condition scheme from data:</p>
+
+<p>``` sql
+&mdash; Schemes
+category_id = ? and published = ? &mdash; S1
+id > ?                            &mdash; S2
+category_id = ? and id &lt; ?        &mdash; S3</p>
+
+<p>&mdash; Conjunctions
+S1:2,true:  K1, K2, K6, K7
+S1:3,true:  K3, K7
+S1:3,false: K4
+S2:7:       K5, K6
+S3:3,7:     K8
+```</p>
+
+<p>Time to try modeling invalidation procedure. Say we are adding this post to our stock:</p>
+
+<p><code>sql
+{id: 42, category_id: 2, published: true, title: "...", content: "..."}
+</code></p>
+
+<p>Looking at <code>S1</code> we can see that there is at most one conjunction of that scheme satisfying our state! Even better, we can build it from scheme and object data by looking at field values: each known value is equal only to itself. Too bad the trick won&rsquo;t work with <code>S2</code> cause our post id, 42, is greater than many things. To find what queries of scheme <code>S2</code> should be invalidated one needs to look through all <code>S2:*</code> conjunctions and that could be a lot.</p>
+
+<p>This is probably a case for trade-off. Dropping all conditions but equalities we will sacrifice invalidation granularity, but simplify and speed up the procedure. Simplified invalidators will look like:</p>
+
+<p>``` sql
+&mdash; Schemes
+category_id = ? and published = ? &mdash; S1</p>
+
+<pre><code>                              -- S2, an empty scheme
+</code></pre>
+
+<p>category_id = ?                   &mdash; S3</p>
+
+<p>&mdash; Conjunctions
+S1:2,true:  K1, K2, K6, K7
+S1:3,true:  K3, K7
+S1:3,false: K4
+S2::        K5, K6 &mdash; no data for S2
+S3:3:       K8
+```</p>
+
+<p>There are some points worth noting here. First, <code>S2</code> is now an empty scheme with a single empty conjunction which is always true, which means <code>K5</code> and <code>K6</code> will be invalidated on any post change. Second, schemes are now just sets of field names, pretty neat.</p>
+
+<p>So far I tried to stay language and platform agnostic, but that journey came to an end. Welcome to dirty reality in the next section.</p>
+
+<h2>Implementation tips</h2>
+
+<ul>
+<li><p>A best way to represent scheme is probably alphabetically sorted list of field names, it&rsquo;s easily serializable and it makes building a conjunction for an object pretty straightforward.</p></li>
+<li><p>Extracting conjunctions from a query tree could be tricky. One might want to employ <a href="http://en.wikipedia.org/wiki/Fuzzy_logic">fuzzy logic</a>: look at <code>not (f &gt; 0 and g != 1)</code>, if we drop <code>f &gt; 0</code> right away, we&rsquo;ll end up with <code>g = 1</code>, which is not equivalent to <code>f &lt;= 0 or g = 1</code>. Lost empty conjunction along the way!</p></li>
+<li><p>Considering invalidator structure (sets) and taking into account that it is generally a good idea to keep all interdependent data together (cache and invalidators) this is an excellent case to use <a href="http://redis.io">Redis</a>. Using it we can easily add keys to conjunctions, we can even do <code>SUNION</code> of conjunctions to fetch all dirty keys in one shot.</p></li>
+</ul>
+
+
+<p>Sure, I went ahead and used that tips in my <a href="https://github.com/Suor/django-cacheops">Django caching solution</a>. Hope it or the ideas it embodies would be helpful.</p>
+]]></content>
+  </entry>
+  
+</feed>
