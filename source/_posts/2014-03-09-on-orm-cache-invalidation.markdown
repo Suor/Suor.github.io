@@ -1,10 +1,11 @@
 ---
 layout: post
 title: "On ORM Cache Invalidation"
-comments: false
-sharing: false
-published: false
+sharing: true
+comments: true
+date: 2014-03-09 19:50
 categories: [Algorithms]
+hn_id: 7368205
 ---
 
 Cache invalidation is probably one of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in a context of caching queries built via ORM.
