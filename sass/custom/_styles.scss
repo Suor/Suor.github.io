@@ -7,3 +7,23 @@ article ol, article ul {
 article p+ul {
     margin-top: -1.5em;
 }
+
+.example-bad .highlight .line-numbers {
+    background: #700011 !important;
+}
+.example-bad .highlight .line-numbers span {
+    color: #888 !important;
+}
+.example-good .highlight .line-numbers {
+    background: #005711 !important;
+}
+.example-good .highlight .line-numbers span {
+    color: #999 !important;
+}
+
+.example-bad .highlight code {
+    background: #480009 !important;
+}
+.example-good .highlight code {
+    background: #003010 !important;
+}
