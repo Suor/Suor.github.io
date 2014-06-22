@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-06-23T00:05:33+08:00</updated>
+  <updated>2014-06-23T02:13:48+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -376,6 +376,8 @@ harder_download = http_retry(<span class='green'>download_image</span>)
 
 
 <p><strong>P.S.</strong> You may also want to look at <a href="http://www.scala-lang.org/">Scala</a> if you are using JVM and at <a href="http://www.tryfsharp.org/">F#</a> if it&rsquo;s .NET.</p>
+
+<p><strong>P.P.S.</strong> Please stop commenting on Hacker News, a controversial penalty is killing this post. Use <a href="http://www.reddit.com/r/programming/comments/28se2h/why_every_language_needs_its_underscore/">reddit thread</a> instead.</p>
 ]]></content>
   </entry>
   
