@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-06-22T22:02:04+08:00</updated>
+  <updated>2014-06-22T22:08:45+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -305,7 +305,7 @@ prev = x
 <table>
 <thead>
 <tr>
-<th>Language     </th>
+<th>Language    </th>
 <th> Libraries</th>
 </tr>
 </thead>
@@ -345,6 +345,8 @@ prev = x
 </tbody>
 </table>
 
+
+<p><strong>P.S.</strong> You may also want to look at <a href="http://www.scala-lang.org/">Scala</a> if you are using JVM and at <a href="http://www.tryfsharp.org/">F#</a> if it&rsquo;s .NET.</p>
 ]]></content>
   </entry>
   
