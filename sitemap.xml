@@ -2,7 +2,7 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://hackflow.com/blog/2013/10/08/abstracting-control-flow/</loc>
-        <lastmod>2013-10-31T15:29:22+08:00</lastmod>
+        <lastmod>2014-06-22T13:55:56+08:00</lastmod>
     </url>
     <url>
         <loc>http://hackflow.com/blog/2013/10/13/functional-python-made-easy/</loc>
@@ -17,6 +17,10 @@
         <lastmod>2014-03-09T19:53:32+08:00</lastmod>
     </url>
     <url>
+        <loc>http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore/</loc>
+        <lastmod>2014-06-22T19:39:11+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://hackflow.com/404.html</loc>
         <lastmod>2014-03-07T18:34:03+08:00</lastmod>
     </url>
@@ -26,10 +30,10 @@
     </url>
     <url>
         <loc>http://hackflow.com/blog/archives/</loc>
-        <lastmod>2014-03-09T19:53:32+08:00</lastmod>
+        <lastmod>2014-06-22T19:39:11+08:00</lastmod>
     </url>
     <url>
         <loc>http://hackflow.com/</loc>
-        <lastmod>2014-03-09T19:53:32+08:00</lastmod>
+        <lastmod>2014-06-22T19:39:11+08:00</lastmod>
     </url>
 </urlset>

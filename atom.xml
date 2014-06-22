@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-03-09T19:53:37+08:00</updated>
+  <updated>2014-06-22T19:40:40+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,370 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Why Every Language Needs Its Underscore]]></title>
+    <link href="http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore/"/>
+    <updated>2014-06-22T19:39:00+08:00</updated>
+    <id>http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore</id>
+    <content type="html"><![CDATA[<p><em>(This is an adaptation of a talk I gave at PyCon and DevDay. <a href="http://www.slideshare.net/hackflow/why-underscore">Slides</a> and <a href="http://www.youtube.com/watch?v=lGAC6ftYUS0#t=12100">video</a> are available in russian)</em></p>
+
+<p>Do you know what <a href="http://underscorejs.org/">underscore</a> is? In its most general it&rsquo;s a JavaScript library that makes life better. For whoever writes in JavaScript. I mostly write Python and I also wanted my life better, so I went ahead and wrote <a href="https://github.com/Suor/funcy">a similar library for Python</a>. But the thing is you need to understand a magic behind something to properly replicate it. So what&rsquo;s the magic behind _?</p>
+
+<!--more-->
+
+
+<h2>The problem</h2>
+
+<p>To answer this question we should look at problems this kind of libraries solve. To get some ground I&rsquo;ll illustrate them with code. That will be in python, but all the ideas are universal, so don&rsquo;t be afraid.</p>
+
+<h3>A piece of entangled code</h3>
+
+<p>This messy piece of code was taken from a real project and slightly simplified:</p>
+
+<div class="example-bad">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class='line'><span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">):</span>
+</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
+</span><span class='line'>            <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">download_image</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
+</span><span class='line'>            <span class="k">break</span>
+</span><span class='line'>        <span class="k">except</span> <span class="n">HttpError</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">DOWNLOAD_TRIES</span><span class="p">:</span>
+</span><span class='line'>                <span class="k">raise</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>There are several things entangled in here, but my point is that this could be written much shorter:</p>
+
+<div class="example-good">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="n">HttpError</span><span class="p">)</span>
+</span><span class='line'><span class="n">harder_download</span> <span class="o">=</span> <span class="n">http_retry</span><span class="p">(</span><span class="n">download_image</span><span class="p">)</span>
+</span><span class='line'><span class="n">images</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">harder_download</span><span class="p">,</span> <span class="n">urls</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>If it seems hard at first, then it&rsquo;s okay. It involves some functions and <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstractions</a> most probably new to you. Once you get used to it you&rsquo;ll find that the latter variant is not only shorter, but is also simpler.</p>
+
+<h3>Dirty dictionary</h3>
+
+<p>But let&rsquo;s go on and clean some dirty dictionary:</p>
+
+<div class="example-bad">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'><span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+</span><span class='line'>        <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>Here we go through dictionary and clean its values by coercing them to <code>int</code>. Or to <code>None</code> if that is impossible. Cleaning input and ignoring malformed data is quite frequent task and yet it takes so much effort. This is the way I want to write that:</p>
+
+<div class="example-good">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">walk_values</span><span class="p">(</span><span class="n">silent</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">request</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>And it&rsquo;s entirely possible with <a href="https://github.com/Suor/funcy">funcy</a>. But let&rsquo;s move to the next one.</p>
+
+<h3>Pairwise iteration</h3>
+
+<p>This code checks if a sequence is ascending:</p>
+
+<div class="example-bad">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">prev</span> <span class="o">=</span> <span class="bp">None</span>
+</span><span class='line'><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">prev</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">seq</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">is_ascending</span> <span class="o">=</span> <span class="bp">False</span>
+</span><span class='line'>        <span class="k">break</span>
+</span><span class='line'>    <span class="n">prev</span> <span class="o">=</span> <span class="n">x</span>
+</span><span class='line'><span class="k">else</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">is_ascending</span> <span class="o">=</span> <span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>Ah, iterating over a sequence and keeping track of a previous element. How many times had you done that? There should be a function to abstract it:</p>
+
+<div class="example-good">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">is_ascending</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span> <span class="o">&lt;</span> <span class="n">r</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pairwise</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>And <a href="http://funcy.readthedocs.org/en/latest/seqs.html#pairwise">pairwise</a> does exactly that. It enables us to iterate by sequence adjacent pairs. So we just need to check that all of them are ordered accordingly.</p>
+
+<h3>&hellip;</h3>
+
+<p>All these examples have one common property &mdash; red variants have more code. And more code:</p>
+
+<ul>
+<li>takes longer to write,</li>
+<li>takes longer to read,</li>
+<li>takes longer to debug,</li>
+<li>contains more bugs.</li>
+</ul>
+
+
+<p>Obviously, underscore, funcy and friends help us write less code (at least in this three examples). But how do they do that?</p>
+
+<h2>Extracting abstractions</h2>
+
+<p>Let&rsquo;s take another look at the first example. It does three things in a single blob of code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code><span class='green'>images</span> <span class='blue'>= []
+</span><span class='blue'>for url in</span> <span class='green'>urls</span><span class='blue'>:
+</span><span class='red'>    for attempt in range(DOWNLOAD_TRIES):
+</span><span class='red'>        try:
+</span><span class='green'>            images</span><span class='blue'>.append(</span><span class='green'>download_image(</span><span class='blue'>url</span><span class='green'>)</span><span class='blue'>)
+</span><span class='red'>            break
+</span><span class='red'>        except HttpError:
+</span><span class='red'>            if attempt + 1 == DOWNLOAD_TRIES:
+</span><span class='red'>                <span class="k">raise
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I highlighted every aspect of this code with separate color:</p>
+
+<ul>
+<li>image download (green),</li>
+<li>retries on fails (red),</li>
+<li>iteration through urls and result collection (blue).</li>
+</ul>
+
+
+<p>As you can see, three colors are interleaved here. This hints that corresponding aspects are entangled. And by &ldquo;entangled&rdquo; I mean they can not be reused separately. Say we need retries on fails in some other place, we will probably end up copying the whole block and updating it somewhat. Not exactly the best practice &ldquo;code reuse&rdquo;.</p>
+
+<p>If, on the other hand, we managed to separate reties then our code will look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code><span class='red'>def retry(...):
+    ...
+
+http_retry = retry(DOWNLOAD_TRIES, HttpError)
+harder_download = http_retry(<span class='green'>download_image</span>)
+</span><span class='green'>images</span> <span class='blue'>= []
+</span><span class='blue'>for url in</span> <span class='green'>urls</span><span class='blue'>:
+</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>harder_download(</span><span class='blue'>url</span><span class='red'>)</span><span class='blue'>)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now red code is nicely grouped at the top. Green and blue are still mixed, but now they represent a pattern so common that most modern languages have a builtin function to handle that:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code><span class='red'>def retry(...):
+    ...
+
+http_retry = retry(DOWNLOAD_TRIES, HttpError)
+harder_download = http_retry(<span class='green'>download_image</span>)
+</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>harder_download</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This last variant has some lovely traits: each part of a task at hand (downloading images) appear only once, the whole iteration aspect is handled with a single <code>map()</code> call and retries are abstracted out into <a href="http://funcy.readthedocs.org/en/latest/flow.html#retry">the retry function</a>.</p>
+
+<p>Extracting common behavior into a higher order functions is a first trick underscore and funcy use to make your life better.</p>
+
+<h2>Hiding low level</h2>
+
+<p>It&rsquo;s time to go back to second example. I&rsquo;ll throw away error handling to make snippets more even:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Using function</span>
+</span><span class='line'><span class="n">walk_values</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Using dict comprehension</span>
+</span><span class='line'><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now they are both one-liners, so how is first one better? Let&rsquo;s identify every single distinct component of each code variant:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># 3 components</span>
+</span><span class='trend3'>walk_values(</span><span class='trend4'>int</span><span class='trend3'>,</span> <span class='trend8'>request</span><span class='trend3'>)
+</span><span class='line'>
+</span><span class='line'><span class="c"># 8 or so components</span>
+</span><span class='line'><span class='trend3'>{</span><span class='trend0'>k</span><span class='trend3'>:</span> <span class='trend4'>int(</span><span class='trend6'>v</span><span class='trend4'>)</span> <span class='trend9'>for</span> <span class='trend0'>k</span><span class='trend7'>,</span> <span class='trend6'>v</span> <span class='trend9'>in</span> <span class='trend8'>request</span><span class='trend5'>.items()</span><span class='trend3'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The second one looks like rainbow. But besides looking nice this means each time you write or read it you need to load all those components into your head, taking up all your cognitive resources. This is how first line is better.</p>
+
+<p>That could be highlighted in even more obvious manner:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='trend3'>walk_values(int, request)
+</span><span class='line'>
+</span><span class='line'><span class="c"># red are low-level details</span>
+</span><span class='line'><span class='trend3'>{</span><span class='trend8'>k</span><span class='trend3'>: int(</span><span class='trend8'>v</span><span class='trend3'>)</span> <span class='trend8'>for k, v in</span> <span class='trend3'>request</span><span class='trend8'>.items()</span><span class='trend3'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This way we can see that about a half of the second line is low-level details. And low-level mean you don&rsquo;t need to know all those details to understand what&rsquo;s going on.</p>
+
+<p>Hiding low-level details is the second way such libraries make your life better.</p>
+
+<h2>Enriching our language</h2>
+
+<p>I&rsquo;ll translate the last example into natural language:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">prev</span> <span class="o">=</span> <span class="bp">None</span>
+</span><span class='line'><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">prev</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">seq</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">is_ascending</span> <span class="o">=</span> <span class="bp">False</span>
+</span><span class='line'>        <span class="k">break</span>
+</span><span class='line'>    <span class="n">prev</span> <span class="o">=</span> <span class="n">x</span>
+</span><span class='line'><span class="k">else</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">is_ascending</span> <span class="o">=</span> <span class="bp">True</span>
+</span><span class='line'><span class="c"># Starting with empty prev, iterate over seq, bookkeeping prev actuality,</span>
+</span><span class='line'><span class="c"># on each cycle if prev is present and current element is greater or equal than it</span>
+</span><span class='line'><span class="c"># then set is_ascending to False and break.</span>
+</span><span class='line'><span class="c"># If loop wasn&#39;t broken set is_ascending to True</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">is_ascending</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span> <span class="o">&lt;</span> <span class="n">r</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pairwise</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
+</span><span class='line'><span class="c"># set is_ascending to all left elements being smaller than right</span>
+</span><span class='line'><span class="c"># in adjacent pairs of seq</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Obviously, more code emits more text. Higher level code generates an explanation utilizing higher level abstractions. This way we can use bigger building blocks not only in coding, but in problem solving.</p>
+
+<p>And this is the third way _ makes your life better.</p>
+
+<h2>Wrap-up</h2>
+
+<p>All the things we came through are completely language independent. So there gotta be underscore for every language? Not quite, and more importantly a straight-forward port is not always a great idea: common behaviors to abstract vary per language and especially per application. The right approach would be to follow core ideas. Or look around if someone have already done that.</p>
+
+<p>Here are some leads for you to take:</p>
+
+<table>
+<thead>
+<tr>
+<th>Language     </th>
+<th> Libraries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JavaScript  </td>
+<td> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/prototype">Array</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/prototype">Function</a>, <a href="http://underscorejs.org/">Underscore</a>, <a href="http://lodash.com/">lowdash</a></td>
+</tr>
+<tr>
+<td>Python      </td>
+<td> <a href="https://docs.python.org/2/library/itertools.html">itertools</a>, <a href="https://docs.python.org/2/library/functools.html">functools</a>, <a href="https://github.com/Suor/funcy">funcy</a>, <a href="https://github.com/pytoolz/toolz">toolz</a>, <a href="https://github.com/kachayev/fn.py">fn.py</a></td>
+</tr>
+<tr>
+<td>Ruby        </td>
+<td> <a href="http://www.ruby-doc.org/core/Enumerable.html">Enumerable</a>, <a href="http://guides.rubyonrails.org/active_support_core_extensions.html">ActiveSupport</a></td>
+</tr>
+<tr>
+<td>PHP         </td>
+<td> <a href="https://github.com/lstrojny/functional-php">functional-php</a>, <a href="https://github.com/brianhaveri/Underscore.php">Underscore.php</a></td>
+</tr>
+<tr>
+<td>Clojure     </td>
+<td> <a href="http://richhickey.github.io/clojure/clojure.core-api.html">clojure.core</a></td>
+</tr>
+<tr>
+<td>Java        </td>
+<td> <a href="http://functionaljava.org/">FunctionalJava</a></td>
+</tr>
+<tr>
+<td>C#          </td>
+<td> <a href="http://msdn.microsoft.com/ru-ru/library/bb397926.aspx">LINQ</a></td>
+</tr>
+<tr>
+<td>Objective-C </td>
+<td> <a href="http://underscorem.org/">Underscore.m</a></td>
+</tr>
+</tbody>
+</table>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[On ORM Cache Invalidation]]></title>
