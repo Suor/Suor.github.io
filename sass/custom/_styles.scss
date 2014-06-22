@@ -22,8 +22,35 @@ article p+ul {
 }
 
 .example-bad .highlight code {
-    background: #480009 !important;
+    background: #420008 !important;
 }
 .example-good .highlight code {
     background: #003010 !important;
+}
+
+.highlight .red {color: #CB4B16 !important}
+.highlight .green {color: #859900 !important}
+.highlight .blue {color: #268BD2 !important}
+
+.highlight .trend1 {color: #113F8C !important}
+.highlight .trend2 {color: #01A4A4 !important}
+.highlight .trend3 {color: #00A1CB !important}
+.highlight .trend4 {color: #61AE24 !important}
+.highlight .trend5 {color: #D0D102 !important}
+.highlight .trend6 {color: #32742C !important}
+.highlight .trend7 {color: #D70060 !important}
+.highlight .trend8 {color: #E54028 !important}
+.highlight .trend9 {color: #F18D05 !important}
+.highlight .trend0 {color: #616161 !important}
+
+
+// Style tables
+.entry-content * + table th, .entry-content * + table td {
+    border: 1px solid #e7e3e7;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.entry-content table th {
+    font-weight: bold;
+    background: url("/images/noise.png?1330434582") repeat scroll left top #F7F3F7;
 }
