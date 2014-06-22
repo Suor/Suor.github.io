@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-06-22T19:43:20+08:00</updated>
+  <updated>2014-06-22T22:02:04+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -96,7 +96,7 @@ walk_values(silent(int), request)
 ``` python
 prev = None
 for x in seq:
-    if prev and x >= seq:
+    if prev and x >= prev:
         is_ascending = False
         break
     prev = x
@@ -265,7 +265,7 @@ harder_download = http_retry(<span class='green'>download_image</span>)
 prev = None
 for x in seq:</p>
 
-<pre><code>if prev and x &gt;= seq:
+<pre><code>if prev and x &gt;= prev:
     is_ascending = False
     break
 prev = x
