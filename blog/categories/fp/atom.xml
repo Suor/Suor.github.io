@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-06-23T02:15:08+08:00</updated>
+  <updated>2014-06-23T02:47:25+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -53,8 +53,7 @@ for url in urls:
 <div class="example-good">
 ``` python
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(download_image)
-images = map(harder_download, urls)
+images = map(http_retry(download_image), urls)
 ```
 </div>
 
@@ -175,17 +174,15 @@ is_ascending = all(l < r for l, r in pairwise(seq))
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(&hellip;):</p>
 
 <pre><code>...
 </code></pre>
 
 <p>http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
 </span><span class='green'>images</span> <span class='blue'>= []
 </span><span class='blue'>for url in</span> <span class='green'>urls</span><span class='blue'>:
-</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>harder_download(</span><span class='blue'>url</span><span class='red'>)</span><span class='blue'>)
+</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>(url))
 </span></code></pre></td></tr></table></div></figure></p>
 
 <p>Now red code is nicely grouped at the top. Green and blue are still mixed, but now they represent a pattern so common that most modern languages have a builtin function to handle that:</p>
@@ -195,15 +192,13 @@ harder_download = http_retry(<span class='green'>download_image</span>)
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-<span class='line-number'>6</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(&hellip;):</p>
 
 <pre><code>...
 </code></pre>
 
 <p>http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
-</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>harder_download</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
+</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
 </span></code></pre></td></tr></table></div></figure></p>
 
 <p>This last variant has some lovely traits: each part of a task at hand (downloading images) appear only once, the whole iteration aspect is handled with a single <code>map()</code> call and retries are abstracted out into <a href="http://funcy.readthedocs.org/en/latest/flow.html#retry">the retry function</a>.</p>

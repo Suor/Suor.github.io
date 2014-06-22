@@ -144,10 +144,8 @@
 <div class="example-good">
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
-<span class='line-number'>3</span>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="n">HttpError</span><span class="p">)</span>
-</span><span class='line'><span class="n">harder_download</span> <span class="o">=</span> <span class="n">http_retry</span><span class="p">(</span><span class="n">download_image</span><span class="p">)</span>
-</span><span class='line'><span class="n">images</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">harder_download</span><span class="p">,</span> <span class="n">urls</span><span class="p">)</span>
+</span><span class='line'><span class="n">images</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">http_retry</span><span class="p">(</span><span class="n">download_image</span><span class="p">),</span> <span class="n">urls</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 </div>
 
@@ -281,15 +279,13 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(...):
     ...
 
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
 </span><span class='green'>images</span> <span class='blue'>= []
 </span><span class='blue'>for url in</span> <span class='green'>urls</span><span class='blue'>:
-</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>harder_download(</span><span class='blue'>url</span><span class='red'>)</span><span class='blue'>)
+</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>(url))
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -300,13 +296,11 @@ harder_download = http_retry(<span class='green'>download_image</span>)
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-<span class='line-number'>6</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(...):
     ...
 
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
-</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>harder_download</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
+</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
 </span></code></pre></td></tr></table></div></figure>
 
 
