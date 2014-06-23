@@ -43,8 +43,7 @@ There are several things entangled in here, but my point is that this could be w
 <div class="example-good">
 ``` python
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(download_image)
-images = map(harder_download, urls)
+images = map(http_retry(download_image), urls)
 ```
 </div>
 
@@ -157,15 +156,13 @@ If, on the other hand, we managed to separate reties then our code will look lik
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(...):
     ...
 
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
 </span><span class='green'>images</span> <span class='blue'>= []
 </span><span class='blue'>for url in</span> <span class='green'>urls</span><span class='blue'>:
-</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>harder_download(</span><span class='blue'>url</span><span class='red'>)</span><span class='blue'>)
+</span><span class='green'>    images</span><span class='blue'>.append(</span><span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>(url))
 </span></code></pre></td></tr></table></div></figure>
 
 Now red code is nicely grouped at the top. Green and blue are still mixed, but now they represent a pattern so common that most modern languages have a builtin function to handle that:
@@ -175,13 +172,11 @@ Now red code is nicely grouped at the top. Green and blue are still mixed, but n
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-<span class='line-number'>6</span>
 </pre></td><td class='code'><pre><code><span class='red'>def retry(...):
     ...
 
 http_retry = retry(DOWNLOAD_TRIES, HttpError)
-harder_download = http_retry(<span class='green'>download_image</span>)
-</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>harder_download</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
+</span><span class='green'>images</span> <span class='blue'>= map(<span class='red'>http_retry(</span><span class='green'>download_image</span><span class='red'>)</span><span class='blue'>, <span class='green'>urls</span><span class='blue'>)
 </span></code></pre></td></tr></table></div></figure>
 
 This last variant has some lovely traits: each part of a task at hand (downloading images) appear only once, the whole iteration aspect is handled with a single `map()` call and retries are abstracted out into [the retry function][retry].
