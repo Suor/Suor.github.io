@@ -1,10 +1,11 @@
 ---
 layout: post
 title: "Why Every Language Needs Its Underscore"
-comments: false
-sharing: false
+comments: true
+sharing: true
 date: 2014-06-22 19:39
 categories: [FP]
+hn_id: 7927578
 ---
 
 *(This is an adaptation of a talk I gave at PyCon and DevDay. [Slides](http://www.slideshare.net/hackflow/why-underscore) and [video](http://www.youtube.com/watch?v=lGAC6ftYUS0#t=12100) are available in russian)*
