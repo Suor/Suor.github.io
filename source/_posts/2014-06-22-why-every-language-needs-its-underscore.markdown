@@ -85,7 +85,7 @@ This code checks if a sequence is ascending:
 ``` python
 prev = None
 for x in seq:
-    if prev and x >= seq:
+    if prev is not None and x <= prev:
         is_ascending = False
         break
     prev = x
@@ -241,7 +241,7 @@ I'll translate the last example into natural language:
 ``` python
 prev = None
 for x in seq:
-    if prev and x >= seq:
+    if prev is not None and x <= prev:
         is_ascending = False
         break
     prev = x
