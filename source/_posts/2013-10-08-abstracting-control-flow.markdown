@@ -14,7 +14,7 @@ Those recurring patterns usually involve rules like "close everything you open",
 
  <!--more-->
 
-In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we through in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.
+In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don't do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.
 
 
 ## Abstractions
