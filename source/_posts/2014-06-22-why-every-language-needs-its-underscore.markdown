@@ -263,7 +263,7 @@ All the things we came through are completely language independent. So there got
 
 Here are some leads for you to take:
 
-Language     | Libraries
+Language    | Libraries
 ---         | ---
 JavaScript  | [Array][], [Function][], [Underscore][], [lowdash][]
 Python      | [itertools][], [functools][], [funcy][], [toolz][], [fn.py][]
@@ -274,6 +274,7 @@ Java        | [FunctionalJava][]
 C#          | [LINQ][]
 Objective-C | [Underscore.m][]
 
+**P.S.** You may also want to look at [Scala][] if you are using JVM and at [F#][] if it's .NET.
 
 
 [acf]: http://hackflow.com/blog/2013/10/08/abstracting-control-flow/
@@ -303,3 +304,6 @@ Objective-C | [Underscore.m][]
 [FunctionalJava]: http://functionaljava.org/
 [LINQ]: http://msdn.microsoft.com/ru-ru/library/bb397926.aspx
 [Underscore.m]: http://underscorem.org/
+
+[Scala]: http://www.scala-lang.org/
+[F#]: http://www.tryfsharp.org/
