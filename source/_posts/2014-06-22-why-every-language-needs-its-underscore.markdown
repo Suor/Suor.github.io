@@ -243,7 +243,7 @@ for x in seq:
 else:
     is_ascending = True
 # Starting with empty prev, iterate over seq, bookkeeping prev actuality,
-# on each cycle if prev is present and current element is greater or equal than it
+# on each cycle if prev is present and current element is less or equal than it
 # then set is_ascending to False and break.
 # If loop wasn't broken set is_ascending to True
 
