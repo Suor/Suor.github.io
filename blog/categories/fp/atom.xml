@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-06-23T12:02:51+08:00</updated>
+  <updated>2014-06-24T10:02:51+08:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -273,7 +273,7 @@ prev = x
 
 <h1>Starting with empty prev, iterate over seq, bookkeeping prev actuality,</h1>
 
-<h1>on each cycle if prev is present and current element is greater or equal than it</h1>
+<h1>on each cycle if prev is present and current element is less or equal than it</h1>
 
 <h1>then set is_ascending to False and break.</h1>
 

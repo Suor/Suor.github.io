@@ -388,7 +388,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 </span><span class='line'><span class="k">else</span><span class="p">:</span>
 </span><span class='line'>    <span class="n">is_ascending</span> <span class="o">=</span> <span class="bp">True</span>
 </span><span class='line'><span class="c"># Starting with empty prev, iterate over seq, bookkeeping prev actuality,</span>
-</span><span class='line'><span class="c"># on each cycle if prev is present and current element is greater or equal than it</span>
+</span><span class='line'><span class="c"># on each cycle if prev is present and current element is less or equal than it</span>
 </span><span class='line'><span class="c"># then set is_ascending to False and break.</span>
 </span><span class='line'><span class="c"># If loop wasn&#39;t broken set is_ascending to True</span>
 </span><span class='line'>
