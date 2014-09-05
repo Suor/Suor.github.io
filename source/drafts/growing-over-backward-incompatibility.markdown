@@ -24,19 +24,19 @@ So what should conscious designer do?
 Most languages don't have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one.
 
 
-#### 0. Grow as it goes, then break big.
+#### Grow as it goes, then break big
 
 This results into separation like Python 2/3, Perl 5/6 or even in total abandonment. The major issue is that it creates a gap that most people don't have enough incentive to jump over. It creates additional headache to library developers making hard to support their creations across incompatibility boundary. This in its turn causes chicken and egg problem of no libraries, no users. In its worst separation could divide both ecosystem and community in half, lessening the project considerably.
 
 
-#### 1. Move fast, break things.
+#### Move fast, break things
 
 Works well in earlier development stages. I never complained when upgrading Node.js from 0.1.x to 0.2.x broke my app as well as several dependencies. However, this effectively reduces library availability, since many authors just can't or interested enough to keep up with the development pace. I was astonished to hear from some of my ruby friends that they avoid using libraries not updated within 3 months as possibly abandoned ones.
 
 It also poses a strain on language users forced to change their coding habits and to constantly seek for and adapt a replacement libraries for abandoned ones. Some of them consequently settle with particular language or framework version causing an erosion of a community and ecosystem.
 
 
-#### 2. Stay small.
+#### Stay small
 
 ... and useless. A viable strategy for very domain specific or otherwise having narrow field languages, e.g. for education. In any other case wider audience will need language to be extended to be useful for them. The alternative is to stay small ...
 
@@ -44,7 +44,7 @@ It also poses a strain on language users forced to change their coding habits an
 
 Language of each project gets tailored to project needs, to particular team style. Communities divide, codebases become incompatible effectively narrowing the language for its users and causing confusion for newcomers.
 
-There other issue with both flavors of this strategy is that problem is not solved, it only reduced. There is still no strategy to evolve the core.
+The other issue with both flavors of this approach is that problem is not solved, it's only reduced. There is still no strategy to evolve the core.
 
 <!--
 Small standard library with good packaging utilities and service will do the job.
@@ -53,7 +53,7 @@ Unlike libraries frameworks divide people.
  -->
 
 
-#### 3. Rolling deprecation.
+#### Rolling deprecation
 
 This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes, still your users have a compatibility guarantee for several releases. There are, however, some considerations to this strategy.
 
@@ -78,24 +78,93 @@ Third, gradual change is not always possible. Say you want to change how a `/` o
 
 ## Rolling a language
 
-Making an operator work differently depending on context seems impossible, but also offers a hint to resolve both itself and API uglifying issue. So obviously first we need a way to tell new code from old.
+Making an operator work differently depending on context seems impossible, but also offers a hint to resolve both itself and API uglifying issue. So obviously first we need a way to tell new code from old. The simplest thing is just stating this explicitly, and this is already used in Python 2:
+
+```python
+from __future__ import division
+```
+
+and in Perl 5:
+
+```perl
+use feature 'say';
+```
+
+Python version has file scope and Perls lexical one. Perl also goes farther by bundling features into language versions. E.g. by:
+
+```perl
+use v5.16;
+```
+
+you can turn on all 5.16 features, this can also deprecate some old features or alter their behavior. Any old code without that `use` statement or with the one with earlier version continues to behave the exact way it did. So we can change a language in a backward incompatible manner while still providing compatibility with older code. <!-- What a trick! -->
+
+So this is it, the idea I started this post to promote. Lower I'll just address any issues/objections that I can think of.
 
 
-Issues:
+## Issues
 
-- syntactic changes (parser changes)
-- built-ins changes
-- renames
-- deprecations (removals)
-- operator semantics
-- type changes
-    + changed methods
-    + changed internal representation
-    + swapping type (convert over lexical boundary? manual? auto?)
+Let's start from the ones from rolling deprecation section. First and last are resolved automatically, second - the need to ship several implementations bundled - remains. We can only limit it by carefully storing all active implementations and providing a limit on supported versions, e.g. make `use v5.10` an error in 5.20 version of a language. We'll need to make this span large and stable enough though.
 
->
+There is also an issue of how do we start this process. It's however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of `use` statement there and in absence of it just assume 3.4 semantics.
 
-Perl 5 experience, Django model.
 
-Easy in lexical scope, problems with anything spanning scope boundaries.
-Type convertors.
+### Easy parts
+
+These ones are almost automatically solved by version declaration, still some elaboration will probably close unneeded questions.
+
+**Syntax changes**. We have a chicken and egg problem like `use` is part of syntax and it can alter syntax itself. This is however only a problem if we follow Perl 5 lead and allow it anywhere. Although it's cool, it has no relation to solving real problem of "using this library written for Blab 2.7 in my Blab 3.4 code". So we can just require every file start with `use` statement and then parse the rest with appropriate parser. Yes, we'll need to ship several parser implementations, they could share code though.
+
+**Semantic changes**. Like we have the same syntactic construction or operator and it should behave in a new way. The beauty of declared version and separate parsers is that we can substitute a thing during parsing. For example, if we get tired of Python semantics of:
+
+```python
+try:
+    ...
+except E1, E2: # really means "except E1 as E2:",
+    ...        # not catch both as you might expect
+```
+
+We can just make it to parse into the same thing as `except (E1, E2)`. Altering an AST node resulting from parsing an operator is even easier.
+
+**Built-in changes**. Having all new and old built-ins implementations we'll need only arrange that globals are updated on `use` statement. Globals should be scoped lexically, at least at file level, for this to work. Note that by altering globals we handle all of addition, removal, rename and change of behavior of any built-in.
+
+**Standard library changes**. The easiest way is just shipping several versions of it and patching import statement to load appropriate library version. Different versions of standard libs can share code for efficiency, but that's optional.
+
+
+### Passing over boundary
+
+Real issues start to arise when we pass something from newer code to older one or vice a versa. Say we have an instance of built-in or standard library type which has changed and pass it to the code that expects to treat it as an instance of an older version of same type.
+
+If it has same internal representation and only a new interface then we can pass it as is and rely on some lexical dependent method substitution. This could sound like some unscientific magic, but there is [a corresponding feature][refinements] in ruby 2.0 and sure there is [a perl module][method-lexical] for that. Anyway, that could be difficult or impossible depending on your language object model, this also won't work if internal representation of a value has changed.
+
+To deal with that we'll need to convert a value upon pass. Or provide all the interfaces for all the internal representations and switch them upon pass.
+
+Partially semantic issue.
+
+Manual vs auto convertation.
+
+Always use newer representation (with extras?), provide older interfaces.
+
+Incorporate lexical language version into call semantics?
+
+Protocol using functions/constructions should handle all protocols
+
+``` python
+class Old:
+    def __repr1__(self):
+        ...
+
+class New:
+    def __repr2__(self):
+        ...
+
+use new;
+
+from old_class import Old
+
+old = Old()
+repr(old) # ???
+```
+
+
+[refinements]: http://www.ruby-doc.org/core-2.1.1/doc/syntax/refinements_rdoc.html
+[method-lexical]: http://search.cpan.org/~chocolate/Method-Lexical/lib/Method/Lexical.pm
