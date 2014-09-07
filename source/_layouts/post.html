@@ -27,7 +27,13 @@ single: true
 </article>
 {% if site.disqus_short_name and page.comments == true %}
   <section>
-    <h1>Comments</h1>
+    <h1>Comments{% if page.hn_id %}<small style="font-size: 0.65em">, also at
+        <a href="https://news.ycombinator.com/item?id={{ page.hn_id }}">Hacker News</a>
+        {% if page.reddit_url %} and <a href="{{ page.reddit_url }}">Reddit</a>{% endif %}
+    </small>
+    {% endif %}
+    </h1>
+
     <div id="disqus_thread" aria-live="polite">{% include post/disqus_thread.html %}</div>
   </section>
 {% endif %}

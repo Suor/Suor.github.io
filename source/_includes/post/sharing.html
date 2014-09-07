@@ -1,9 +1,4 @@
 <div class="sharing">
-  {% if page.hn_id %}
-    <div style="float: left; height: 20px; line-height: 20px; font-size: 20px; margin-right: 30px">
-      <a href="https://news.ycombinator.com/item?id={{ page.hn_id }}">HN comments</a>
-    </div>
-  {% endif %}
   {% if site.twitter_tweet_button %}
   <a href="//twitter.com/share" class="twitter-share-button" data-url="{{ site.url }}{{ page.url }}" data-via="{{ site.twitter_user }}" data-counturl="{{ site.url }}{{ page.url }}" >Tweet</a>
   {% endif %}
