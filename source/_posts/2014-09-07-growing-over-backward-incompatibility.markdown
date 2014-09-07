@@ -1,15 +1,19 @@
 ---
 layout: post
 title: "Growing Over Backward Incompatibility"
-comments: false
-sharing: false
-published: false
+comments: true
+sharing: true
+date: 2014-09-07 19:58
 categories: [CS]
+hn_id: 8280876
+reddit_url: http://www.reddit.com/r/programming/comments/2fpofk/growing_over_backward_incompatibility/
 ---
 
 Every language needs to grow. It needs to evolve. However, there is a certain barrier it builds around itself over time called "Backward compatibility". Backward compatibility means you can't just change the thing in a best way possible, you need to comply to older design decisions, coincidences and even bugs.
 
 So what should conscious designer do?
+
+<!--more-->
 
 
 ## Possible strategies
