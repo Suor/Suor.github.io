@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: CS | Hackflow]]></title>
+  <link href="http://hackflow.com/blog/categories/cs/atom.xml" rel="self"/>
+  <link href="http://hackflow.com/"/>
+  <updated>2014-09-07T20:00:16+08:00</updated>
+  <id>http://hackflow.com/</id>
+  <author>
+    <name><![CDATA[Alexander Schepanovski]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Growing Over Backward Incompatibility]]></title>
+    <link href="http://hackflow.com/blog/2014/09/07/growing-over-backward-incompatibility/"/>
+    <updated>2014-09-07T19:58:00+08:00</updated>
+    <id>http://hackflow.com/blog/2014/09/07/growing-over-backward-incompatibility</id>
+    <content type="html"><![CDATA[<p>Every language needs to grow. It needs to evolve. However, there is a certain barrier it builds around itself over time called &ldquo;Backward compatibility&rdquo;. Backward compatibility means you can&rsquo;t just change the thing in a best way possible, you need to comply to older design decisions, coincidences and even bugs.</p>
+
+<p>So what should conscious designer do?</p>
+
+<!--more-->
+
+
+<h2>Possible strategies</h2>
+
+<p>Most languages don&rsquo;t have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one. But let&rsquo;s review possible strategies.</p>
+
+<h4>Grow as it goes, then break big</h4>
+
+<p>This results into separation like Python 2/3, Perl 5/6 or even in total abandonment. The major issue is that it creates a gap that most people don&rsquo;t have enough incentive to jump over. It creates additional headache to library developers making hard to support their creations across incompatibility boundary. This in its turn causes chicken and egg problem of no libraries, no users. In its worst separation could divide both ecosystem and community in half, lessening the project considerably.</p>
+
+<h4>Move fast, break things</h4>
+
+<p>Works well in earlier development stages. I never complained when upgrading Node.js from 0.1.x to 0.2.x broke my app as well as several dependencies. However, this effectively reduces library availability, since many authors just can&rsquo;t or interested enough to keep up with the development pace. I was astonished to hear from some of my ruby friends that they avoid using libraries not updated within 3 months as possibly abandoned ones.</p>
+
+<p>It also poses a strain on language users forced to change their coding habits and to constantly seek for and adapt a replacement libraries for abandoned ones. Some of them consequently settle with particular language or framework version causing an erosion of a community and ecosystem.</p>
+
+<h4>Stay small</h4>
+
+<p>&hellip; and useless. A viable strategy for very domain specific or otherwise having narrow field languages, e.g. for education. In any other case wider audience will need language to be extended to be useful for them. The alternative is to stay small &hellip;</p>
+
+<p>&hellip; and provide language extending capabilities. Seems like a good one. However, it hadn&rsquo;t quite worked for lots of lisps and forths. The common issue is that by not providing enough common ground you encourage separating into dialects.</p>
+
+<p>Language of each project gets tailored to project needs, to particular team style. Communities divide, codebases become incompatible effectively narrowing the language for its users and causing confusion for newcomers.</p>
+
+<p>The other issue with both flavors of this approach is that problem is not solved, it&rsquo;s only reduced. There is still no strategy to evolve the core.</p>
+
+<!--
+Small standard library with good packaging utilities and service will do the job.
+tools do job, language is more subjective.
+Unlike libraries frameworks divide people.
+ -->
+
+
+<h4>Rolling deprecation</h4>
+
+<p>This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes while still providing a compatibility guarantee for several releases. There are, however, some considerations to this strategy.</p>
+
+<p>First, you&rsquo;ll need new API each time you update something in backwards incompatible manner. Say you have a function to parse URLs and it returns a dict of query parameters. It however doesn&rsquo;t handle repetitive params well, it just captures last value. So you decided to update it to return a list instead. This change could break someone&rsquo;s code, so you end up with one of:</p>
+
+<p>```python
+def parse(url, capture_all=False):</p>
+
+<pre><code>...
+</code></pre>
+
+<p>def parse_all(url):</p>
+
+<pre><code>...
+</code></pre>
+
+<p>```</p>
+
+<p>Your users, respecting deprecation, litter their code with ugly <code>parse(url, True)</code> or <code>parse_all(url)</code> calls. And when finally you get rid of an old <code>parse</code> you need another round of deprecation to return to sane API. On function level this leads to <code>do_something_ex()</code> things, on module level we can see <code>urllib2</code>, <code>newforms</code> and <code>better-assert</code>.</p>
+
+<p>Second, you&rsquo;ll obviously need to ship several implementations for things you change. This hardens managing whatever you are doing a bit. But making life easier for broader group, whatever users, by making it harder for narrower one, whatever developers, is generally a good trade-off.</p>
+
+<p>Third, gradual change is not always possible. Say you want to change how the <code>/</code> operator works in your language. To be compatible it should work the old way in old code and a new way in new one.</p>
+
+<!-- not friendly with semver -->
+
+
+<h2>Rolling a language</h2>
+
+<p>Making an operator work differently depending on context seems impossible, but also offers a hint to resolve both itself and API uglifying issue. So obviously first we need a way to tell new code from old. The simplest thing is just stating this explicitly, and this is already used in Python 2:</p>
+
+<p><code>python
+from __future__ import division
+</code></p>
+
+<p>and in Perl 5:</p>
+
+<p><code>perl
+use feature 'say';
+</code></p>
+
+<p>Python version has file scope and Perls lexical one. Perl also goes farther by bundling features into language versions. E.g. by:</p>
+
+<p><code>perl
+use v5.16;
+</code></p>
+
+<p>you can turn on all 5.16 features, this can also deprecate some old features or alter their behavior. Any old code without that <code>use</code> statement or with the one with earlier version continues to behave the exact way it did. So we can change a language in a backward incompatible manner while still providing compatibility with older code. <!-- What a trick! --></p>
+
+<p>So this is it, the idea I started this post to promote. Lower I&rsquo;ll just address any issues/objections that I can think of.</p>
+
+<h2>Issues</h2>
+
+<p>Let&rsquo;s start from the ones from rolling deprecation section. First and last are resolved automatically, second &ndash; the need to ship several implementations bundled &ndash; remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make <code>use v5.10</code> an error in 5.20 version of a language. We&rsquo;ll need to make this span large and stable enough though.</p>
+
+<p>There is also an issue of how do we start this process. It&rsquo;s however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of <code>use</code> statement there and in absence of it just assume 3.4 semantics.</p>
+
+<h3>Easy parts</h3>
+
+<p>These ones are almost automatically solved by version declaration, still some elaboration will probably close unneeded questions.</p>
+
+<p><strong>Syntax changes</strong>. We have a chicken and egg problem like <code>use</code> is part of syntax and it can alter syntax itself. This is however only a problem if we follow Perl 5 lead and allow it anywhere. Although it&rsquo;s cool, it has no relation to solving real problem of &ldquo;using this library written for Blab 2.7 in my Blab 3.4 code&rdquo;. So we can just require every file start with <code>use</code> statement and then parse the rest with appropriate parser. Yes, we&rsquo;ll need to ship several parser implementations, they could share code though.</p>
+
+<p><strong>Semantic changes</strong>. Like we have the same syntactic construction or operator and it should behave in a new way. The beauty of declared version and separate parsers is that we can substitute a thing during parsing. For example, if we get tired of Python semantics of:</p>
+
+<p>```python
+try:</p>
+
+<pre><code>...
+</code></pre>
+
+<p>except E1, E2: # really means &ldquo;except E1 as E2:&rdquo;,</p>
+
+<pre><code>...        # not catch both as you might expect
+</code></pre>
+
+<p>```</p>
+
+<p>We can just make it to parse into the same thing as <code>except (E1, E2)</code>. Altering an AST node resulting from parsing an operator is even easier.</p>
+
+<p><strong>Built-in changes</strong>. Having all new and old built-ins implementations we&rsquo;ll need only arrange that globals are updated on <code>use</code> statement. Globals should be scoped lexically, at least at file level, for this to work. Note that by altering globals we handle all of addition, removal, rename and change of behavior of any built-in.</p>
+
+<p><strong>Standard library changes</strong>. The easiest way is just shipping several versions of it and patching import statement to load appropriate library version. Different versions of standard libs can share code for efficiency, but that&rsquo;s optional.</p>
+
+<h3>Passing over boundary</h3>
+
+<p>Real issues start to arise when we pass something from newer code to older one or vice a versa. Say we have an instance of built-in or standard library type which has changed and pass it to the code that expects to treat it as an instance of an older version of same type.</p>
+
+<p>The simplest thing to do is to provide converters and require a new code interfacing with an older one to use them. This will work, however, it will place significant burden on every forward-looking user of that old code. This is also not future compatible in a sense that if suddenly that old code is updated everyone needs to remove converter calls. And even if we manage somehow to automatically intercept all calls over boundary and convert everything there still be an issues like it could be slow or it would be impossible to share data by reference between newer and older code.</p>
+
+<p>Given all these obstacles, being able to gradually update your code even with a use of converters is significant improvement over major break with just no way to call older code without first updating it. And converters are quite simple thing to implement. But let&rsquo;s take a view into some more elaborate ways to overcome type changes.</p>
+
+<p>Say if a new version of a type has same internal representation and only a new interface then we can pass it as is and rely on some lexical dependent method substitution. This could sound like some unscientific magic, but there is <a href="http://www.ruby-doc.org/core-2.1.1/doc/syntax/refinements_rdoc.html">a corresponding feature</a> in ruby 2.0 and sure there is <a href="http://search.cpan.org/~chocolate/Method-Lexical/lib/Method/Lexical.pm">a perl module</a> for that. We can even incorporate active language version into method call semantics, this way changed types should just respond to all their historical interfaces in a support window, which probably won&rsquo;t be more than two.</p>
+
+<p>What if internal representation of a type changes? The thing is that shouldn&rsquo;t matter if nobody looks inside. We should still support all the interfaces and we&rsquo;ll be good. This puts a restriction on a kind of access language users, including library authors, have to instances of built-in types. E.g. if instance data is represented with C struct then we shouldn&rsquo;t allow direct access to its members, casting, etc. Everything should be done via functions or at least macros, which could be updated to handle newer representation.</p>
+
+<h3>Wrap-up</h3>
+
+<p>There are obviously some things I haven&rsquo;t addressed. And this approach doesn&rsquo;t make language developers lives easier. It could however make it more fun both for developers and their users. Cause this way things don&rsquo;t need to stay broken or weird cause that&rsquo;s how they are. An ability to change language in a backward incompatible manner should in the end bring better languages for everyone. It also feels like freedom.</p>
+]]></content>
+  </entry>
+  
+</feed>
