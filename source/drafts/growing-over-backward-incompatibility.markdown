@@ -7,21 +7,14 @@ published: false
 categories: [CS]
 ---
 
-<!-- When language grows it inevitably ... -->
-<!-- You can't foresee every use ... -->
-
 Every language needs to grow. It needs to evolve. However, there is a certain barrier it builds around itself over time called "Backward compatibility". Backward compatibility means you can't just change the thing in a best way possible, you need to comply to older design decisions, coincidences and even bugs.
-
-<!-- This could become so annoying that people start ... -->
-<!-- It's like going though a contracting tunnel ... -->
-<!-- If we thinks of field of all the possibilities ... walls ... -->
 
 So what should conscious designer do?
 
 
 ## Possible strategies
 
-Most languages don't have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one.
+Most languages don't have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one. But let's review possible strategies.
 
 
 #### Grow as it goes, then break big
@@ -55,7 +48,7 @@ Unlike libraries frameworks divide people.
 
 #### Rolling deprecation
 
-This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes, still your users have a compatibility guarantee for several releases. There are, however, some considerations to this strategy.
+This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes while still providing a compatibility guarantee for several releases. There are, however, some considerations to this strategy.
 
 First, you'll need new API each time you update something in backwards incompatible manner. Say you have a function to parse URLs and it returns a dict of query parameters. It however doesn't handle repetitive params well, it just captures last value. So you decided to update it to return a list instead. This change could break someone's code, so you end up with one of:
 
@@ -69,9 +62,9 @@ def parse_all(url):
 
 Your users, respecting deprecation, litter their code with ugly `parse(url, True)` or `parse_all(url)` calls. And when finally you get rid of an old `parse` you need another round of deprecation to return to sane API. On function level this leads to `do_something_ex()` things, on module level we can see `urllib2`, `newforms` and `better-assert`.
 
-Second, you'll obviously need to ship several implementations for things you change. This hardens managing whatever you are doing a bit, but easing life for broader group, whatever users, by making it harder for narrower one, whatever developers, is generally a good trade-off.
+Second, you'll obviously need to ship several implementations for things you change. This hardens managing whatever you are doing a bit. But making life easier for broader group, whatever users, by making it harder for narrower one, whatever developers, is generally a good trade-off.
 
-Third, gradual change is not always possible. Say you want to change how a `/` operator works in your language. To be compatible it should work the old way in old code and a new way in new one.
+Third, gradual change is not always possible. Say you want to change how the `/` operator works in your language. To be compatible it should work the old way in old code and a new way in new one.
 
 <!-- not friendly with semver -->
 
@@ -103,7 +96,7 @@ So this is it, the idea I started this post to promote. Lower I'll just address 
 
 ## Issues
 
-Let's start from the ones from rolling deprecation section. First and last are resolved automatically, second - the need to ship several implementations bundled - remains. We can only limit it by carefully storing all active implementations and providing a limit on supported versions, e.g. make `use v5.10` an error in 5.20 version of a language. We'll need to make this span large and stable enough though.
+Let's start from the ones from rolling deprecation section. First and last are resolved automatically, second - the need to ship several implementations bundled - remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make `use v5.10` an error in 5.20 version of a language. We'll need to make this span large and stable enough though.
 
 There is also an issue of how do we start this process. It's however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of `use` statement there and in absence of it just assume 3.4 semantics.
 
@@ -134,36 +127,18 @@ We can just make it to parse into the same thing as `except (E1, E2)`. Altering 
 
 Real issues start to arise when we pass something from newer code to older one or vice a versa. Say we have an instance of built-in or standard library type which has changed and pass it to the code that expects to treat it as an instance of an older version of same type.
 
-If it has same internal representation and only a new interface then we can pass it as is and rely on some lexical dependent method substitution. This could sound like some unscientific magic, but there is [a corresponding feature][refinements] in ruby 2.0 and sure there is [a perl module][method-lexical] for that. Anyway, that could be difficult or impossible depending on your language object model, this also won't work if internal representation of a value has changed.
+The simplest thing to do is to provide converters and require a new code interfacing with an older one to use them. This will work, however, it will place significant burden on every forward-looking user of that old code. This is also not future compatible in a sense that if suddenly that old code is updated everyone needs to remove converter calls. And even if we manage somehow to automatically intercept all calls over boundary and convert everything there still be an issues like it could be slow or it would be impossible to share data by reference between newer and older code.
 
-To deal with that we'll need to convert a value upon pass. Or provide all the interfaces for all the internal representations and switch them upon pass.
+Given all these obstacles, being able to gradually update your code even with a use of converters is significant improvement over major break with just no way to call older code without first updating it. And converters are quite simple thing to implement. But let's take a view into some more elaborate ways to overcome type changes.
 
-Partially semantic issue.
+Say if a new version of a type has same internal representation and only a new interface then we can pass it as is and rely on some lexical dependent method substitution. This could sound like some unscientific magic, but there is [a corresponding feature][refinements] in ruby 2.0 and sure there is [a perl module][method-lexical] for that. We can even incorporate active language version into method call semantics, this way changed types should just respond to all their historical interfaces in a support window, which probably won't be more than two.
 
-Manual vs auto convertation.
+What if internal representation of a type changes? The thing is that shouldn't matter if nobody looks inside. We should still support all the interfaces and we'll be good. This puts a restriction on a kind of access language users, including library authors, have to instances of built-in types. E.g. if instance data is represented with C struct then we shouldn't allow direct access to its members, casting, etc. Everything should be done via functions or at least macros, which could be updated to handle newer representation.
 
-Always use newer representation (with extras?), provide older interfaces.
 
-Incorporate lexical language version into call semantics?
+### Wrap-up
 
-Protocol using functions/constructions should handle all protocols
-
-``` python
-class Old:
-    def __repr1__(self):
-        ...
-
-class New:
-    def __repr2__(self):
-        ...
-
-use new;
-
-from old_class import Old
-
-old = Old()
-repr(old) # ???
-```
+There are obviously some things I haven't addressed. And this approach doesn't make language developers lives easier. It could however make it more fun both for developers and their users. Cause this way things don't need to stay broken or weird cause that's how they are. An ability to change language in a backward incompatible manner should in the end bring better languages for everyone. It also feels like freedom.
 
 
 [refinements]: http://www.ruby-doc.org/core-2.1.1/doc/syntax/refinements_rdoc.html
