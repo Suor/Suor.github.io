@@ -5,6 +5,7 @@ comments: true
 date: 2013-10-13 19:22
 categories: [FP, Python]
 hn_id: 6542224
+reddit_url: http://www.reddit.com/r/Python/comments/1oej74/functional_python_made_easy_with_a_new_library/
 ---
 
 

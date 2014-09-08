@@ -5,6 +5,7 @@ date: 2013-10-08 12:13
 comments: true
 categories: [FP, Python]
 hn_id: 6527441
+reddit_url: http://www.reddit.com/r/programming/comments/1pvaqy/abstracting_control_flow/
 ---
 
 

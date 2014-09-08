@@ -6,6 +6,7 @@ comments: true
 date: 2014-03-09 19:50
 categories: [Algorithms]
 hn_id: 7368205
+reddit_url: http://www.reddit.com/r/programming/comments/1zyozl/on_orm_cache_invalidation/
 ---
 
 Cache invalidation is probably one of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in a context of caching queries built via ORM.

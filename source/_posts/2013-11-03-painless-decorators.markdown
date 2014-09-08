@@ -6,6 +6,7 @@ comments: true
 date: 2013-11-03 20:07
 categories: [Python]
 hn_id: 6662926
+reddit_url: http://www.reddit.com/r/Python/comments/1puzwp/painless_decorators/
 ---
 
 
