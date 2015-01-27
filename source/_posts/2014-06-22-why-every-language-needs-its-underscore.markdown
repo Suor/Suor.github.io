@@ -113,7 +113,7 @@ All these examples have one common property -- red variants have more code. And 
 - takes longer to debug,
 - contains more bugs.
 
-Obviously, underscore, funcy and friends help us write less code (at least in this three examples). But how do they do that?
+Obviously, underscore, funcy and friends help us write less code (at least in these three examples). But how do they do that?
 
 
 ## Extracting abstractions
