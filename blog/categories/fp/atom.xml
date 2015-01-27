@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2014-09-08T08:55:12+08:00</updated>
+  <updated>2015-01-27T18:08:04+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -128,7 +128,7 @@ is_ascending = all(l < r for l, r in pairwise(seq))
 </ul>
 
 
-<p>Obviously, underscore, funcy and friends help us write less code (at least in this three examples). But how do they do that?</p>
+<p>Obviously, underscore, funcy and friends help us write less code (at least in these three examples). But how do they do that?</p>
 
 <h2>Extracting abstractions</h2>
 
