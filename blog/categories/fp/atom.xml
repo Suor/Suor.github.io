@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-04T15:45:43+07:00</updated>
+  <updated>2015-03-08T20:10:35+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,409 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Boiling React Down to Few Lines in jQuery]]></title>
+    <link href="http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
+    <updated>2015-03-08T20:08:00+07:00</updated>
+    <id>http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
+    <content type="html"><![CDATA[<p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p>
+
+<!--more-->
+
+
+<p>```html
+<span id="colored-counter">0</span>
+<input id="color"></input>
+<button id="inc"></button></p>
+
+<script>
+$('#color').on('keyup', function () {
+    $('#colored-counter').css('color', this.value);
+})
+
+$('#inc').on('click', function () {
+    var oldValue = $('#colored-counter').html();
+    var newValue = 1 + Number(old);
+    $('#colored-counter').html(newValue);
+})
+</script>
+
+
+<p>```</p>
+
+<p>Could be written as:</p>
+
+<p>```html
+<span id="colored-counter">0</span>
+<input id="color"></input>
+<button id="inc"></button></p>
+
+<script>
+var state = {color: '', value: 0};
+
+function updateUI() {
+    $('#colored-counter').css('color', state.color);
+    $('#colored-counter').html(state.value);
+}
+
+$('#color').on('keyup', function () {
+    state.color = this.value;
+    updateUI();
+})
+
+$('#inc').on('click', function () {
+    state.value++;
+    updateUI();
+})
+</script>
+
+
+<p>```</p>
+
+<p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
+Let me draw you a picture. This is how first variant works:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
+
+<p>And this is how second one does:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
+
+<p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
+
+<p>And even with our bastardized React-like code we get:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
+
+<p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
+In second one we have just <code>N</code> event links and <code>M</code> element links.
+Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M)</code>, not bad for a simple trick.</p>
+
+<p>Now it looks like we got something. But what about all those magical powers?
+Ah, we almost got them too.</p>
+
+<h2>Magical Powers</h2>
+
+<p>Basically all magical powers mentioned come from an ability to write:</p>
+
+<p>```js
+// save
+var cannedState = deepcopy(state);</p>
+
+<p>// load
+state = cannedState;
+updateUI();
+```</p>
+
+<p>This is facilitated by 2 facts:</p>
+
+<ul>
+<li>we have a single explicit state,</li>
+<li>we can update UI to comply to arbitrary state.</li>
+</ul>
+
+
+<p>That&rsquo;s it. We can write serialized canned state to local storage, send it to server, manage a history of canned states. And this will give us page reload protection, persistence and undo/time-travel respectively.</p>
+
+<p>Confused? Let&rsquo;s write some code. That&rsquo;s how we protect from accidental page reload:</p>
+
+<p>```js
+function updateUI() {</p>
+
+<pre><code>// Save latest state to local storage
+LocalStorage.set('state', JSON.stringify(state));
+// ... continue as usual
+</code></pre>
+
+<p>}</p>
+
+<p>// Load saved state from local storage on page load
+$(function () {</p>
+
+<pre><code>state = JSON.parse(LocalStorage.get('state'));
+updateUI();
+</code></pre>
+
+<p>});
+```</p>
+
+<p>And that&rsquo;s how we get time-travel debugging:</p>
+
+<p>```html
+<span id="time-pos"></span>
+<button id="back">Back</button>
+<button id="next">Next</button></p>
+
+<script>
+var time = {history: [], pos: 0};
+
+function updateTimeUI() {
+    $('#time-pos').html('Position ' + time.pos + ' of ' + time.history.length);
+}
+
+function saveState() {
+    time.history.push(deepcopy(state));
+    time.pos++;
+    updateTimeUI();
+}
+
+$('#back').on('click', function () {
+    // Move history pointer
+    time.pos--;
+    updateTimeUI();
+    // Load historic state
+    state = time.history[time.pos];
+    updateUI();
+})
+$('#next').on('click', function () {
+    time.pos++;
+    // ... same
+})
+
+// ...
+
+function updateUI() {
+    // Save state to history on every change
+    saveState();
+    // ... continue as usual
+}
+</script>
+
+
+<p>```</p>
+
+<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.</p>
+
+<p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
+and <code>updateTimeUI()</code> is its update function.</p>
+
+<p>Now we can build from that. Undo is just time-travel for user not developer, by saving history to local storage we can preserve it on page reload, by catching errors and sending them along with serialized history to our bug tracker we can automatically reproduce errors our users face.</p>
+
+<p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p>
+
+<h2>Pure Function</h2>
+
+<p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p>
+
+<p>First we need a slightly more intricate example:</p>
+
+<p>```html
+<span id="count">2</span></p>
+
+<ul>
+    <li>hi</li>
+    <li>there</li>
+</ul>
+
+
+<p><button id="add"></button></p>
+
+<script>
+var state = {items: ['hi', 'there']}
+
+function updateUI() {
+    $('#count').html(state.items.length);
+    // Compare ul.childNodes to state.items and make updates
+    // ...
+}
+
+$('ul li').on('click', function () {
+    delete state.items[this.index]; // TODO: check if this works
+    updateUI();
+})
+
+$('#add').on('click', function () {
+    state.items.push(getRandomString());
+    updateUI();
+})
+</script>
+
+
+<p>```</p>
+
+<p>Several things to see here:</p>
+
+<ul>
+<li>there is a duplication between prerendered html and initial state,</li>
+<li>update became complex &lsquo;cause we need to compare data structure to DOM.</li>
+</ul>
+
+
+<p>There is a simpler way to do this:</p>
+
+<p>```html</p>
+
+<div id="ui"></div>
+
+
+<p>&hellip;</p>
+
+<script>
+...
+
+function render(state) {
+    var span = '<span id="count">' + state.items.length + '</span>';
+    var lis = state.items.map(function (item) {
+        return '<li>' + item + '</li>';
+    });
+    return span + '<ul>' + lis.join('') + '</ul>'
+}
+
+function updateUI() {
+    $('#id').html(render(state));
+}
+
+...
+</script>
+
+
+<p>```</p>
+
+<p>Here <code>render()</code> is just pure function from app state to html. And we want it to be pure so that
+state will be the single thing defining UI.</p>
+
+<p>In a way UI was a function of state even in our bastardized code, it just wasn&rsquo;t clearly obvious
+&lsquo;cause we updated UI, not calculated and rebuilt it from scratch each time. There also was a possibility to screw up and write <code>updateUI()</code> so that UI state is defined both by its own previous state and application state, thus using render is not really an optimization, but a simplification and a guard.</p>
+
+<p>But anyway that&rsquo;s it on pure functions.</p>
+
+<h2>Virtual DOM</h2>
+
+<p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization &mdash; virtual DOM:</p>
+
+<p>```js
+var root = document.getElementById(&lsquo;ui&rsquo;);
+var prevState = state, prevTree = [];</p>
+
+<p>function render(state) {</p>
+
+<pre><code>// Virtual DOM is really just a tree of JavaScript objects or arrays
+return [
+    ['span', {id: 'count'}, state.items.length],
+    ['ul', {}, state.items.map(function (item) {
+        return  ['li', {}, item]
+    })]
+]
+</code></pre>
+
+<p>}</p>
+
+<p>function updateUI() {</p>
+
+<pre><code>var vTree = render(state);
+var diff = vDiff(prevTree, vTree); // Just a diff on data structures, haha :)
+vApply(root, diff)                 // Apply series of patches to real DOM
+
+prevState = deepcopy(state);
+prevTree = vTree;
+</code></pre>
+
+<p>}
+```</p>
+
+<p>If any of this diffing/patching sounds complicated to you then you shouldn&rsquo;t worry React or <a href="https://github.com/Matt-Esch/virtual-dom">standalone virtual DOM implementation</a> got you covered. But that&rsquo;s really not that complicated. If you know how to write diffing algorithm then you can surely implement this yourself.</p>
+
+<p>Note that what we just did is a premature optimization. Current simple example will do just fine
+with naive render-to-string implementation above. Surprisingly, most of SPAs out there will do just
+fine as well, browsers are hell fast these days. I want to stress this once more &ndash; for an average app you can skip React or other virtual DOM at start and only go for it once it gets too slow (or never).</p>
+
+<p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href="http://vdom-benchmark.github.io/vdom-benchmark/">one of the slowest ones</a> across the block.</p>
+
+<h2>Immutability</h2>
+
+<p>Noticed all that <code>deepcopy()</code> calls lying around, this looks like a waste (it really is cheap, but bear with me). The idea of immutable data-structures is instead of copying everything to save older states we build new state based on previous one without changing it.</p>
+
+<p>Maybe it is still not clear enough, so I show you. That&rsquo;s how we make immutable object in JS:</p>
+
+<p>```js
+var object = {</p>
+
+<pre><code>a: {x: 1, y: 2},
+b: {text: 'hi'}
+</code></pre>
+
+<p>}</p>
+
+<p>// Now instead of object.a.y = 3 we do
+var object2 = {</p>
+
+<pre><code>a: {x: object.a.x, y: 3},
+b: object.b
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Look how we reuse <code>object.a.x</code> and <code>object.b</code>. This not only saves us from copying, but effectively makes diffs way faster: before diffing <code>object.b</code> and <code>object2.b</code> we just check if they are the same object, which is referential equality, and done &mdash; diff is empty, no need to go all the way down.</p>
+
+<p>One thing to add is this naive approach to immutable collections is not only cumbersome, but also ineffective. Suppose you have an object with lots of keys and a value of one of them changes,
+you now need to create a new object with all the same keys (you can still reuse values). You probably don&rsquo;t use such objects, but what about array? Let&rsquo;s see how that looks like:</p>
+
+<p><code>js
+var prev = ['a', 'b', 'c', ..., 'z'];
+var next = prev.slice(0, n-1).concat([newValue]).concat(prev.slice(n));
+</code></p>
+
+<p>So we need to copy the whole thing. Here is a better way to implement immutable sequences:</p>
+
+<p>```js
+var prev = {</p>
+
+<pre><code>'0-3': {
+    '0-1': {0: 'a', 1: 'b'},
+    '2-3': {...},
+},
+'4-7': {...}
+</code></pre>
+
+<p>}
+var next = {</p>
+
+<pre><code>'0-3': {
+    '0-1': prev['0-3']['0-1'],
+    '2-3': {
+        2: 'hey',
+        3: prev['0-3']['2-3'][3]
+    }
+},
+'4-7': prev['4-7']
+</code></pre>
+
+<p>}
+```</p>
+
+<p>We can see that we only create <code>log N</code> new objects here and the rest is reused, so even less copying and faster diffs. You also don&rsquo;t need to really deal with all this trees. There are great ready to use implementations out there. E.g. this is how our first example looks with a help of
+<a href="https://github.com/facebook/immutable-js">Immutable.js</a>:</p>
+
+<p>```js
+var object = Immutable.fromJS({</p>
+
+<pre><code>a: {x: 1, y: 2},
+b: {text: 'hi'}
+</code></pre>
+
+<p>})</p>
+
+<p>var object2 = object.setIn([&lsquo;a&rsquo;, &lsquo;y&rsquo;], 3); // object remains intact
+```</p>
+
+<p>It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at <a href="https://github.com/swannodette/mori">mori</a> &mdash; a set of immutable collections extracted from ClojureScript.</p>
+
+<p>Note that React actually uses naive immutable by convention collections.</p>
+
+<h2>Wrap-up</h2>
+
+<p>It may look from my notes that React is not a good tool, but it is actually very useful one.
+It may not have magical powers and top speed, but it got components and is still pretty fast. It also offers ecosystem and community.</p>
+
+<p>And there is one more way to look at it. React made a significant push to front-end development in an interesting direction, including all those virtual DOMs and immutable collection libraries.</p>
+
+<p>Anyway, now that you know all this, you can judge better on what to use and how to structure your code.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Why Every Language Needs Its Underscore]]></title>

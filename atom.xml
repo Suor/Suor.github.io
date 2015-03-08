@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-04T15:45:43+07:00</updated>
+  <updated>2015-03-08T20:10:35+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,562 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Boiling React Down to Few Lines in jQuery]]></title>
+    <link href="http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
+    <updated>2015-03-08T20:08:00+07:00</updated>
+    <id>http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
+    <content type="html"><![CDATA[<p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p>
+
+<!--more-->
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;colored-counter&quot;</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'><span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;color&quot;</span><span class="nt">&gt;&lt;/input&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;inc&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;script&gt;</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#color&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;keyup&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#inc&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">oldValue</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">();</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">newValue</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">Number</span><span class="p">(</span><span class="nx">old</span><span class="p">);</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">newValue</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Could be written as:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;colored-counter&quot;</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'><span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;color&quot;</span><span class="nt">&gt;&lt;/input&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;inc&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;script&gt;</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">state</span> <span class="o">=</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="nx">state</span><span class="p">.</span><span class="nx">color</span><span class="p">);</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#color&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;keyup&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#inc&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
+Let me draw you a picture. This is how first variant works:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
+
+<p>And this is how second one does:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
+
+<p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
+
+<p>And even with our bastardized React-like code we get:</p>
+
+<p><img src="http://hackflow.com/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
+
+<p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
+In second one we have just <code>N</code> event links and <code>M</code> element links.
+Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M)</code>, not bad for a simple trick.</p>
+
+<p>Now it looks like we got something. But what about all those magical powers?
+Ah, we almost got them too.</p>
+
+<h2>Magical Powers</h2>
+
+<p>Basically all magical powers mentioned come from an ability to write:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// save</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">cannedState</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// load</span>
+</span><span class='line'><span class="nx">state</span> <span class="o">=</span> <span class="nx">cannedState</span><span class="p">;</span>
+</span><span class='line'><span class="nx">updateUI</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is facilitated by 2 facts:</p>
+
+<ul>
+<li>we have a single explicit state,</li>
+<li>we can update UI to comply to arbitrary state.</li>
+</ul>
+
+
+<p>That&rsquo;s it. We can write serialized canned state to local storage, send it to server, manage a history of canned states. And this will give us page reload protection, persistence and undo/time-travel respectively.</p>
+
+<p>Confused? Let&rsquo;s write some code. That&rsquo;s how we protect from accidental page reload:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Save latest state to local storage</span>
+</span><span class='line'>    <span class="nx">LocalStorage</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
+</span><span class='line'>    <span class="c1">// ... continue as usual</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Load saved state from local storage on page load</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">LocalStorage</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">));</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&rsquo;s how we get time-travel debugging:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;time-pos&quot;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;back&quot;</span><span class="nt">&gt;</span>Back<span class="nt">&lt;/button&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;next&quot;</span><span class="nt">&gt;</span>Next<span class="nt">&lt;/button&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;script&gt;</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">time</span> <span class="o">=</span> <span class="p">{</span><span class="nx">history</span><span class="o">:</span> <span class="p">[],</span> <span class="nx">pos</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateTimeUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#time-pos&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s1">&#39;Position &#39;</span> <span class="o">+</span> <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span> <span class="o">+</span> <span class="s1">&#39; of &#39;</span> <span class="o">+</span> <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">saveState</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
+</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">updateTimeUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#back&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Move history pointer</span>
+</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">--</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">updateTimeUI</span><span class="p">();</span>
+</span><span class='line'>    <span class="c1">// Load historic state</span>
+</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="p">];</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#next&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>    <span class="c1">// ... same</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// ...</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Save state to history on every change</span>
+</span><span class='line'>    <span class="nx">saveState</span><span class="p">();</span>
+</span><span class='line'>    <span class="c1">// ... continue as usual</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.</p>
+
+<p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
+and <code>updateTimeUI()</code> is its update function.</p>
+
+<p>Now we can build from that. Undo is just time-travel for user not developer, by saving history to local storage we can preserve it on page reload, by catching errors and sending them along with serialized history to our bug tracker we can automatically reproduce errors our users face.</p>
+
+<p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p>
+
+<h2>Pure Function</h2>
+
+<p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p>
+
+<p>First we need a slightly more intricate example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;count&quot;</span><span class="nt">&gt;</span>2<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'><span class="nt">&lt;ul&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li&gt;</span>hi<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li&gt;</span>there<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;add&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;script&gt;</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">state</span> <span class="o">=</span> <span class="p">{</span><span class="nx">items</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;hi&#39;</span><span class="p">,</span> <span class="s1">&#39;there&#39;</span><span class="p">]}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#count&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// Compare ul.childNodes to state.items and make updates</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;ul li&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">delete</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">index</span><span class="p">];</span> <span class="c1">// TODO: check if this works</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#add&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getRandomString</span><span class="p">());</span>
+</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Several things to see here:</p>
+
+<ul>
+<li>there is a duplication between prerendered html and initial state,</li>
+<li>update became complex &lsquo;cause we need to compare data structure to DOM.</li>
+</ul>
+
+
+<p>There is a simpler way to do this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;ui&quot;</span><span class="nt">&gt;&lt;/div&gt;</span>
+</span><span class='line'>...
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;script&gt;</span>
+</span><span class='line'><span class="p">...</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">span</span> <span class="o">=</span> <span class="s1">&#39;&lt;span id=&quot;count&quot;&gt;&#39;</span> <span class="o">+</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="s1">&#39;&lt;/span&gt;&#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">lis</span> <span class="o">=</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s1">&#39;&lt;li&gt;&#39;</span> <span class="o">+</span> <span class="nx">item</span> <span class="o">+</span> <span class="s1">&#39;&lt;/li&gt;&#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">span</span> <span class="o">+</span> <span class="s1">&#39;&lt;ul&gt;&#39;</span> <span class="o">+</span> <span class="nx">lis</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&lt;/ul&gt;&#39;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#id&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">...</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here <code>render()</code> is just pure function from app state to html. And we want it to be pure so that
+state will be the single thing defining UI.</p>
+
+<p>In a way UI was a function of state even in our bastardized code, it just wasn&rsquo;t clearly obvious
+&lsquo;cause we updated UI, not calculated and rebuilt it from scratch each time. There also was a possibility to screw up and write <code>updateUI()</code> so that UI state is defined both by its own previous state and application state, thus using render is not really an optimization, but a simplification and a guard.</p>
+
+<p>But anyway that&rsquo;s it on pure functions.</p>
+
+<h2>Virtual DOM</h2>
+
+<p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization &mdash; virtual DOM:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">root</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;ui&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">prevState</span> <span class="o">=</span> <span class="nx">state</span><span class="p">,</span> <span class="nx">prevTree</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Virtual DOM is really just a tree of JavaScript objects or arrays</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">[</span>
+</span><span class='line'>        <span class="p">[</span><span class="s1">&#39;span&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">id</span><span class="o">:</span> <span class="s1">&#39;count&#39;</span><span class="p">},</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">],</span>
+</span><span class='line'>        <span class="p">[</span><span class="s1">&#39;ul&#39;</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span>  <span class="p">[</span><span class="s1">&#39;li&#39;</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">item</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">})]</span>
+</span><span class='line'>    <span class="p">]</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">vTree</span> <span class="o">=</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">diff</span> <span class="o">=</span> <span class="nx">vDiff</span><span class="p">(</span><span class="nx">prevTree</span><span class="p">,</span> <span class="nx">vTree</span><span class="p">);</span> <span class="c1">// Just a diff on data structures, haha :)</span>
+</span><span class='line'>    <span class="nx">vApply</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span> <span class="nx">diff</span><span class="p">)</span>                 <span class="c1">// Apply series of patches to real DOM</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">prevState</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
+</span><span class='line'>    <span class="nx">prevTree</span> <span class="o">=</span> <span class="nx">vTree</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If any of this diffing/patching sounds complicated to you then you shouldn&rsquo;t worry React or <a href="https://github.com/Matt-Esch/virtual-dom">standalone virtual DOM implementation</a> got you covered. But that&rsquo;s really not that complicated. If you know how to write diffing algorithm then you can surely implement this yourself.</p>
+
+<p>Note that what we just did is a premature optimization. Current simple example will do just fine
+with naive render-to-string implementation above. Surprisingly, most of SPAs out there will do just
+fine as well, browsers are hell fast these days. I want to stress this once more &ndash; for an average app you can skip React or other virtual DOM at start and only go for it once it gets too slow (or never).</p>
+
+<p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href="http://vdom-benchmark.github.io/vdom-benchmark/">one of the slowest ones</a> across the block.</p>
+
+<h2>Immutability</h2>
+
+<p>Noticed all that <code>deepcopy()</code> calls lying around, this looks like a waste (it really is cheap, but bear with me). The idea of immutable data-structures is instead of copying everything to save older states we build new state based on previous one without changing it.</p>
+
+<p>Maybe it is still not clear enough, so I show you. That&rsquo;s how we make immutable object in JS:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">object</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;hi&#39;</span><span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Now instead of object.a.y = 3 we do</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">object2</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="nx">object</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">3</span><span class="p">},</span>
+</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="nx">object</span><span class="p">.</span><span class="nx">b</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Look how we reuse <code>object.a.x</code> and <code>object.b</code>. This not only saves us from copying, but effectively makes diffs way faster: before diffing <code>object.b</code> and <code>object2.b</code> we just check if they are the same object, which is referential equality, and done &mdash; diff is empty, no need to go all the way down.</p>
+
+<p>One thing to add is this naive approach to immutable collections is not only cumbersome, but also ineffective. Suppose you have an object with lots of keys and a value of one of them changes,
+you now need to create a new object with all the same keys (you can still reuse values). You probably don&rsquo;t use such objects, but what about array? Let&rsquo;s see how that looks like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">prev</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="p">...,</span> <span class="s1">&#39;z&#39;</span><span class="p">];</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">next</span> <span class="o">=</span> <span class="nx">prev</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">n</span><span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="nx">concat</span><span class="p">([</span><span class="nx">newValue</span><span class="p">]).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">prev</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">n</span><span class="p">));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So we need to copy the whole thing. Here is a better way to implement immutable sequences:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">prev</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="s1">&#39;0-3&#39;</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="s1">&#39;0-1&#39;</span><span class="o">:</span> <span class="p">{</span><span class="mi">0</span><span class="o">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="o">:</span> <span class="s1">&#39;b&#39;</span><span class="p">},</span>
+</span><span class='line'>        <span class="s1">&#39;2-3&#39;</span><span class="o">:</span> <span class="p">{...},</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>    <span class="s1">&#39;4-7&#39;</span><span class="o">:</span> <span class="p">{...}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">next</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="s1">&#39;0-3&#39;</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="s1">&#39;0-1&#39;</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;0-3&#39;</span><span class="p">][</span><span class="s1">&#39;0-1&#39;</span><span class="p">],</span>
+</span><span class='line'>        <span class="s1">&#39;2-3&#39;</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="mi">2</span><span class="o">:</span> <span class="s1">&#39;hey&#39;</span><span class="p">,</span>
+</span><span class='line'>            <span class="mi">3</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;0-3&#39;</span><span class="p">][</span><span class="s1">&#39;2-3&#39;</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>    <span class="s1">&#39;4-7&#39;</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;4-7&#39;</span><span class="p">]</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can see that we only create <code>log N</code> new objects here and the rest is reused, so even less copying and faster diffs. You also don&rsquo;t need to really deal with all this trees. There are great ready to use implementations out there. E.g. this is how our first example looks with a help of
+<a href="https://github.com/facebook/immutable-js">Immutable.js</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">object</span> <span class="o">=</span> <span class="nx">Immutable</span><span class="p">.</span><span class="nx">fromJS</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;hi&#39;</span><span class="p">}</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">var</span> <span class="nx">object2</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">setIn</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// object remains intact</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at <a href="https://github.com/swannodette/mori">mori</a> &mdash; a set of immutable collections extracted from ClojureScript.</p>
+
+<p>Note that React actually uses naive immutable by convention collections.</p>
+
+<h2>Wrap-up</h2>
+
+<p>It may look from my notes that React is not a good tool, but it is actually very useful one.
+It may not have magical powers and top speed, but it got components and is still pretty fast. It also offers ecosystem and community.</p>
+
+<p>And there is one more way to look at it. React made a significant push to front-end development in an interesting direction, including all those virtual DOMs and immutable collection libraries.</p>
+
+<p>Anyway, now that you know all this, you can judge better on what to use and how to structure your code.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Growing Over Backward Incompatibility]]></title>
