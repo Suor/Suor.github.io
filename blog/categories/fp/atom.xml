@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-08T21:12:01+07:00</updated>
+  <updated>2015-03-08T21:27:02+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -221,8 +221,8 @@ function updateUI() {
     // ...
 }
 
-$('ul li').on('click', function () {
-    state.items.splice(this.index, 1);
+$('ul').on('click', 'li', function () {
+    state.items.splice($(this).index(), 1);
     updateUI();
 })
 
