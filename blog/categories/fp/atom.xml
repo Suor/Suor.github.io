@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-08T21:27:02+07:00</updated>
+  <updated>2015-03-08T23:06:34+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -166,7 +166,7 @@ $('#back').on('click', function () {
     time.pos--;
     updateTimeUI();
     // Load historic state
-    state = time.history[time.pos];
+    state = deepcopy(time.history[time.pos]);
     updateUI();
 })
 $('#next').on('click', function () {
@@ -186,7 +186,8 @@ function updateUI() {
 
 <p>```</p>
 
-<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.</p>
+<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.
+I created <a href="http://jsbin.com/fejija/1/edit?js,output">a working clickable demo</a> to illustrate it even more.</p>
 
 <p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
 and <code>updateTimeUI()</code> is its update function.</p>

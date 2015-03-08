@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-08T21:27:02+07:00</updated>
+  <updated>2015-03-08T23:06:34+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -249,7 +249,7 @@ Ah, we almost got them too.</p>
 </span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">--</span><span class="p">;</span>
 </span><span class='line'>    <span class="nx">updateTimeUI</span><span class="p">();</span>
 </span><span class='line'>    <span class="c1">// Load historic state</span>
-</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="p">];</span>
+</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="p">]);</span>
 </span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
 </span><span class='line'><span class="p">})</span>
 </span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#next&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
@@ -268,7 +268,8 @@ Ah, we almost got them too.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.</p>
+<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.
+I created <a href="http://jsbin.com/fejija/1/edit?js,output">a working clickable demo</a> to illustrate it even more.</p>
 
 <p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
 and <code>updateTimeUI()</code> is its update function.</p>

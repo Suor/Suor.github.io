@@ -351,6 +351,8 @@ Ah, we almost got them too.</p>
 
 <p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.</p>
 
+<p><a class="jsbin-embed" href="http://jsbin.com/xohohagahu/1/embed?js,output">JS Bin</a><script src="http://static.jsbin.com/js/embed.js"></script></p>
+
 <p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
 and <code>updateTimeUI()</code> is its update function.</p>
 
@@ -637,7 +639,7 @@ you now need to create a new object with all the same keys (you can still reuse 
 
 <p>It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at <a href="https://github.com/swannodette/mori">mori</a> &mdash; a set of immutable collections extracted from ClojureScript.</p>
 
-<p>Note that React actually uses naive immutable by convention collections.</p>
+<p>Note that React actually uses naive immutable by convention collections</p>
 
 <h2>Wrap-up</h2>
 
@@ -700,14 +702,6 @@ It may not have magical powers and top speed, but it got components and is still
     </p>
   </footer>
 </article>
-
-  <section>
-    <h1>Comments
-    </h1>
-
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
 
 </div>
 
@@ -793,22 +787,6 @@ It may not have magical powers and top speed, but it got components and is still
 
 </footer>
   
-
-<script type="text/javascript">
-      var disqus_shortname = 'hackflow';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://hackflow.com/drafts/boiling-react-down-to-few-lines-in-jquery.html';
-        var disqus_url = 'http://hackflow.com/drafts/boiling-react-down-to-few-lines-in-jquery.html';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
 
 
 
