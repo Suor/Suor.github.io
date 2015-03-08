@@ -2,7 +2,7 @@
 layout: post
 title: "Boiling React Down to Few Lines in jQuery"
 comments: true
-published: true
+date: 2015-03-08 20:08
 categories: [FP, UI]
 ---
 
