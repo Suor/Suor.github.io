@@ -409,12 +409,12 @@ and <code>updateTimeUI()</code> is its update function.</p>
 </span><span class='line'><span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;ul li&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="k">delete</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">index</span><span class="p">];</span> <span class="c1">// TODO: check if this works</span>
+</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 </span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
 </span><span class='line'><span class="p">})</span>
 </span><span class='line'>
 </span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#add&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getRandomString</span><span class="p">());</span>
+</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getNextString</span><span class="p">());</span>
 </span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
 </span><span class='line'><span class="p">})</span>
 </span><span class='line'><span class="nt">&lt;/script&gt;</span>
