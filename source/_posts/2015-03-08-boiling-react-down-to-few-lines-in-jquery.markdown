@@ -25,7 +25,7 @@ $('#color').on('keyup', function () {
 
 $('#inc').on('click', function () {
     var oldValue = $('#colored-counter').html();
-    var newValue = 1 + Number(old);
+    var newValue = 1 + Number(oldValue);
     $('#colored-counter').html(newValue);
 })
 </script>
@@ -144,7 +144,7 @@ $('#back').on('click', function () {
     time.pos--;
     updateTimeUI();
     // Load historic state
-    state = time.history[time.pos];
+    state = deepcopy(time.history[time.pos]);
     updateUI();
 })
 $('#next').on('click', function () {
@@ -195,13 +195,13 @@ function updateUI() {
     // ...
 }
 
-$('ul li').on('click', function () {
-    delete state.items[this.index]; // TODO: check if this works
+$('ul').on('click', 'li', function () {
+    state.items.splice($(this).index(), 1);
     updateUI();
 })
 
 $('#add').on('click', function () {
-    state.items.push(getRandomString());
+    state.items.push(getNextString());
     updateUI();
 })
 </script>
@@ -230,7 +230,7 @@ function render(state) {
 }
 
 function updateUI() {
-    $('#id').html(render(state));
+    $('#ui').html(render(state));
 }
 
 ...
