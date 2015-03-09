@@ -2,8 +2,11 @@
 layout: post
 title: "Boiling React Down to a Few Lines in jQuery"
 comments: true
+sharing: true
 date: 2015-03-08 20:08
 categories: [FP, UI]
+_hn_id: 9165462
+reddit_url: http://www.reddit.com/r/programming/comments/2yc1cs/boiling_react_down_to_few_lines_in_jquery/
 ---
 
 You probably heard something like how React is awesome 'cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I'll show that in a few lines in jQuery.
