@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Boiling React Down to Few Lines in jQuery"
+title: "Boiling React Down to a Few Lines in jQuery"
 comments: true
 date: 2015-03-08 20:08
 categories: [FP, UI]
@@ -282,9 +282,9 @@ Another stone in Reacts direction: it's virtual DOM is [one of the slowest ones]
 
 ## Immutability
 
-Noticed all that `deepcopy()` calls lying around, this looks like a waste (it really is cheap, but bear with me). The idea of immutable data-structures is instead of copying everything to save older states we build new state based on previous one without changing it.
+Noticed all that `deepcopy()` calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.
 
-Maybe it is still not clear enough, so I show you. That's how we make immutable object in JS:
+Maybe it is still not clear enough, so I'll show you. That's how we make immutable objects in JS:
 
 ```js
 var object = {
