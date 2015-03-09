@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-09T00:20:55+07:00</updated>
+  <updated>2015-03-09T09:24:03+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -35,7 +35,7 @@ $('#color').on('keyup', function () {
 
 $('#inc').on('click', function () {
     var oldValue = $('#colored-counter').html();
-    var newValue = 1 + Number(old);
+    var newValue = 1 + Number(oldValue);
     $('#colored-counter').html(newValue);
 })
 </script>
