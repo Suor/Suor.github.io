@@ -163,6 +163,7 @@ function updateUI() {
 ```
 
 On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.
+I created [a working clickable demo][time-travel-demo] to illustrate it even more.
 
 Note also how we use the same pattern here? `time` is the state of time-travel sub-application
 and `updateTimeUI()` is its update function.
@@ -361,6 +362,7 @@ And there is one more way to look at it. React made a significant push to front-
 Anyway, now that you know all this, you can judge better on what to use and how to structure your code.
 
 
+[time-travel-demo]: http://jsbin.com/fejija/1/edit?js,output
 [virtual-dom]: https://github.com/Matt-Esch/virtual-dom
 [virtual-dom-benchmark]: http://vdom-benchmark.github.io/vdom-benchmark/
 [Immutable.js]: https://github.com/facebook/immutable-js
