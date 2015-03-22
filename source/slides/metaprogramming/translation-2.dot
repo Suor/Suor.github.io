@@ -1,0 +1,20 @@
+digraph {
+    ordering="out"
+    node [style=filled color="#599FB6" fillcolor=lightblue fontname="Ubuntu,Monospace"]
+    edge [arrowhead=normal arrowtail=dot color="#599FB6"]
+
+    "[Name]" [label="v" color=orange fillcolor="#FFD890"]
+    Name2 [label="v" color=orange fillcolor="#FFD890"]
+    Num [label="100" color=orange fillcolor="#FFD890"]
+    LtE [label="<="]
+    Compare [label="(v <= 100)"]
+
+    Lambda -> arguments
+    arguments -> "[Name]" [color="#C68100"]
+
+    Lambda -> Return
+    Return -> Compare
+    Compare -> Name2 [color="#C68100"]
+    Compare -> LtE
+    Compare -> Num [color="#C68100"]
+}

@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+
+        <title>Метапрограммирование за гранью приличий</title>
+
+        <meta name="description" content="Питон предоставляет глубокие возможности по интроспекции вплоть до байткода и AST. Это, наряду c возможностью кастомизации поведения объектов, предоставляет неочевидные пути написания кода, который пишет код или иначе влияет на исполнение. Я приведу несколько примеров как можно всё это применить весело и с пользой">
+        <meta name="author" content="Hakim El Hattab">
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+        <meta property="twitter:card" content="summary">
+        <meta property="twitter:site" content="hackflow">
+        <meta property="twitter:url" content="http://hackflow.com/slides/metaprogramming/">
+        <meta property="twitter:title" content="Метапрограммирование (за гранью приличий)">
+        <meta property="twitter:description" content="Этот доклад про код, который пишет код или иначе влияет на исполнение, используя AST, bytecode и перегрузку операторов. Я приведу несколько примеров как можно всё это применить весело и с пользой.">
+
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+        <!-- Code syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+        <style>
+            .reveal pre code {
+                font-size: 195%;
+                line-height: 150%;
+            }
+            .small-code pre code, pre.small-code code {
+                font-size: 150%;
+                line-height: 130%;
+            }
+            .tiny-code pre code, pre.tiny-code code {
+                font-size: 135%;
+                line-height: 111%;
+            }
+            .break-word, .break-word code {
+                word-wrap: break-word !important;
+            }
+        </style>
+
+        <!--[if lt IE 9]>
+        <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+
+    <body>
+
+        <div class="reveal">
+
+            <!-- Any section element inside of this container is displayed as a slide -->
+            <div class="slides">
+
+<section>
+    <h2>Метапрограммирование</h2>
+    <p>(за гранью приличий)</p>
+</section>
+
+<section data-markdown>
+<script type="text/template">
+### Разминка
+```python
+>>> map(_ + 1, [1, 2, 3])
+[2, 3, 4]
+```
+</script>
+</section>
+
+<section data-markdown><script type="text/template">
+### Просто перегрузка операторов
+```python
+class Whatever(object):
+    def __add__(self, y):
+        return lambda x: x + y
+
+_ = Whatever()
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+sort(guys, key=-_.height)
+
+factorial = lambda n:
+    reduce(_ * _, range(2, n+1))
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+### 3 библиотеки
+
+- whatever
+- placeholder
+- fn.py
+</script></section>
+
+<section data-transition-speed="slow" >
+<h3>Pattern matching</h3>
+<pre class="fragment" style="margin-bottom: 0; box-shadow: none; transition-duration: 0.8s"><code class="python">@patterns</code></pre>
+<pre style="margin-top: 0; box-shadow: none"><code class="python">def prod():
+    if []: 1
+    if [x] + xs: x * prod(xs)
+</code></pre>
+</section>
+
+<section>
+    <p>Код &nbsp;&rarr;&nbsp; AST &nbsp;&rarr;&nbsp; Новый AST &nbsp;&rarr;&nbsp; Новый Код</p>
+    <small style="color: #7f7f7f">*AST = Абстрактное синтаксическое дерево</small>
+</section>
+
+<SECTION>
+<section data-markdown><script type="text/template">
+```python
+def prod(value):
+   if value == []: return 1
+   if isinstance(value, list) ...:
+      x, xs = value[0], value[1:]
+      return x * prod(xs)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+@patterns
+def prod():
+    if []: 1
+    if [x] + xs: x * prod(xs)
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+@patterns
+def answer():
+    if ['hello']:
+        "Hello, my `ame is %s" % botname
+    if ['i', 'am', name]:
+        "Hello, %s!" % name.capitalize()
+```
+</script></section>
+</SECTION>
+
+<section data-markdown><script type="text/template">
+### Применения
+
+- расширение языка
+- оптимизации
+- анализ
+- трансляция
+</script></section>
+
+<section>
+    <p>Код &nbsp;&rarr;&nbsp; AST &nbsp;&rarr;&nbsp; Новый AST &nbsp;&rarr;&nbsp; Новый Код</p>
+    <p>Код &nbsp;&rarr;&nbsp; AST &nbsp;&rarr;&nbsp; JavaScript</p>
+    <p>Байткод &nbsp;&rarr;&nbsp; AST &nbsp;&rarr;&nbsp; SQL</p>
+    <!-- <p>... &nbsp;&rarr;&nbsp; AST &nbsp;&rarr;&nbsp; ...</p> -->
+</section>
+
+<section data-markdown><script type="text/template">
+## AST
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+import inspect, ast
+source = inspect.getsource(func)
+tree = ast.parse(source)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+from meta.decompiler
+    import decompile_func
+
+tree = decompile_func(
+    lambda x: x + 1)
+```
+</script></section>
+
+<style>
+img.fragment.visible.grow-up  {margin-top: -1.2em}
+</style>
+<section>
+    <pre><code class="python">lambda x: x + 1</code></pre>
+    <img src="ast-example.dot.svg" class="fragment grow grow-up">
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> tree
+<_ast.Lambda at 0x7f7e2359e490>
+```
+```python
+>>> tree.body
+<_ast.Return at 0x7f3e75f869d0>
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section>
+<pre><code class="python break-word">>>> import ast
+>>> print ast.dump(tree)
+Lambda(args=arguments(args=[Name(id='x', ctx=Param())], ...), body=BinOp(left=Name(id='x', ctx=Load()), op=Add(), right=Num(n=1)))
+</code></pre>
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> import astor
+>>> print astor.dump(tree)
+Lambda(
+    args=arguments(args=...),
+    body=BinOp(...)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> print astor.to_source(tree)
+(lambda x: (x + 1))
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+code = compile(tree, '', 'exec')
+exec(code, globals(), context)
+```
+```python
+>>> context
+{'func': <function __main__.func>}
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section>
+    <h3>Хождение по дереву</h3>
+</section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class NumberFinder(ast.NodeVisitor):
+    def visit_Num(self, node):
+        print "Found number literal", node.n
+
+def find_numbers(tree):
+    NumberFinder().visit(tree)
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class ExprOptimizer(ast.NodeTransformer):
+    def visit_BinOp(self, n):
+        n = self.generic_visit(n)
+        if type(n.left) is Num
+                and type(n.right) is Num:
+            return do(n.op, n.left, n.right)
+        else:
+            return n
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+def return_last(tree):
+    if not hasattr(tree, 'body'):
+        return
+    elif isinstance(tree.body[-1], Expr):
+        tree.body[-1]
+            = Return(value=tree.body[-1])
+    else:
+        return_last(tree.body[-1])
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+>>> tree._fields
+('args', 'body')
+```
+```python
+>>> ast.iter_fields(tree)
+[('args', <_ast.arguments at ...>),
+ ('body', <_ast.Return at ...>)]
+```
+<!-- .element: class="fragment roll-in" -->
+
+```python
+>>> ast.iter_child_nodes(tree)
+[<_ast.arguments ...>, <_ast.Return ...>]
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+## Трансляция
+</script></section>
+
+<section>
+    <img src="car-form-start.png" class="stretch">
+</section>
+
+<section>
+    <img src="car-form-full.png" class="stretch">
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+clean = lambda x:
+    int(re.sub(r'\s+', '', x))
+
+validate = lambda x:
+    1000 <= x < 100000000
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Начнём с простенького
+```python
+>>> translate(lambda v: v <= 100)
+```
+</script></section>
+<!-- ```js
+function (v) {
+    return (v <= 100)}
+```
+ -->
+<section data-markdown><script type="text/template">
+```python
+from meta.decompiler
+    import decompile_func
+
+tree = decompile_func(
+    lambda v: v <= 100)
+```
+</script></section>
+
+<section>
+    <img src="rule-tree.dot.svg" class="stretch">
+</section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class Translator(ast.NodeVisitor):
+    ...
+    def visit_Num(self, node):
+        node.js = str(node.n)
+
+    def visit_Name(self, node):
+        node.js = 'null' if node.id == 'None'
+            else node.id
+```
+</script></section>
+
+<section>
+    <img src="translation-1.dot.svg" class="stretch">
+</section>
+
+<SECTION>
+<section data-markdown><script type="text/template">
+```python
+def visit_Compare(self, node):
+    self.generic_visit(node)
+    node.js = '(%s %s %s)' %
+              (node.left.js,
+               node.op.js,
+               node.right.js)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+def visit_IfExp(self, node):
+    self.generic_visit(node)
+    node.js = '%s ? %s : %s' %
+              (node.test.js,
+               node.body.js,
+               node.orelse.js)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+def visit_Call(self, node):
+    assert node.kwargs is None
+        and node.starargs is None
+    # ...
+```
+</script></section>
+</SECTION>
+
+<section>
+    <img src="translation-2.dot.svg" class="stretch">
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> translate(lambda v: v <= 100)
+```
+```js
+function (v) {
+    return (v <= 100)}
+```
+</script></section>
+
+<section xclass="tiny-code" data-markdown><script type="text/template">
+### Особенности
+```python
+1 <= x < 10           # Python
+```
+```js
+(1 <= x) && (x < 10) // JavaScript
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section class="tiny-code" data-markdown><script type="text/template">
+```python
+1 <= x < 10           # Python
+```
+```js
+(1 <= x) && (x < 10) // JavaScript
+```
+```python
+def visit_Compare(self, node):
+    self.generic_visit(node)
+
+    ops = node.ops
+    operands = [node.left] + node.comparators
+    pairs = pairwise(operands)
+
+    node.js = ' && '.join('%s(%s %s %s)' %
+        ('!' if isinstance(op, ast.NotIn) else '',
+            l.js, op.js, r.js)
+        for op, (l, r) in zip(ops, pairs))
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+func(*args, **kwargs)    # Python
+```
+```python
+def visit_Call(self, node):
+    assert node.kwargs is None
+        and node.starargs is None
+    # ...
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+## Замыкания
+```python
+up_to = lambda limit:
+            lambda v: v <= limit
+translate(up_to(50))
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> u50 = up_to(50)
+>>> u50.__closure__
+(<cell at ...: int object ...>,)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> [cell.cell_contents
+      for cell in u50.__closure__]
+[50]
+```
+```python
+>>> u50.__code__.co_freevars
+('limit',)
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+```js
+(function (){
+    var limit = 50;
+
+    return function (v) {
+        return (v <= limit)}
+}())
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+## Больше замыканий
+- глобальные имена <!-- .element: class="fragment roll-in" -->
+- встроенные функции <!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+len50 = lambda s: len(s) <= 50
+```
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+```python
+>>> len50.__globals__
+{'len50': <function <lambda> at 0x7f705a92a848>, '__builtins__': <module '__builtin__' (built-in)>, 'dis': <module 'dis' from '/usr/lib/python2.7/dis.pyc'>, 'translate': <function js.translate>, 's': '\n<section>\n<pre><code class="python">>>> [cell.cell_contents\n...'
+```
+<!-- .element: class="small-code break-word" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> __builtin__.__dict__
+{'bytearray': <type 'bytearray'>, 'IndexError': <type 'exceptions.IndexError'>, 'all': <built-in function all>, 'vars': <built-in function vars>, 'SyntaxError': <type 'exceptions.SyntaxError'>, 'isinstance': <built-in function isinstance>, 'copyright': Copyright (c) 2001-2014 Python Software Foundatio...
+```
+<!-- .element: class="small-code break-word" -->
+</script></section>
+
+<section>
+    <p>Как получить используемые имена?</p>
+</section>
+
+<section data-markdown><script type="text/template">
+### Байткод
+```python
+>>> len50.__code__.co_code
+'t\x00\x00|\x00\x00\x83\x01\x00d\x01\x00k\x01\x00S'
+```
+<!-- .element: class="break-word _fragment roll-in" -->
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+>>> dis.dis(lambda s: len(s) <= 50)
+1       0 LOAD_GLOBAL         0 (len)
+        3 LOAD_FAST           0 (s)
+        6 CALL_FUNCTION       1
+        9 LOAD_CONST          1 (50)
+       12 COMPARE_OP          1 (<=)
+       15 RETURN_VALUE
+```
+</script></section>
+
+
+<section cclass="small-code" data-markdown><script type="text/template">
+```python
+from byteplay import Code
+
+code = Code.from_code(f.__code__)
+```
+```python
+for cmd, param in code.code:
+    if cmd == LOAD_GLOBAL:
+        names.add(param)
+```
+<!-- .element: class="break-word fragment roll-in" -->
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+```python
+BUILTINS = {
+    ...
+    len: lambda s: s.length,
+    ...
+}
+```
+</script></section>
+
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+translate(lambda s: len(s) <= 50)
+```
+```js
+(function (){
+    var len = function (s) {return s.length};
+
+    return function (s) {
+        return (len(s) <= 50)}
+}())
+```
+</script></section>
+
+<style type="text/css">
+    .fragment.center.visible {margin-top: 25%}
+</style>
+<section class="tiny-code" data-markdown><script type="text/template">
+```python
+translate(lambda xs: len(xs) >= 1 and all(xs))
+```
+<!-- .element: class="fragment grow center" data-fragment-index="1" -->
+
+```js
+(function (){
+    var all = (function () {
+            var identity = function (x) {
+                return x};
+
+            return function (seq) {
+                return seq.every(identity)}
+        }()),
+        len = function (s) {return s.length};
+
+    return function (xs) {
+        return ((len(xs) >= 1) && all(xs))}
+}())
+```
+<!-- .element: class="fragment fade-out" data-fragment-index="1" -->
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+### Движение с двух сторон
+
+```python
+# не работает, нужно s.trim()
+lambda s: s.strip()
+```
+```python
+# работает
+lambda s: string.strip(s)
+```
+<!-- .element: class="break-word fragment roll-in" -->
+</script>
+</section>
+
+<section data-markdown><script type="text/template">
+### Движение с двух сторон
+- никакого рантайма <!-- .element: class="break-word fragment roll-in" -->
+- никаких обёрточек <!-- .element: class="break-word fragment roll-in" -->
+- 300 строк кода    <!-- .element: class="break-word fragment roll-in" -->
+</script></section>
+
+<section><h3>Демонстрация</h3></section>
+
+<section>
+    <img src="demo-validation.gif" class="stretch">
+</section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class PriceField(FlexField):
+    clean = lambda v:
+                int(re.sub('\s+', '', v))
+    rules = [
+        [lambda v: v < 100000000,
+            'Укажите адекватную цену'],
+        [lambda v: v >= 1000,
+            'Укажите цену в рублях, ...'],
+    ]
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class PriceField(FlexField):
+    clean = clean.posint
+    rules = [
+        [rule.lt(100000000),
+            'Укажите адекватную цену'],
+        [rule.ge(1000),
+            'Укажите цену в рублях, ...'],
+    ]
+```
+</script></section>
+
+<section id="field-inheritance" class="small-code" data-markdown><script type="text/template">
+```python
+class PriceField(IntegerField):
+    rules = [
+        [rule.lt(100000000),
+            'Укажите адекватную цену'],
+        [rule.ge(1000),
+            'Укажите цену в рублях, ...'],
+    ]
+```
+</script></section>
+<script type="text/javascript">
+    function hi() {
+        var base = document.querySelector('#field-inheritance .hljs-params');
+        if (!base) setTimeout(hi, 1000);
+        else base.className = "fragment highlight-blue";
+    }
+    hi();
+</script>
+
+<section><h3>Вычислимые свойства</h3></section>
+
+<section>
+    <img src="demo-visibility.gif" class="stretch">
+</section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class SomeField(FlexField):
+    label = lambda self:
+        'Высота передних' if self.staggered
+        else 'Высота'
+
+    visible = lambda self:
+        self.tire_count >= 2
+```
+</script></section>
+
+<section class="small-code" data-markdown><script type="text/template">
+```python
+class SomeField(IntegerField):
+    @depends('staggered')
+    def label(self):
+        if self.staggered:
+            return 'Высота передних'
+        return 'Высота'
+```
+</script></section>
+
+<section><h3>Установка значений</h3></section>
+
+<section>
+    <img src="demo-autoselect.gif" class="stretch">
+</section>
+
+<!-- // models = group_by(_.brand, CarModel.objects.values('title', 'brand')) -->
+<section class="ssmall-code" data-markdown><script type="text/template">
+```python
+models = CarModel.objects
+    .values_list('id', 'title')
+
+value = lambda self:
+    first(id for id, t in models
+             if self.lookup in t)
+```
+</script></section>
+
+
+<style type="text/css">
+    .acute {margin-left: -0.35em; mmargin-top: -0.5em; pposition: relative; }
+</style>
+<section data-markdown><script type="text/template">
+### Большая система
+
+- декларативное описание полей, форм, фильтров, списков, детализации
+  <!-- .element: class="break-word fragment roll-in" -->
+- трансляция очистки, валидаторов, вычислимых значений и свойств
+  <!-- .element: class="break-word fragment roll-in" -->
+- прозрачный проброс данных
+  <!-- .element: class="break-word fragment roll-in" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Популяционный взрыв
+
+- 7 форм &nbsp;&rarr;&nbsp; 51 форма <!-- .element: class="break-word fragment roll-in" -->
+  <span style="color: #7f7f7f">x 2</span> <!-- .element: class="break-word fragment roll-in" -->
+- 500+ таблиц                        <!-- .element: class="break-word fragment roll-in" -->
+- всё красиво и не разваливается     <!-- .element: class="break-word fragment roll-in" -->
+</script></section>
+
+<section>
+    <h2>Спасибо</h2>
+    <p _class="fragment">Вопросы?</p>
+</section>
+
+            </div>
+
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // Remove extra sections on print
+            if (window.location.search.match( /print-pdf/gi )) {
+                var nodes = document.querySelectorAll('section > section + section');
+                [].forEach.call(nodes, function (s) {
+                    s.parentElement.removeChild(s);
+                })
+            }
+
+            // Full list of configuration options available at:
+            // https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                controls: true,
+                progress: true,
+                history: true,
+                center: true,
+
+                slideNumber: true,
+
+                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+                // Optional reveal.js plugins
+                dependencies: [
+                    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                    { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/zoom-js/zoom.js', async: true },
+                    { src: 'plugin/notes/notes.js', async: true }
+                ]
+            });
+        </script>
+    </body>
+</html>
