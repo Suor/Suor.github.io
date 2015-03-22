@@ -1,0 +1,32 @@
+digraph {
+    ordering="out"
+    node [style=filled color="#599FB6" fillcolor=lightblue fontname="Ubuntu,Monospace"];
+    edge [arrowhead=normal arrowtail=dot color="#599FB6"];
+
+    "[Name]" [shape=record, label="<name>Name"]
+    "[]" [shape=record label="" fillcolor=white]
+    Name2 [label=Name]
+
+    None1 [label=None color=orange fillcolor="#FFD890" ]
+    None2 [label=None color=orange fillcolor="#FFD890" ]
+    x1 [label="'x'" color=orange fillcolor="#FFD890" ]
+    x2 [label="'x'" color=orange fillcolor="#FFD890" ]
+    1 [color=orange fillcolor="#FFD890" ]
+
+    Lambda -> arguments [label="args"]
+    arguments -> "[Name]" [label="args"]
+    "[Name]":name -> x1 [label="id" color="#C68100"]
+    "[Name]":name -> Param [label="context"]
+    arguments -> None1 [label="vararg" color="#C68100"]
+    arguments -> None2 [label="kwarg" color="#C68100"]
+    arguments -> "[]" [label="defaults"]
+
+    Lambda -> Return [label=body]
+    Return -> BinOp [label=value]
+    BinOp -> Name2 [label=left]
+    Name2 -> x2 [label=id color="#C68100"]
+    Name2 -> Load [label=context]
+    BinOp -> Add [label=op]
+    BinOp -> Num [label=right]
+    Num -> 1 [label=n color="#C68100"]
+}
