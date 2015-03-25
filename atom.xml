@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-22T23:33:51+07:00</updated>
+  <updated>2015-03-25T16:40:43+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -670,7 +670,7 @@ Unlike libraries frameworks divide people.
 
 <h2>Issues</h2>
 
-<p>Let&rsquo;s start from the ones from rolling deprecation section. First and last are resolved automatically, second &ndash; the need to ship several implementations bundled &ndash; remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make <code>use v5.10</code> an error in 5.20 version of a language. We&rsquo;ll need to make this span large and stable enough though.</p>
+<p>Let&rsquo;s start from the ones from rolling deprecation section. First (ugly APIs) and last (no way to break) are resolved automatically, second &ndash; the need to ship several implementations bundled &ndash; remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make <code>use v5.10</code> an error in 5.20 version of a language. We&rsquo;ll need to make this span large and stable enough though.</p>
 
 <p>There is also an issue of how do we start this process. It&rsquo;s however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of <code>use</code> statement there and in absence of it just assume 3.4 semantics.</p>
 
