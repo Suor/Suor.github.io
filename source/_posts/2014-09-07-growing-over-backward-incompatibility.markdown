@@ -100,7 +100,7 @@ So this is it, the idea I started this post to promote. Lower I'll just address 
 
 ## Issues
 
-Let's start from the ones from rolling deprecation section. First and last are resolved automatically, second - the need to ship several implementations bundled - remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make `use v5.10` an error in 5.20 version of a language. We'll need to make this span large and stable enough though.
+Let's start from the ones from rolling deprecation section. First (ugly APIs) and last (no way to break) are resolved automatically, second - the need to ship several implementations bundled - remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make `use v5.10` an error in 5.20 version of a language. We'll need to make this span large and stable enough though.
 
 There is also an issue of how do we start this process. It's however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of `use` statement there and in absence of it just assume 3.4 semantics.
 
