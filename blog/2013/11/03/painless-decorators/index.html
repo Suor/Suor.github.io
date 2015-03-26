@@ -57,7 +57,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">Hackflow</a></h1>
   
-    <h2>Sharing knowledge and mindset</h2>
+    <h2>Sharing my mindset</h2>
   
 </hgroup>
 
@@ -117,6 +117,7 @@
 <!--more-->
 
 
+<a name="Current.state"></a>
 <h2>Current state</h2>
 
 <p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:</p>
@@ -173,6 +174,7 @@
 
 <p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
 
+<a name="Removing.a.boilerplate"></a>
 <h2>Removing a boilerplate</h2>
 
 <p>What we probably want to see (or write) is some flat syntax with code showing only wrapper semantics. Something like:</p>
@@ -226,10 +228,12 @@
 
 <p>Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually, you can <a href="https://pypi.python.org/pypi/funcy">download it from pypi</a> right now and import it with <code>from funcy import decorator</code>.</p>
 
+<a name="Advanced.usage"></a>
 <h2>Advanced usage</h2>
 
 <p>We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and create decorators with arguments. But that&rsquo;s not the case really, we can pack all these into <code>call</code> object. I&rsquo;ll go through everything with better examples than you saw so far.</p>
 
+<a name="Accessing.function.arguments"></a>
 <h3>Accessing function arguments</h3>
 
 <p>You didn&rsquo;t expect a post about decorators without logging example, did you? Anyway, it&rsquo;s an excellent way to show how you can access not only call arguments but decorated function itself:</p>
@@ -264,6 +268,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Altering.calls"></a>
 <h3>Altering calls</h3>
 
 <p>Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is just using plain function carefully stored in <code>call._func</code>:</p>
@@ -302,6 +307,7 @@
 
 <p>This works with named arguments too, and is probably a better way since you won&rsquo;t run into problems with arguments order.</p>
 
+<a name="Decorators.with.arguments"></a>
 <h3>Decorators with arguments</h3>
 
 <p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
@@ -327,6 +333,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Why.use.that."></a>
 <h2>Why use that?</h2>
 
 <p>There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that &hellip;</p>

@@ -57,7 +57,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">Hackflow</a></h1>
   
-    <h2>Sharing knowledge and mindset</h2>
+    <h2>Sharing my mindset</h2>
   
 </hgroup>
 
@@ -121,6 +121,7 @@
 
 <p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
 
+<a name="Everyday.data.manipulation"></a>
 <h2>Everyday data manipulation</h2>
 
 <p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
@@ -245,6 +246,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="About.imports.and.practicality"></a>
 <h2>About imports and practicality</h2>
 
 <p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
@@ -258,6 +260,7 @@
 
 <p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
 
+<a name="A.bit.more.functional.things"></a>
 <h2>A bit more functional things</h2>
 
 <p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
@@ -302,6 +305,7 @@
 
 <p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
 
+<a name="Collections"></a>
 <h2>Collections</h2>
 
 <p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
@@ -358,6 +362,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Back.to.data.manipulation"></a>
 <h2>Back to data manipulation</h2>
 
 <p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
@@ -429,6 +434,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="More.than.just.a.library"></a>
 <h2>More than just a library</h2>
 
 <p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>

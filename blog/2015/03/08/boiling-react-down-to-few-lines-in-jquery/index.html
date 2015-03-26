@@ -57,7 +57,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">Hackflow</a></h1>
   
-    <h2>Sharing knowledge and mindset</h2>
+    <h2>Sharing my mindset</h2>
   
 </hgroup>
 
@@ -223,6 +223,7 @@ Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M
 <p>Now it looks like we got something. But what about all those magical powers?
 Ah, we almost got them too.</p>
 
+<a name="Magical.Powers"></a>
 <h2>Magical Powers</h2>
 
 <p>Basically all magical powers mentioned come from an ability to write:</p>
@@ -370,6 +371,7 @@ and <code>updateTimeUI()</code> is its update function.</p>
 
 <p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p>
 
+<a name="Pure.Function"></a>
 <h2>Pure Function</h2>
 
 <p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p>
@@ -492,6 +494,7 @@ state will be the single thing defining UI.</p>
 
 <p>But anyway that&rsquo;s it on pure functions.</p>
 
+<a name="Virtual.DOM"></a>
 <h2>Virtual DOM</h2>
 
 <p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization &mdash; virtual DOM:</p>
@@ -549,6 +552,7 @@ fine as well, browsers are hell fast these days. I want to stress this once more
 
 <p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href="http://vdom-benchmark.github.io/vdom-benchmark/">one of the slowest ones</a> across the block.</p>
 
+<a name="Immutability"></a>
 <h2>Immutability</h2>
 
 <p>Noticed all that <code>deepcopy()</code> calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.</p>
@@ -651,6 +655,7 @@ you now need to create a new object with all the same keys (you can still reuse 
 
 <p>Note that React actually uses naive immutable by convention collections.</p>
 
+<a name="Wrap-up"></a>
 <h2>Wrap-up</h2>
 
 <p>It may look from my notes that React is not a good tool, but it is actually very useful one.
@@ -719,8 +724,8 @@ It may not have magical powers and top speed, but it got components and is still
 
   <section>
     <h1>Comments<small style="font-size: 0.65em">, also at
-        
-        
+         <a href="https://news.ycombinator.com/item?id=9165462">Hacker News</a>
+        and
         <a href="http://www.reddit.com/r/programming/comments/2yc1cs/boiling_react_down_to_few_lines_in_jquery/">Reddit</a>
     </small>
     </h1>

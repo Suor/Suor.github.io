@@ -57,7 +57,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">Hackflow</a></h1>
   
-    <h2>Sharing knowledge and mindset</h2>
+    <h2>Sharing my mindset</h2>
   
 </hgroup>
 
@@ -117,6 +117,7 @@
 
 <p>I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.</p>
 
+<a name="Completeness.and.redundancy"></a>
 <h2>Completeness and redundancy</h2>
 
 <p>Let&rsquo;s start from some general considerations. I define abovesaid completeness as a characteristic of invalidation procedure describing how frequent and under what circumstances data can become dirty and how long it will remain accessible. And redundancy will be a frequency and a volume of cache invalidated needlessly.</p>
@@ -125,6 +126,7 @@
 
 <p>There are lots of scenarios where it&rsquo;s ok to use stale data: popular articles list doesn&rsquo;t change fast and it&rsquo;s not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.</p>
 
+<a name="Event-driven.invalidation"></a>
 <h2>Event-driven invalidation</h2>
 
 <p>Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. These are elements of such system we need to think about:</p>
@@ -138,6 +140,7 @@
 
 <p>There are obviously different strategies to define those in your code. I&rsquo;ll start from simplest one &ndash; manual definition.</p>
 
+<a name="Coding.dependencies.by.hand"></a>
 <h2>Coding dependencies by hand</h2>
 
 <p>First, cached things, they will probably look like this (in sort of python pseudo-code):</p>
@@ -213,6 +216,7 @@
 
 <p>There is a problem with our code though. It&rsquo;s tightly coupled &ndash; update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.</p>
 
+<a name="Bringing.things.together"></a>
 <h2>Bringing things together</h2>
 
 <p>Fortunately, there is a single solution to both problems &ndash; events. We can write fetching and invalidation logic for each thing in one place and then register both cached thing and event listener:</p>
@@ -247,6 +251,7 @@
 
 <p>Looks like we&rsquo;ve come up with pretty solid system. It&rsquo;s dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.</p>
 
+<a name="Automatic.invalidation"></a>
 <h2>Automatic invalidation</h2>
 
 <p>We have not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.</p>
@@ -389,6 +394,7 @@
 
 <p>So far I tried to stay language and platform agnostic, but that journey came to an end. Welcome to dirty reality in the next section.</p>
 
+<a name="Implementation.tips"></a>
 <h2>Implementation tips</h2>
 
 <ul>

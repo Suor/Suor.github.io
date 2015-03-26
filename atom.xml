@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-25T16:40:43+07:00</updated>
+  <updated>2015-03-26T18:15:36+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -131,6 +131,7 @@ Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M
 <p>Now it looks like we got something. But what about all those magical powers?
 Ah, we almost got them too.</p>
 
+<a name="Magical.Powers"></a>
 <h2>Magical Powers</h2>
 
 <p>Basically all magical powers mentioned come from an ability to write:</p>
@@ -278,6 +279,7 @@ and <code>updateTimeUI()</code> is its update function.</p>
 
 <p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p>
 
+<a name="Pure.Function"></a>
 <h2>Pure Function</h2>
 
 <p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p>
@@ -400,6 +402,7 @@ state will be the single thing defining UI.</p>
 
 <p>But anyway that&rsquo;s it on pure functions.</p>
 
+<a name="Virtual.DOM"></a>
 <h2>Virtual DOM</h2>
 
 <p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization &mdash; virtual DOM:</p>
@@ -457,6 +460,7 @@ fine as well, browsers are hell fast these days. I want to stress this once more
 
 <p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href="http://vdom-benchmark.github.io/vdom-benchmark/">one of the slowest ones</a> across the block.</p>
 
+<a name="Immutability"></a>
 <h2>Immutability</h2>
 
 <p>Noticed all that <code>deepcopy()</code> calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.</p>
@@ -559,6 +563,7 @@ you now need to create a new object with all the same keys (you can still reuse 
 
 <p>Note that React actually uses naive immutable by convention collections.</p>
 
+<a name="Wrap-up"></a>
 <h2>Wrap-up</h2>
 
 <p>It may look from my notes that React is not a good tool, but it is actually very useful one.
@@ -582,20 +587,24 @@ It may not have magical powers and top speed, but it got components and is still
 <!--more-->
 
 
+<a name="Possible.strategies"></a>
 <h2>Possible strategies</h2>
 
 <p>Most languages don&rsquo;t have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one. But let&rsquo;s review possible strategies.</p>
 
+<a name="Grow.as.it.goes..then.break.big"></a>
 <h4>Grow as it goes, then break big</h4>
 
 <p>This results into separation like Python 2/3, Perl 5/6 or even in total abandonment. The major issue is that it creates a gap that most people don&rsquo;t have enough incentive to jump over. It creates additional headache to library developers making hard to support their creations across incompatibility boundary. This in its turn causes chicken and egg problem of no libraries, no users. In its worst separation could divide both ecosystem and community in half, lessening the project considerably.</p>
 
+<a name="Move.fast..break.things"></a>
 <h4>Move fast, break things</h4>
 
 <p>Works well in earlier development stages. I never complained when upgrading Node.js from 0.1.x to 0.2.x broke my app as well as several dependencies. However, this effectively reduces library availability, since many authors just can&rsquo;t or interested enough to keep up with the development pace. I was astonished to hear from some of my ruby friends that they avoid using libraries not updated within 3 months as possibly abandoned ones.</p>
 
 <p>It also poses a strain on language users forced to change their coding habits and to constantly seek for and adapt a replacement libraries for abandoned ones. Some of them consequently settle with particular language or framework version causing an erosion of a community and ecosystem.</p>
 
+<a name="Stay.small"></a>
 <h4>Stay small</h4>
 
 <p>&hellip; and useless. A viable strategy for very domain specific or otherwise having narrow field languages, e.g. for education. In any other case wider audience will need language to be extended to be useful for them. The alternative is to stay small &hellip;</p>
@@ -613,6 +622,7 @@ Unlike libraries frameworks divide people.
  -->
 
 
+<a name="Rolling.deprecation"></a>
 <h4>Rolling deprecation</h4>
 
 <p>This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes while still providing a compatibility guarantee for several releases. There are, however, some considerations to this strategy.</p>
@@ -641,6 +651,7 @@ Unlike libraries frameworks divide people.
 <!-- not friendly with semver -->
 
 
+<a name="Rolling.a.language"></a>
 <h2>Rolling a language</h2>
 
 <p>Making an operator work differently depending on context seems impossible, but also offers a hint to resolve both itself and API uglifying issue. So obviously first we need a way to tell new code from old. The simplest thing is just stating this explicitly, and this is already used in Python 2:</p>
@@ -668,12 +679,14 @@ Unlike libraries frameworks divide people.
 
 <p>So this is it, the idea I started this post to promote. Lower I&rsquo;ll just address any issues/objections that I can think of.</p>
 
+<a name="Issues"></a>
 <h2>Issues</h2>
 
 <p>Let&rsquo;s start from the ones from rolling deprecation section. First (ugly APIs) and last (no way to break) are resolved automatically, second &ndash; the need to ship several implementations bundled &ndash; remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make <code>use v5.10</code> an error in 5.20 version of a language. We&rsquo;ll need to make this span large and stable enough though.</p>
 
 <p>There is also an issue of how do we start this process. It&rsquo;s however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of <code>use</code> statement there and in absence of it just assume 3.4 semantics.</p>
 
+<a name="Easy.parts"></a>
 <h3>Easy parts</h3>
 
 <p>These ones are almost automatically solved by version declaration, still some elaboration will probably close unneeded questions.</p>
@@ -699,6 +712,7 @@ Unlike libraries frameworks divide people.
 
 <p><strong>Standard library changes</strong>. The easiest way is just shipping several versions of it and patching import statement to load appropriate library version. Different versions of standard libs can share code for efficiency, but that&rsquo;s optional.</p>
 
+<a name="Passing.over.boundary"></a>
 <h3>Passing over boundary</h3>
 
 <p>Real issues start to arise when we pass something from newer code to older one or vice a versa. Say we have an instance of built-in or standard library type which has changed and pass it to the code that expects to treat it as an instance of an older version of same type.</p>
@@ -711,6 +725,7 @@ Unlike libraries frameworks divide people.
 
 <p>What if internal representation of a type changes? The thing is that shouldn&rsquo;t matter if nobody looks inside. We should still support all the interfaces and we&rsquo;ll be good. This puts a restriction on a kind of access language users, including library authors, have to instances of built-in types. E.g. if instance data is represented with C struct then we shouldn&rsquo;t allow direct access to its members, casting, etc. Everything should be done via functions or at least macros, which could be updated to handle newer representation.</p>
 
+<a name="Wrap-up"></a>
 <h3>Wrap-up</h3>
 
 <p>There are obviously some things I haven&rsquo;t addressed. And this approach doesn&rsquo;t make language developers lives easier. It could however make it more fun both for developers and their users. Cause this way things don&rsquo;t need to stay broken or weird cause that&rsquo;s how they are. An ability to change language in a backward incompatible manner should in the end bring better languages for everyone. It also feels like freedom.</p>
@@ -729,10 +744,12 @@ Unlike libraries frameworks divide people.
 <!--more-->
 
 
+<a name="The.problem"></a>
 <h2>The problem</h2>
 
 <p>To answer this question we should look at problems this kind of libraries solve. To get some ground I&rsquo;ll illustrate them with code. That will be in python, but all the ideas are universal, so don&rsquo;t be afraid.</p>
 
+<a name="A.piece.of.entangled.code"></a>
 <h3>A piece of entangled code</h3>
 
 <p>This messy piece of code was taken from a real project and slightly simplified:</p>
@@ -773,6 +790,7 @@ Unlike libraries frameworks divide people.
 
 <p>If it seems hard at first, then it&rsquo;s okay. It involves some functions and <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstractions</a> most probably new to you. Once you get used to it you&rsquo;ll find that the latter variant is not only shorter, but is also simpler.</p>
 
+<a name="Dirty.dictionary"></a>
 <h3>Dirty dictionary</h3>
 
 <p>But let&rsquo;s go on and clean some dirty dictionary:</p>
@@ -805,6 +823,7 @@ Unlike libraries frameworks divide people.
 
 <p>And it&rsquo;s entirely possible with <a href="https://github.com/Suor/funcy">funcy</a>. But let&rsquo;s move to the next one.</p>
 
+<a name="Pairwise.iteration"></a>
 <h3>Pairwise iteration</h3>
 
 <p>This code checks if a sequence is ascending:</p>
@@ -841,6 +860,7 @@ Unlike libraries frameworks divide people.
 
 <p>And <a href="http://funcy.readthedocs.org/en/latest/seqs.html#pairwise">pairwise</a> does exactly that. It enables us to iterate by sequence adjacent pairs. So we just need to check that all of them are ordered accordingly.</p>
 
+<a name="L..."></a>
 <h3>&hellip;</h3>
 
 <p>All these examples have one common property &mdash; red variants have more code. And more code:</p>
@@ -855,6 +875,7 @@ Unlike libraries frameworks divide people.
 
 <p>Obviously, underscore, funcy and friends help us write less code (at least in these three examples). But how do they do that?</p>
 
+<a name="Extracting.abstractions"></a>
 <h2>Extracting abstractions</h2>
 
 <p>Let&rsquo;s take another look at the first example. It does three things in a single blob of code:</p>
@@ -929,6 +950,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>Extracting common behavior into a higher order functions is a first trick underscore and funcy use to make your life better.</p>
 
+<a name="Hiding.low.level"></a>
 <h2>Hiding low level</h2>
 
 <p>It&rsquo;s time to go back to second example. I&rsquo;ll throw away error handling to make snippets more even:</p>
@@ -980,6 +1002,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>Hiding low-level details is the second way such libraries make your life better.</p>
 
+<a name="Enriching.our.language"></a>
 <h2>Enriching our language</h2>
 
 <p>I&rsquo;ll translate the last example into natural language:</p>
@@ -1023,6 +1046,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>And this is the third way _ makes your life better.</p>
 
+<a name="Wrap-up"></a>
 <h2>Wrap-up</h2>
 
 <p>All the things we came through are completely language independent. So there gotta be underscore for every language? Not quite, and more importantly a straight-forward port is not always a great idea: common behaviors to abstract vary per language and especially per application. The right approach would be to follow core ideas. Or look around if someone have already done that.</p>
@@ -1091,6 +1115,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>I will move from basic ideas building upon them as needed and diving into more and more specifics as the post goes.</p>
 
+<a name="Completeness.and.redundancy"></a>
 <h2>Completeness and redundancy</h2>
 
 <p>Let&rsquo;s start from some general considerations. I define abovesaid completeness as a characteristic of invalidation procedure describing how frequent and under what circumstances data can become dirty and how long it will remain accessible. And redundancy will be a frequency and a volume of cache invalidated needlessly.</p>
@@ -1099,6 +1124,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>There are lots of scenarios where it&rsquo;s ok to use stale data: popular articles list doesn&rsquo;t change fast and it&rsquo;s not a big deal if user count of your social network is off by a couple of thousands. But then there are some scenarios where you need immediate invalidation, go to next section for that.</p>
 
+<a name="Event-driven.invalidation"></a>
 <h2>Event-driven invalidation</h2>
 
 <p>Probably, the only way to achieve ideal invalidation completeness is to invalidate each time you change data. These are elements of such system we need to think about:</p>
@@ -1112,6 +1138,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>There are obviously different strategies to define those in your code. I&rsquo;ll start from simplest one &ndash; manual definition.</p>
 
+<a name="Coding.dependencies.by.hand"></a>
 <h2>Coding dependencies by hand</h2>
 
 <p>First, cached things, they will probably look like this (in sort of python pseudo-code):</p>
@@ -1187,6 +1214,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>There is a problem with our code though. It&rsquo;s tightly coupled &ndash; update logic knows about cache logic. Even bigger problem is that our cache logic is scattered. We define cached thing in one place and invalidate in another or several other places. This means there will come some day when someone will add a cached thing and just forget to add corresponding invalidation, producing hard to find bug.</p>
 
+<a name="Bringing.things.together"></a>
 <h2>Bringing things together</h2>
 
 <p>Fortunately, there is a single solution to both problems &ndash; events. We can write fetching and invalidation logic for each thing in one place and then register both cached thing and event listener:</p>
@@ -1221,6 +1249,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>Looks like we&rsquo;ve come up with pretty solid system. It&rsquo;s dry, but retains flexibility of still mostly manual system. We, however, need to declare each thing we plan to cache in advance. We also need to provide argument constructing functions. There got to be a smarter way.</p>
 
+<a name="Automatic.invalidation"></a>
 <h2>Automatic invalidation</h2>
 
 <p>We have not even started utilizing a power of ORM. Its query is not a mere text and plain arguments, it is a structure which includes condition tree. And some smart code could use that information to determine when query cache should be invalidated, saving work for lazy guys like me.</p>
@@ -1363,6 +1392,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>So far I tried to stay language and platform agnostic, but that journey came to an end. Welcome to dirty reality in the next section.</p>
 
+<a name="Implementation.tips"></a>
 <h2>Implementation tips</h2>
 
 <ul>
@@ -1388,6 +1418,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 <!--more-->
 
 
+<a name="Current.state"></a>
 <h2>Current state</h2>
 
 <p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:</p>
@@ -1444,6 +1475,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
 
+<a name="Removing.a.boilerplate"></a>
 <h2>Removing a boilerplate</h2>
 
 <p>What we probably want to see (or write) is some flat syntax with code showing only wrapper semantics. Something like:</p>
@@ -1497,10 +1529,12 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually, you can <a href="https://pypi.python.org/pypi/funcy">download it from pypi</a> right now and import it with <code>from funcy import decorator</code>.</p>
 
+<a name="Advanced.usage"></a>
 <h2>Advanced usage</h2>
 
 <p>We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and create decorators with arguments. But that&rsquo;s not the case really, we can pack all these into <code>call</code> object. I&rsquo;ll go through everything with better examples than you saw so far.</p>
 
+<a name="Accessing.function.arguments"></a>
 <h3>Accessing function arguments</h3>
 
 <p>You didn&rsquo;t expect a post about decorators without logging example, did you? Anyway, it&rsquo;s an excellent way to show how you can access not only call arguments but decorated function itself:</p>
@@ -1535,6 +1569,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Altering.calls"></a>
 <h3>Altering calls</h3>
 
 <p>Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is just using plain function carefully stored in <code>call._func</code>:</p>
@@ -1573,6 +1608,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>This works with named arguments too, and is probably a better way since you won&rsquo;t run into problems with arguments order.</p>
 
+<a name="Decorators.with.arguments"></a>
 <h3>Decorators with arguments</h3>
 
 <p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
@@ -1598,6 +1634,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Why.use.that."></a>
 <h2>Why use that?</h2>
 
 <p>There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that &hellip;</p>
@@ -1622,6 +1659,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
 
+<a name="Everyday.data.manipulation"></a>
 <h2>Everyday data manipulation</h2>
 
 <p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
@@ -1746,6 +1784,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="About.imports.and.practicality"></a>
 <h2>About imports and practicality</h2>
 
 <p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
@@ -1759,6 +1798,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
 
+<a name="A.bit.more.functional.things"></a>
 <h2>A bit more functional things</h2>
 
 <p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
@@ -1803,6 +1843,7 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 
 <p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
 
+<a name="Collections"></a>
 <h2>Collections</h2>
 
 <p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
@@ -1859,6 +1900,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="Back.to.data.manipulation"></a>
 <h2>Back to data manipulation</h2>
 
 <p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
@@ -1930,6 +1972,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="More.than.just.a.library"></a>
 <h2>More than just a library</h2>
 
 <p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>
@@ -1953,6 +1996,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 
 <p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
 
+<a name="Abstractions"></a>
 <h2>Abstractions</h2>
 
 <p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
@@ -1969,6 +2013,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 
 <p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
 
+<a name="Back.to.real-life"></a>
 <h2>Back to real-life</h2>
 
 <p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
@@ -2101,6 +2146,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 </span></code></pre></td></tr></table></div></figure>
 
 
+<a name="How.is.this.better."></a>
 <h2>How is this better?</h2>
 
 <p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-25T16:40:43+07:00</updated>
+  <updated>2015-03-26T18:15:36+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -25,6 +25,7 @@
 <!--more-->
 
 
+<a name="Current.state"></a>
 <h2>Current state</h2>
 
 <p>Currently in a decorator you need to create a wrapper, update it&rsquo;s metadata and then return it. You also need to pass arguments and result value in and out carefully. A typical pattern would be:</p>
@@ -67,6 +68,7 @@ return decorator
 
 <p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
 
+<a name="Removing.a.boilerplate"></a>
 <h2>Removing a boilerplate</h2>
 
 <p>What we probably want to see (or write) is some flat syntax with code showing only wrapper semantics. Something like:</p>
@@ -112,10 +114,12 @@ return result
 
 <p>Looks simple and to the point. Something we were looking for. And once we have a clear view we can go ahead and implement the magic. Actually, you can <a href="https://pypi.python.org/pypi/funcy">download it from pypi</a> right now and import it with <code>from funcy import decorator</code>.</p>
 
+<a name="Advanced.usage"></a>
 <h2>Advanced usage</h2>
 
 <p>We seemingly lost a couple of features in our quest for simplicity: access to call arguments, function itself, ability to call function differently and create decorators with arguments. But that&rsquo;s not the case really, we can pack all these into <code>call</code> object. I&rsquo;ll go through everything with better examples than you saw so far.</p>
 
+<a name="Accessing.function.arguments"></a>
 <h3>Accessing function arguments</h3>
 
 <p>You didn&rsquo;t expect a post about decorators without logging example, did you? Anyway, it&rsquo;s an excellent way to show how you can access not only call arguments but decorated function itself:</p>
@@ -145,6 +149,7 @@ else:
 
 <p>```</p>
 
+<a name="Altering.calls"></a>
 <h3>Altering calls</h3>
 
 <p>Is considered a bad practice cause it makes code harder to read. However, this could be useful occasionally and I am not into childproofing anyway. The obvious way to do it is just using plain function carefully stored in <code>call._func</code>:</p>
@@ -179,6 +184,7 @@ def some_view(request, phone):</p>
 
 <p>This works with named arguments too, and is probably a better way since you won&rsquo;t run into problems with arguments order.</p>
 
+<a name="Decorators.with.arguments"></a>
 <h3>Decorators with arguments</h3>
 
 <p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
@@ -198,6 +204,7 @@ def retry(call, tries, errors=Exception):</p>
 
 <p>```</p>
 
+<a name="Why.use.that."></a>
 <h2>Why use that?</h2>
 
 <p>There are obvious reasons: to reduce clutter and expose your intentions. However, there is usual cost. This as any abstraction brings an additional layer of complexity on top of python. And python could be seen as a layer on top of c, and that as one above asm, and that &hellip;</p>
@@ -222,6 +229,7 @@ def retry(call, tries, errors=Exception):</p>
 
 <p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
 
+<a name="Everyday.data.manipulation"></a>
 <h2>Everyday data manipulation</h2>
 
 <p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
@@ -230,10 +238,12 @@ def retry(call, tries, errors=Exception):</p>
 from operator import concat
 reduce(concat, list_of_lists)</p>
 
+<a name="or.that:"></a>
 <h1>or that:</h1>
 
 <p>sum(list_of_lists, [])</p>
 
+<a name="or.that:"></a>
 <h1>or that:</h1>
 
 <p>from itertools import chain
@@ -301,21 +311,26 @@ actual_match = re_find(some_re, s)
 <p>``` python
 from funcy import re_finder, re_all, partial, mapcat</p>
 
+<a name="Get.a.number.out.of.every.word"></a>
 <h1>Get a number out of every word</h1>
 
 <p>map(re_finder(&lsquo;\d+&rsquo;), words)</p>
 
+<a name="Parse.simple.ini.file.into.dict"></a>
 <h1>Parse simple ini file into dict</h1>
 
+<a name="L.re_finder.returns.tuples.when.there.is.more.that.one.capture.in.regexp."></a>
 <h1>(re_finder returns tuples when there is more that one capture in regexp)</h1>
 
 <p>dict(imap(re_finder(&lsquo;(\w+)=(\w+)&rsquo;), ini.splitlines()))</p>
 
+<a name="Find.all.numbers.in.all.the.strings.and.return.as.flat.list"></a>
 <h1>Find all numbers in all the strings and return as flat list</h1>
 
 <p>mapcat(partial(re_all, r'\d+&lsquo;), bunch_of_strings)
 ```</p>
 
+<a name="About.imports.and.practicality"></a>
 <h2>About imports and practicality</h2>
 
 <p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
@@ -328,12 +343,14 @@ from funcy import *
 
 <p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
 
+<a name="A.bit.more.functional.things"></a>
 <h2>A bit more functional things</h2>
 
 <p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
 
 <p>``` python</p>
 
+<a name="Choose.all.private.attributes.of.an.object"></a>
 <h1>Choose all private attributes of an object</h1>
 
 <p>is_private = re_tester(&lsquo;^_&rsquo;)
@@ -364,6 +381,7 @@ remove(is_private, ...) # same as filter(is_public)
 
 <p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
 
+<a name="Collections"></a>
 <h2>Collections</h2>
 
 <p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
@@ -373,19 +391,23 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
 walk(inc, {1, 2, 3}) # &ndash;> {2, 3, 4}
 walk(inc, (1, 2, 3)) # &ndash;> (2, 3, 4)</p>
 
+<a name="Mapping.function.receives.pairs.when.walking.dicts"></a>
 <h1>Mapping function receives pairs when walking dicts</h1>
 
 <p>swap = lambda (k, v): (v, k)
 walk(swap, {1: 10, 2: 20})</p>
 
+<a name="L-...10:.1..20:.2."></a>
 <h1>&ndash;> {10: 1, 20: 2}</h1>
 
 <p>select(even, {1, 2, 3, 10, 20})</p>
 
+<a name="L-...2..10..20."></a>
 <h1>&ndash;> {2, 10, 20}</h1>
 
 <p>select(lambda (k, v): k == v, {1: 1, 2: 3})</p>
 
+<a name="L-...1:.1."></a>
 <h1>&ndash;> {1: 1}</h1>
 
 <p>```</p>
@@ -394,10 +416,12 @@ walk(swap, {1: 10, 2: 20})</p>
 
 <p>``` python</p>
 
+<a name="Get.a.dict.of.public.attributes.of.an.instance"></a>
 <h1>Get a dict of public attributes of an instance</h1>
 
 <p>select_keys(is_public, instance.<strong>dict</strong>)</p>
 
+<a name="Clean.dict.of.falsy.values"></a>
 <h1>Clean dict of falsy values</h1>
 
 <p>select_values(bool, some_dict)
@@ -409,16 +433,19 @@ walk(swap, {1: 10, 2: 20})</p>
 compact(walk_values(silent(int), request_dict))
 </code></p>
 
+<a name="Back.to.data.manipulation"></a>
 <h2>Back to data manipulation</h2>
 
 <p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
 
 <p>``` python</p>
 
+<a name="split.absolute.and.relative.urls"></a>
 <h1>split absolute and relative urls</h1>
 
 <p>absolute, relative = split(re_tester(r'^<a href="http://">http://</a>&lsquo;), urls)</p>
 
+<a name="group.posts.by.category"></a>
 <h1>group posts by category</h1>
 
 <p>group_by(lambda post: post.category, posts)
@@ -428,18 +455,22 @@ compact(walk_values(silent(int), request_dict))
 
 <p>``` python</p>
 
+<a name="make.a.dict.from.flat.list.of.pairs"></a>
 <h1>make a dict from flat list of pairs</h1>
 
 <p>dict(partition(2, flat_list_of_pairs))</p>
 
+<a name="make.a.structures.from.flat.list"></a>
 <h1>make a structures from flat list</h1>
 
 <p>{id: (name, password) for id, name, password in partition(3, users)}</p>
 
+<a name="check.versions.are.consecutive"></a>
 <h1>check versions are consecutive</h1>
 
 <p>assert all(prev + 1 == next for prev, next in partition(2, 1, versions)):</p>
 
+<a name="process.data.by.chunks"></a>
 <h1>process data by chunks</h1>
 
 <p>for chunk in chunks(CHUNK_SIZE, lots_of_data):</p>
@@ -453,6 +484,7 @@ compact(walk_values(silent(int), request_dict))
 
 <p>``` python</p>
 
+<a name="add.new.line.indents.at.the.beginning.of.each.paragraph"></a>
 <h1>add new line indents at the beginning of each paragraph</h1>
 
 <p>for line, prev in with_prev(text.splitlines()):</p>
@@ -462,16 +494,20 @@ compact(walk_values(silent(int), request_dict))
 print line
 </code></pre>
 
+<a name="select.Shakespeare.s.play.written.in.1611"></a>
 <h1>select Shakespeare&rsquo;s play written in 1611</h1>
 
 <p>where(plays, author=&ldquo;Shakespeare&rdquo;, year=1611)</p>
 
+<a name="L......title.:..Cymbeline....author.:..Shakespeare....year.:.1611.."></a>
 <h1>=> [{&ldquo;title&rdquo;: &ldquo;Cymbeline&rdquo;, &ldquo;author&rdquo;: &ldquo;Shakespeare&rdquo;, &ldquo;year&rdquo;: 1611},</h1>
 
+<a name="L..title.:..The.Tempest....author.:..Shakespeare....year.:.1611.."></a>
 <h1>{&ldquo;title&rdquo;: &ldquo;The Tempest&rdquo;, &ldquo;author&rdquo;: &ldquo;Shakespeare&rdquo;, &ldquo;year&rdquo;: 1611}]</h1>
 
 <p>```</p>
 
+<a name="More.than.just.a.library"></a>
 <h2>More than just a library</h2>
 
 <p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>
@@ -495,6 +531,7 @@ print line
 
 <p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
 
+<a name="Abstractions"></a>
 <h2>Abstractions</h2>
 
 <p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
@@ -511,6 +548,7 @@ print line
 
 <p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
 
+<a name="Back.to.real-life"></a>
 <h2>Back to real-life</h2>
 
 <p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
@@ -609,6 +647,7 @@ download = http_retry(ignore_small(download_image))
 photos = filter(None, map(download, urls))
 ```</p>
 
+<a name="How.is.this.better."></a>
 <h2>How is this better?</h2>
 
 <p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>
