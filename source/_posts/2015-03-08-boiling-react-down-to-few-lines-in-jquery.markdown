@@ -5,7 +5,7 @@ comments: true
 sharing: true
 date: 2015-03-08 20:08
 categories: [FP, UI]
-_hn_id: 9165462
+hn_id: 9165462
 reddit_url: http://www.reddit.com/r/programming/comments/2yc1cs/boiling_react_down_to_few_lines_in_jquery/
 ---
 
