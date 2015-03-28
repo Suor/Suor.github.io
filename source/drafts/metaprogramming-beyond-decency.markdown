@@ -1,18 +1,17 @@
 ---
 layout: post
-title: "Metaprogramming Beyond Decency"
+title: "Metaprogramming Beyond Decency: Part 1"
 comments: false
 published: false
 sharing: false
 categories: [Python]
 ---
 
-<!-- TODO: add post image to twitter card -->
-
+*(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)*
 <!-- TODO: add links -->
-*(This an adaptation of a talk I gave at PiterPy, slides in russian are available [here][slides], video will follow)*
 
-Питон предоставляет глубокие возможности по интроспекции вплоть до байткода и AST. Это, наряду c возможностью кастомизации поведения объектов, предоставляет неочевидные пути написания кода, который пишет код или иначе влияет на исполнение. Я приведу несколько примеров как можно всё это применить весело и с пользой.
+Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
+fun and profit.
 
 <!--more-->
 
@@ -260,7 +259,24 @@ So if all these were happening in a decorator we can get that function out of th
 
 ## AST Traversal
 
-Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation, and first of them is `NodeVisitor` -- a base class implementing visitor pattern, the idea is to subclass it and define methods like `visit_<NodeClass>()`:
+Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:
+
+```python
+# Iterate fields with values
+>>> ast.iter_fields(tree)
+[('args', <_ast.arguments at ...>),
+ ('body', <_ast.Return at ...>)]
+
+# Iterate child nodes
+>>> ast.iter_child_nodes(tree)
+[<_ast.arguments ...>, <_ast.Return ...>]
+
+# Just list available fields
+>>> tree._fields
+('args', 'body')
+```
+
+First of higher level ones is `NodeVisitor` -- a base class implementing visitor pattern, the idea is to subclass it and define methods like `visit_<NodeClass>()`:
 
 ```python
 class NumberFinder(ast.NodeVisitor):
@@ -309,9 +325,12 @@ def return_last(tree):
 
 Note this code is simplified and hence broken, e.g. it will insert `return` into the end of while loop if there is an expression there.
 
-...
 
-NOTE: this is only about 1/3 of the thing, he-he ;)
+## Going Forward
+
+This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.
+
+<!-- NOTE: this is only about 1/3 of the thing, he-he ;) -->
 
 
 [slides]: http://hackflow.com/slides/metaprogramming/
