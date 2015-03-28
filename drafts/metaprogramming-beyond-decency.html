@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Metaprogramming Beyond Decency - Hackflow</title>
+  <title>Metaprogramming Beyond Decency: Part 1 - Hackflow</title>
   <meta name="author" content="Alexander Schepanovski">
 
   
-  <meta name="description" content="(This an adaptation of a talk I gave at PiterPy, slides in russian are available here, video will follow) Питон предоставляет глубокие возможности &hellip;">
+  <meta name="description" content="(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks) Python gives us deep introspecting and &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -33,8 +33,8 @@
     <meta property="twitter:card" content="summary">
     <meta property="twitter:site" content="hackflow">
     <meta property="twitter:url" content="http://hackflow.com/drafts/metaprogramming-beyond-decency.html">
-    <meta property="twitter:title" content="Metaprogramming Beyond Decency">
-    <meta property="twitter:description" content="(This an adaptation of a talk I gave at PiterPy, slides in russian are available here, video will follow) Питон предоставляет глубокие возможности по интроспекции вплоть до байткода и AST. Это, &hellip;">
+    <meta property="twitter:title" content="Metaprogramming Beyond Decency: Part 1">
+    <meta property="twitter:description" content="(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks) Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST &hellip;">
 
 
   
@@ -87,7 +87,7 @@
   
   <header>
     
-      <h1 class="entry-title">Metaprogramming Beyond Decency</h1>
+      <h1 class="entry-title">Metaprogramming Beyond Decency: Part 1</h1>
     
     
       <p class="meta">
@@ -108,17 +108,13 @@
   </header>
 
 
-<div class="entry-content"><!-- TODO: add post image to twitter card -->
-
-
-
+<div class="entry-content"><p><em>(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)</em></p>
 
 <!-- TODO: add links -->
 
 
-<p><em>(This an adaptation of a talk I gave at PiterPy, slides in russian are available <a href="http://hackflow.com/slides/metaprogramming/">here</a>, video will follow)</em></p>
-
-<p>Питон предоставляет глубокие возможности по интроспекции вплоть до байткода и AST. Это, наряду c возможностью кастомизации поведения объектов, предоставляет неочевидные пути написания кода, который пишет код или иначе влияет на исполнение. Я приведу несколько примеров как можно всё это применить весело и с пользой.</p>
+<p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
+fun and profit.</p>
 
 <!--more-->
 
@@ -437,7 +433,36 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 <a name="AST.Traversal"></a>
 <h2>AST Traversal</h2>
 
-<p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation, and first of them is <code>NodeVisitor</code> &mdash; a base class implementing visitor pattern, the idea is to subclass it and define methods like <code>visit_&lt;NodeClass&gt;()</code>:</p>
+<p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Iterate fields with values</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">[(</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">arguments</span> <span class="n">at</span> <span class="o">...&gt;</span><span class="p">),</span>
+</span><span class='line'> <span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Return</span> <span class="n">at</span> <span class="o">...&gt;</span><span class="p">)]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Iterate child nodes</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_child_nodes</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+</span><span class='line'><span class="p">[</span><span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">arguments</span> <span class="o">...&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Return</span> <span class="o">...&gt;</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Just list available fields</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">_fields</span>
+</span><span class='line'><span class="p">(</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>First of higher level ones is <code>NodeVisitor</code> &mdash; a base class implementing visitor pattern, the idea is to subclass it and define methods like <code>visit_&lt;NodeClass&gt;()</code>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -514,9 +539,15 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
 <p>Note this code is simplified and hence broken, e.g. it will insert <code>return</code> into the end of while loop if there is an expression there.</p>
 
-<p>&hellip;</p>
+<a name="Going.Forward"></a>
+<h2>Going Forward</h2>
 
-<p>NOTE: this is only about 1/3 of the thing, he-he ;)</p>
+<p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p>
+
+<!-- NOTE: this is only about 1/3 of the thing, he-he ;) -->
+
+
+
 </div>
 
 
