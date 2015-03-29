@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://hackflow.com/drafts/metaprogramming-beyond-decency.html">
+  <link rel="canonical" href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
@@ -32,7 +32,7 @@
 
     <meta property="twitter:card" content="summary">
     <meta property="twitter:site" content="hackflow">
-    <meta property="twitter:url" content="http://hackflow.com/drafts/metaprogramming-beyond-decency.html">
+    <meta property="twitter:url" content="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency">
     <meta property="twitter:title" content="Metaprogramming Beyond Decency: Part 1">
     <meta property="twitter:description" content="(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks) Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST &hellip;">
 
@@ -100,8 +100,10 @@
 
 
 
+  
 
 
+<time datetime="2015-03-29T20:08:00+07:00" pubdate data-updated="true">Mar 29<span>th</span>, 2015</time>
         
       </p>
     
@@ -132,7 +134,7 @@ fun and profit.</p>
 
 
 <p>It maps a list through <code>_ + 1</code> and gets a new list with each element incremented.
-This makes sense mnemonically, but could this code actually work in python?</p>
+This makes sense mnemonically, but can this code actually work in python?</p>
 
 <p>And sure it can. In fact this is rather simple trick with operator overloading:</p>
 
@@ -149,9 +151,8 @@ This makes sense mnemonically, but could this code actually work in python?</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Here we create a class that produces lambda upon addition and then create its instance named <code>_</code>.
-A simple trick of using common interface in an unusual way.
-We can even go all loose and make something like this to work:</p>
+<p>Here we create a class that produces lambda upon addition and then creates its instance named <code>_</code>.
+Just using common interface in an unusual way. We can even go all loose and make something like this to work:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -170,7 +171,7 @@ We can even go all loose and make something like this to work:</p>
 which also returns callables as operations results. We are also intercepting attribute access here,
 shouldn&rsquo;t surprise you after everything you&rsquo;ve seen.</p>
 
-<p>Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file, too few to bring an import, a dependency and all the complications.
+<p>Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications.
 But suppose you are writing <a href="https://github.com/Suor/funcy/blob/master/tests/test_funcs.py">tests for functional support library</a>,
 then you&rsquo;ll need to create lots of small functions to pass them to your ones.
 A library like this would be useful in that setting.</p>
@@ -205,11 +206,8 @@ This is supposed to recursively calculate a product of all the list elements:</p
 
 <ul>
 <li>product is 1 for empty list,</li>
-<li>product is (first element) times (product of the rest of the list).</li>
+<li>product is (first element) times (product of the rest of the list) otherwise.</li>
 </ul>
-
-
-<!-- TODO: grouping? -->
 
 
 <p>On the other hand, python doesn&rsquo;t work this way. <code>x</code> and <code>xs</code> are never defined and <code>product()</code> has no arguments. And yes, this really doesn&rsquo;t work. This, however, does:</p>
@@ -288,18 +286,16 @@ The general idea, however, comes beyond pattern matching.</p>
 <h2>AST Applications</h2>
 
 <p>This technique &mdash; abstract syntax tree transformation &mdash; is much more broadly useful.
-And the main reason why is that trees capture language structure, they are also data structures,
-which are much more hackable than code strings.</p>
+And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.</p>
 
 <p>Anyway, these are some things they facilitate:</p>
 
-<p><strong>Language extensions.</strong> With pattern matching being only one of them. The other examples are optional or not static typing, macros, &hellip; It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.</p>
+<p><strong>Language extensions.</strong> With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, &hellip; It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.</p>
 
-<p><strong>Optimizations</strong>. This is less obvious but we can inline calls, precalculate constant expressions,
-even make tail call optimization.</p>
+<p><strong>Optimizations</strong>. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.</p>
 
-<p><strong>Code analysis</strong>. It&rsquo;s much easier to analyze tree than just code string &lsquo;cause it captures some of semantics of a language. We could implement some linters or editor plugins with the help of AST.
-Generally you won&rsquo;t need to transform a tree for analysis, but imagine how some linter could suggest code changes specific to particular fragment not just general advice, that would be cool.</p>
+<p><strong>Code analysis</strong>. It&rsquo;s much easier to analyze tree than just code string &lsquo;cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST.
+Generally you won&rsquo;t need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.</p>
 
 <p><strong>Translation</strong>. To JavaScript to run things in browser, to SQL to automatically generate queries
 or stored procedures, to Python 3 after all.</p>
@@ -330,7 +326,7 @@ or stored procedures, to Python 3 after all.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Sometimes you can&rsquo;t get function source, most common example &mdash; <code>inspect.getsource()</code> doesn&rsquo;t work for lambdas. Then you can still get to AST by decompiling bytecode:</p>
+<p>Sometimes you can&rsquo;t get function source, most common example &mdash; <code>inspect.getsource()</code> doesn&rsquo;t work with lambdas. Then you can still get to AST by decompiling bytecode:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -397,7 +393,7 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>The same plus indents. It is already useful when you need to look at the AST close, but for quick print debugging python code would be even better:</p>
+<p>The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -567,8 +563,10 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
 
 
+  
 
 
+<time datetime="2015-03-29T20:08:00+07:00" pubdate data-updated="true">Mar 29<span>th</span>, 2015</time>
       
 
 <span class="categories">
@@ -580,12 +578,41 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
     </p>
     
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/" data-via="hackflow" data-counturl="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+  <div style="clear: both; margin-bottom: 0.6em"></div>
+</div>
+<style type="text/css">
+  .sharing * {float: left !important;}
+</style>
+
+    
     <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/" title="Previous Post: Boiling React Down to a Few Lines in jQuery">&laquo; Boiling React Down to a Few Lines in jQuery</a>
       
       
     </p>
   </footer>
 </article>
+
+  <section>
+    <h1>Comments
+        
+        
+        
+    
+    </h1>
+
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -605,6 +632,10 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
       </li>
     
@@ -618,10 +649,6 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
     
       <li class="post">
         <a href="/blog/2014/03/09/on-orm-cache-invalidation/">On ORM Cache Invalidation</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/11/03/painless-decorators/">Painless Decorators</a>
       </li>
     
   </ul>
@@ -671,6 +698,22 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
 </footer>
   
+
+<script type="text/javascript">
+      var disqus_shortname = 'hackflow';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/';
+        var disqus_url = 'http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
 
 
 

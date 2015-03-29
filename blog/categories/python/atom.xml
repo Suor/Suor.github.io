@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-03-28T08:37:02+07:00</updated>
+  <updated>2015-03-29T20:12:49+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,396 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 1]]></title>
+    <link href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/"/>
+    <updated>2015-03-29T20:08:00+07:00</updated>
+    <id>http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency</id>
+    <content type="html"><![CDATA[<p><em>(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)</em></p>
+
+<!-- TODO: add links -->
+
+
+<p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
+fun and profit.</p>
+
+<!--more-->
+
+
+<a name="Warming.up"></a>
+<h2>Warming up</h2>
+
+<p>Look at this code:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>map(_ + 1, [1, 2, 3])
+[2, 3, 4]
+```</p></blockquote></blockquote></blockquote>
+
+<p>It maps a list through <code>_ + 1</code> and gets a new list with each element incremented.
+This makes sense mnemonically, but can this code actually work in python?</p>
+
+<p>And sure it can. In fact this is rather simple trick with operator overloading:</p>
+
+<p>```python
+class Whatever(object):</p>
+
+<pre><code>def __add__(self, y):
+    return lambda x: x + y
+</code></pre>
+
+<p>_ = Whatever()
+```</p>
+
+<p>Here we create a class that produces lambda upon addition and then creates its instance named <code>_</code>.
+Just using common interface in an unusual way. We can even go all loose and make something like this to work:</p>
+
+<p>```python</p>
+
+<a name="Sort.guys.by.height.descending"></a>
+<h1>Sort guys by height descending</h1>
+
+<p>sort(guys, key=&ndash;_.height)</p>
+
+<a name="Reduce.my.multiplication"></a>
+<h1>Reduce my multiplication</h1>
+
+<p>factorial = lambda n: reduce(<em> * </em>, range(2, n+1))
+```</p>
+
+<p>Returning lambda, obviously, won&rsquo;t work anymore. However, we can return a callable object,
+which also returns callables as operations results. We are also intercepting attribute access here,
+shouldn&rsquo;t surprise you after everything you&rsquo;ve seen.</p>
+
+<p>Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications.
+But suppose you are writing <a href="https://github.com/Suor/funcy/blob/master/tests/test_funcs.py">tests for functional support library</a>,
+then you&rsquo;ll need to create lots of small functions to pass them to your ones.
+A library like this would be useful in that setting.</p>
+
+<p>Anyway, if you still think this idea is too weird then you should know that there are at least 3 libraries implementing it:</p>
+
+<ul>
+<li><a href="https://github.com/Suor/whatever">whatever</a></li>
+<li><a href="https://pypi.python.org/pypi/placeholder">placeholder</a></li>
+<li><a href="https://github.com/kachayev/fn.py">fn.py</a></li>
+</ul>
+
+
+<p>But let&rsquo;s move to something more interesting.</p>
+
+<a name="Pattern.Matching"></a>
+<h2>Pattern Matching</h2>
+
+<p>Now look at this and think if it is also feasible in python.
+This is supposed to recursively calculate a product of all the list elements:</p>
+
+<p>```python
+def product():</p>
+
+<pre><code>if []: 1
+if [x] + xs: x * product(xs)
+</code></pre>
+
+<p>```</p>
+
+<p>If you familiar with pattern matching then the code makes sense:</p>
+
+<ul>
+<li>product is 1 for empty list,</li>
+<li>product is (first element) times (product of the rest of the list) otherwise.</li>
+</ul>
+
+
+<p>On the other hand, python doesn&rsquo;t work this way. <code>x</code> and <code>xs</code> are never defined and <code>product()</code> has no arguments. And yes, this really doesn&rsquo;t work. This, however, does:</p>
+
+<p>```python
+from patterns import patterns</p>
+
+<p>@patterns
+def product():</p>
+
+<pre><code>if []: 1
+if [x] + xs: x * product(xs)
+</code></pre>
+
+<p>```</p>
+
+<p><code>@patterns</code> here rewrites function into something we meant. It can&rsquo;t obviously be implemented as ordinary decorator, since calling original function will crash. So <code>@patterns</code> reads function code instead, parses it into abstract syntax tree, transforms that to a meaningful one and then compiles back:</p>
+
+<p><blockquote><p>Code  →  AST  →  New AST  →  New Code</p></blockquote></p>
+
+<!-- TODO: make it pretty -->
+
+
+<p>And after transformation we get something like:</p>
+
+<p>```python
+def product(value):</p>
+
+<pre><code>if value == []:
+    return 1
+if isinstance(value, list) and len(value) &gt;= 1:
+    x, xs = value[0], value[1:]
+    return x * product(xs)
+</code></pre>
+
+<p>```</p>
+
+<p>Which looks like normal python code, it is also much more verbose.
+That&rsquo;s why we got into this whole pattern matching thing in the first place.</p>
+
+<p>And again it was too awkward to use all this magic in production code,
+but I used code inspired by that:</p>
+
+<p>```python</p>
+
+<a name="Use.simple.pattern.matching.to.construct.form.field.widget"></a>
+<h1>Use simple pattern matching to construct form field widget</h1>
+
+<p>TYPE_TO_WIDGET = (</p>
+
+<pre><code>[lambda f: f.choices,           lambda f: Select(choices=f.choices)],
+[lambda f: f.type == 'int',     lambda f: TextInput(coerce=int)],
+[lambda f: f.type == 'string',  lambda f: TextInput()],
+[lambda f: f.type == 'text',    lambda f: Textarea()],
+[lambda f: f.type == 'boolean', lambda f: Checkbox(f.label)],
+</code></pre>
+
+<p>)
+return first(do(field) for cond, do in TYPE_TO_WIDGET if cond(field))
+```</p>
+
+<p>This actually could be useful for many things: recursive functions, chatbots, binary protocol implementations and other occasions when you resolve to long if-elses or switch-cases.
+The general idea, however, comes beyond pattern matching.</p>
+
+<a name="AST.Applications"></a>
+<h2>AST Applications</h2>
+
+<p>This technique &mdash; abstract syntax tree transformation &mdash; is much more broadly useful.
+And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.</p>
+
+<p>Anyway, these are some things they facilitate:</p>
+
+<p><strong>Language extensions.</strong> With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, &hellip; It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.</p>
+
+<p><strong>Optimizations</strong>. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.</p>
+
+<p><strong>Code analysis</strong>. It&rsquo;s much easier to analyze tree than just code string &lsquo;cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST.
+Generally you won&rsquo;t need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.</p>
+
+<p><strong>Translation</strong>. To JavaScript to run things in browser, to SQL to automatically generate queries
+or stored procedures, to Python 3 after all.</p>
+
+<p>These are various ways it flows:</p>
+
+<p><blockquote><p>Code  →  AST  →  New AST  →  New Code<br/>Code  →  AST  →  JavaScript<br/>Bytecode  →  AST  →  SQL</p></blockquote></p>
+
+<!-- TODO: make a flowchart? -->
+
+
+<p>Looks like we need to dig a bit more into AST.</p>
+
+<a name="AST"></a>
+<h2>AST</h2>
+
+<p>First we need a way to get a tree. The easiest way is to first get source and then parse it. Two standard modules will help us with that:</p>
+
+<p>```python
+import inspect, ast</p>
+
+<p>source = inspect.getsource(func)
+tree = ast.parse(source)
+```</p>
+
+<p>Sometimes you can&rsquo;t get function source, most common example &mdash; <code>inspect.getsource()</code> doesn&rsquo;t work with lambdas. Then you can still get to AST by decompiling bytecode:</p>
+
+<p>```python
+from meta.decompiler import decompile_func</p>
+
+<p>tree = decompile_func(lambda x: x + 1)
+```</p>
+
+<p>We are using third party module <a href="https://github.com/srossross/Meta">meta</a> here, and despite saying that we decompile function it really does inspect and decompile its bytecode. Anyway, we&rsquo;ve got our AST, let&rsquo;s look at it:</p>
+
+<p><img src="http://hackflow.com/slides/metaprogramming/ast-example.dot.svg" style="width: 100%"></p>
+
+<p>This is quite a hairy tree for something as simple as <code>lambda x: x + 1</code>. But if we look at it a bit
+more closer we can recognize all the corresponding parts. Left branch is arguments, which have single argument named <code>x</code>, but no kwarg, vararg or defaults. Right branch is a return node returning a result of binary operation with an op of addition and operands of a name <code>x</code> and a number <code>1</code>.</p>
+
+<p>That makes sense, this is not however what we see as a result in python REPL:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>tree
+&lt;_ast.Lambda at 0x7f7e2359e490>
+```</p></blockquote></blockquote></blockquote>
+
+<p>Yeah, it&rsquo;s just a <code>Lambda</code> object. We can look up its attributes to get other nodes:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>tree.body
+&lt;_ast.Return at 0x7f3e75f869d0>
+```</p></blockquote></blockquote></blockquote>
+
+<p>And this is what python AST actually is: a collection of objects stored in the attributes of each other. In addition I need to say that this objects don&rsquo;t really have behaviour, they are just data.
+You can find full list of available nodes and their attributes in <a href="https://docs.python.org/2/library/ast.html">ast module</a> documentation.</p>
+
+<p>Inspecting AST this way could be too tiresome, we need some way to get a bigger picture.
+The simplest thing we have is <code>ast.dump()</code> utility:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>print ast.dump(tree)
+Lambda(args=arguments(args=[Name(id=&lsquo;x&rsquo;, ctx=Param())], vararg=None, kwarg=None,
+defaults=[]), body=Return(value=BinOp(left=Name(id=&lsquo;x&rsquo;, ctx=Load()), op=Add(),
+right=Num(n=1))))
+```</p></blockquote></blockquote></blockquote>
+
+<p>This is the same thing we saw in the picture, it is also useless for any non-trivial case. One more
+third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, could help us out:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>print astor.dump(tree)
+Lambda(</p>
+
+<pre><code>args=arguments(args=[Name(id='x')], vararg=None, kwarg=None, defaults=[]),
+body=Return(value=BinOp(left=Name(id='x'), op=Add, right=Num(n=1))))
+</code></pre>
+
+<p>```</p></blockquote></blockquote></blockquote>
+
+<p>The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>print astor.to_source(tree)
+(lambda x: (x + 1))
+```</p></blockquote></blockquote></blockquote>
+
+<p>Parentheses are added everywhere to avoid dealing with operator precedence, but otherwise it&rsquo;s the same code we parsed.</p>
+
+<p>And the last thing we usually do to AST &mdash; compile it back and execute:</p>
+
+<p><code>python
+code = compile(tree, '', 'exec')
+context = {}
+exec(code, globals(), context)
+</code></p>
+
+<p>Functions used here, <code>compile()</code> and <code>exec()</code>, are built-ins. And <code>code</code> is the same object type you can find introspecting <code>func.__code__</code>. By executing in a context we set all the names defined into that dict:</p>
+
+<p>```python</p>
+
+<blockquote><blockquote><blockquote><p>context
+{&lsquo;func&rsquo;: <function __main__.func>}
+```</p></blockquote></blockquote></blockquote>
+
+<p>So if all these were happening in a decorator we can get that function out of the context and substitute original one. Only the meat is left &mdash; walking the tree.</p>
+
+<a name="AST.Traversal"></a>
+<h2>AST Traversal</h2>
+
+<p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:</p>
+
+<p>```python</p>
+
+<a name="Iterate.fields.with.values"></a>
+<h1>Iterate fields with values</h1>
+
+<blockquote><blockquote><blockquote><p>ast.iter_fields(tree)
+[(&lsquo;args&rsquo;, &lt;<em>ast.arguments at &hellip;>),
+ (&lsquo;body&rsquo;, &lt;</em>ast.Return at &hellip;>)]</p></blockquote></blockquote></blockquote>
+
+<a name="Iterate.child.nodes"></a>
+<h1>Iterate child nodes</h1>
+
+<blockquote><blockquote><blockquote><p>ast.iter_child_nodes(tree)
+[&lt;<em>ast.arguments &hellip;>, &lt;</em>ast.Return &hellip;>]</p></blockquote></blockquote></blockquote>
+
+<a name="Just.list.available.fields"></a>
+<h1>Just list available fields</h1>
+
+<blockquote><blockquote><blockquote><p>tree._fields
+(&lsquo;args&rsquo;, &lsquo;body&rsquo;)
+```</p></blockquote></blockquote></blockquote>
+
+<p>First of higher level ones is <code>NodeVisitor</code> &mdash; a base class implementing visitor pattern, the idea is to subclass it and define methods like <code>visit_&lt;NodeClass&gt;()</code>:</p>
+
+<p>```python
+class NumberFinder(ast.NodeVisitor):</p>
+
+<pre><code>def visit_Num(self, node):
+    print "Found number literal", node.n
+</code></pre>
+
+<p>def find_numbers(tree):</p>
+
+<pre><code>NumberFinder().visit(tree)
+</code></pre>
+
+<p>```</p>
+
+<p>This simple example finds all the number literals in given code. Just an example, but it could be grown into some magic number finding tool and wrapped into linter or code editor plugin.</p>
+
+<p>The second base class ast provides is <code>NodeTransformer</code>. It works almost the same, but you can change a tree by returning new nodes from visit methods:</p>
+
+<p>```python
+class ExprOptimizer(ast.NodeTransformer):</p>
+
+<pre><code>def visit_BinOp(self, node):
+    # Call .generic_visit() to transform sub-nodes
+    node = self.generic_visit(node)
+    # If both operands are just numbers then precalculate
+    if type(node.left) is Num and type(node.right) is Num:
+        op = AST_TO_OP[node.op.__class__]
+        return Num(n=op(node.left.n, node.right.n))
+    else:
+        return node
+</code></pre>
+
+<p>AST_TO_OP = {</p>
+
+<pre><code>Add: operator.add,
+...
+</code></pre>
+
+<p>}
+```</p>
+
+<p>This one precalculates any expressions on number literals, quite neat for just a bunch of lines.</p>
+
+<p>And last but not least we can use old and good recursive tree walking. This snippet makes python function return last expression in a way Ruby, CoffeScript and Clojure do:</p>
+
+<p>```python
+def return_last(tree):</p>
+
+<pre><code>if not hasattr(tree, 'body'):
+    return
+elif isinstance(tree.body[-1], Expr):
+    tree.body[-1] = Return(value=tree.body[-1])
+else:
+    return_last(tree.body[-1])
+</code></pre>
+
+<p>```</p>
+
+<p>Note this code is simplified and hence broken, e.g. it will insert <code>return</code> into the end of while loop if there is an expression there.</p>
+
+<a name="Going.Forward"></a>
+<h2>Going Forward</h2>
+
+<p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p>
+
+<!-- NOTE: this is only about 1/3 of the thing, he-he ;) -->
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Painless Decorators]]></title>
