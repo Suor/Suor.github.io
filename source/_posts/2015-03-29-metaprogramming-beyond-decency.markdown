@@ -1,10 +1,11 @@
 ---
 layout: post
 title: "Metaprogramming Beyond Decency: Part 1"
-comments: false
-published: false
-sharing: false
+date: 2015-03-29 20:08
+comments: true
+sharing: true
 categories: [Python]
+reddit_url: http://www.reddit.com/r/programming/comments/30p2zw/python_metaprogramming_beyond_decency/
 ---
 
 *(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)*
@@ -26,7 +27,7 @@ Look at this code:
 ```
 
 It maps a list through `_ + 1` and gets a new list with each element incremented.
-This makes sense mnemonically, but could this code actually work in python?
+This makes sense mnemonically, but can this code actually work in python?
 
 And sure it can. In fact this is rather simple trick with operator overloading:
 
@@ -38,9 +39,8 @@ class Whatever(object):
 _ = Whatever()
 ```
 
-Here we create a class that produces lambda upon addition and then create its instance named `_`.
-A simple trick of using common interface in an unusual way.
-We can even go all loose and make something like this to work:
+Here we create a class that produces lambda upon addition and then creates its instance named `_`.
+Just using common interface in an unusual way. We can even go all loose and make something like this to work:
 
 ```python
 # Sort guys by height descending
@@ -54,7 +54,7 @@ Returning lambda, obviously, won't work anymore. However, we can return a callab
 which also returns callables as operations results. We are also intercepting attribute access here,
 shouldn't surprise you after everything you've seen.
 
-Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file, too few to bring an import, a dependency and all the complications.
+Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications.
 But suppose you are writing [tests for functional support library][funcy-tests],
 then you'll need to create lots of small functions to pass them to your ones.
 A library like this would be useful in that setting.
@@ -82,8 +82,7 @@ def product():
 If you familiar with pattern matching then the code makes sense:
 
 - product is 1 for empty list,
-- product is (first element) times (product of the rest of the list).
-<!-- TODO: grouping? -->
+- product is (first element) times (product of the rest of the list) otherwise.
 
 On the other hand, python doesn't work this way. `x` and `xs` are never defined and `product()` has no arguments. And yes, this really doesn't work. This, however, does:
 
@@ -139,18 +138,16 @@ The general idea, however, comes beyond pattern matching.
 ## AST Applications
 
 This technique -- abstract syntax tree transformation -- is much more broadly useful.
-And the main reason why is that trees capture language structure, they are also data structures,
-which are much more hackable than code strings.
+And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.
 
 Anyway, these are some things they facilitate:
 
-**Language extensions.** With pattern matching being only one of them. The other examples are optional or not static typing, macros, ... It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.
+**Language extensions.** With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, ... It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.
 
-**Optimizations**. This is less obvious but we can inline calls, precalculate constant expressions,
-even make tail call optimization.
+**Optimizations**. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.
 
-**Code analysis**. It's much easier to analyze tree than just code string 'cause it captures some of semantics of a language. We could implement some linters or editor plugins with the help of AST.
-Generally you won't need to transform a tree for analysis, but imagine how some linter could suggest code changes specific to particular fragment not just general advice, that would be cool.
+**Code analysis**. It's much easier to analyze tree than just code string 'cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST.
+Generally you won't need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.
 
 **Translation**. To JavaScript to run things in browser, to SQL to automatically generate queries
 or stored procedures, to Python 3 after all.
@@ -178,7 +175,7 @@ source = inspect.getsource(func)
 tree = ast.parse(source)
 ```
 
-Sometimes you can't get function source, most common example -- `inspect.getsource()` doesn't work for lambdas. Then you can still get to AST by decompiling bytecode:
+Sometimes you can't get function source, most common example -- `inspect.getsource()` doesn't work with lambdas. Then you can still get to AST by decompiling bytecode:
 
 ```python
 from meta.decompiler import decompile_func
@@ -230,7 +227,7 @@ Lambda(
     body=Return(value=BinOp(left=Name(id='x'), op=Add, right=Num(n=1))))
 ```
 
-The same plus indents. It is already useful when you need to look at the AST close, but for quick print debugging python code would be even better:
+The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:
 
 ```python
 >>> print astor.to_source(tree)
