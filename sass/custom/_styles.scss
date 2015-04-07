@@ -8,6 +8,13 @@ article p+ul {
     margin-top: -1.5em;
 }
 
+.break-code pre {
+    white-space: pre-wrap;
+}
+.break-code .line-numbers {
+    display: none;
+}
+
 .example-bad .highlight .line-numbers {
     background: #700011 !important;
 }
