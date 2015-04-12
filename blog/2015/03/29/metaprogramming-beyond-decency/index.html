@@ -30,7 +30,9 @@
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
-    <meta property="twitter:card" content="summary">
+    
+        <meta property="twitter:card" content="summary">
+    
     <meta property="twitter:site" content="hackflow">
     <meta property="twitter:url" content="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency">
     <meta property="twitter:title" content="Metaprogramming Beyond Decency: Part 1">
@@ -121,7 +123,6 @@ fun and profit.</p>
 <!--more-->
 
 
-<a name="Warming.up"></a>
 <h2>Warming up</h2>
 
 <p>Look at this code:</p>
@@ -187,7 +188,6 @@ A library like this would be useful in that setting.</p>
 
 <p>But let&rsquo;s move to something more interesting.</p>
 
-<a name="Pattern.Matching"></a>
 <h2>Pattern Matching</h2>
 
 <p>Now look at this and think if it is also feasible in python.
@@ -282,7 +282,6 @@ but I used code inspired by that:</p>
 <p>This actually could be useful for many things: recursive functions, chatbots, binary protocol implementations and other occasions when you resolve to long if-elses or switch-cases.
 The general idea, however, comes beyond pattern matching.</p>
 
-<a name="AST.Applications"></a>
 <h2>AST Applications</h2>
 
 <p>This technique &mdash; abstract syntax tree transformation &mdash; is much more broadly useful.
@@ -310,7 +309,6 @@ or stored procedures, to Python 3 after all.</p>
 
 <p>Looks like we need to dig a bit more into AST.</p>
 
-<a name="AST"></a>
 <h2>AST</h2>
 
 <p>First we need a way to get a tree. The easiest way is to first get source and then parse it. Two standard modules will help us with that:</p>
@@ -426,7 +424,6 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
 <p>So if all these were happening in a decorator we can get that function out of the context and substitute original one. Only the meat is left &mdash; walking the tree.</p>
 
-<a name="AST.Traversal"></a>
 <h2>AST Traversal</h2>
 
 <p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:</p>
@@ -535,7 +532,6 @@ third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, 
 
 <p>Note this code is simplified and hence broken, e.g. it will insert <code>return</code> into the end of while loop if there is an expression there.</p>
 
-<a name="Going.Forward"></a>
 <h2>Going Forward</h2>
 
 <p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p>

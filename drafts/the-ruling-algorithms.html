@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>The Ruling Algorithms - Hackflow</title>
+  <meta name="author" content="Alexander Schepanovski">
+
+  
+  <meta name="description" content="Hey intro &hellip; oDesk added new metric &mdash; job success rate. This new feature disrupted status quo of using average
+feedback score. Profiles &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://hackflow.com/drafts/the-ruling-algorithms.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+    
+        <meta property="twitter:card" content="summary">
+    
+    <meta property="twitter:site" content="hackflow">
+    <meta property="twitter:url" content="http://hackflow.com/drafts/the-ruling-algorithms.html">
+    <meta property="twitter:title" content="The Ruling Algorithms">
+    <meta property="twitter:description" content="Hey intro &hellip; oDesk added new metric &mdash; job success rate. This new feature disrupted status quo of using average
+feedback score. Profiles people were building up for years suddenly became &hellip;">
+
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37289902-3']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Hackflow</a></h1>
+  
+    <h2>Sharing my mindset</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:hackflow.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">The Ruling Algorithms</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Hey intro &hellip;</p>
+
+<!--more-->
+
+
+<p>oDesk added new metric &mdash; job success rate. This new feature disrupted status quo of using average
+feedback score. Profiles people were building up for years suddenly became useless to the point where it makes sense to delete your account and start afresh. Let look closer what&rsquo;s wrong with it.</p>
+
+<p>First and most important thing &mdash; it affects your living, if you have low score you are effectively invisible to potential clients, so if over the years you started to rely on oDesk as your primary source of income then you are screwed.</p>
+
+<p>Second &mdash; nobody understands how it works, there is no public formula, support answers contradict each other, there are rumours of private feedback that is incorporated into that.</p>
+
+<p>Third &mdash; it&rsquo;s out of your control both because you don&rsquo;t know how this works and you don&rsquo;t have access to some of the factors.</p>
+
+<p>There are bonus points for delaying score recalculation for unknown long periods (days and weeks), this protects from user reverse engineering it. It also creates additional suspense &lsquo;cause now it&rsquo;s just some thing that changes randomly at unpredicatable intervals and can totally screw you up at any moment. Best thing done on freelance website ever.</p>
+
+<p>Obviously it will be fixed or people will migrate to another site. We could have just laughed and forgot until it would have started&hellip;</p>
+
+<h2>Getting Serious</h2>
+
+<p>Imagine some city ER infrastructure like this:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>MAP
+</span><span class='line'>hospital, hospital
+</span><span class='line'>ambulances, roads, houses, districts</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ER operators are having hard times to regulate all these so we introduce some automation, an operators application to show all the calls with all the relevant data, like address, cause, condition:</p>
+
+<table>
+<thead>
+<tr>
+<th>Time </th>
+<th> Name </th>
+<th> Condition </th>
+<th> Address </th>
+<th> Urgency </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 min ago </td>
+<td> John </td>
+<td> Heart Attack </td>
+<td> &hellip; </td>
+<td> High <em>(cause heart attack)</em></td>
+</tr>
+<tr>
+<td>3 min ago </td>
+<td> Martha </td>
+<td> Food poisoning </td>
+<td> &hellip; </td>
+<td> Medium</td>
+</tr>
+<tr>
+<td>&hellip; </td>
+<td> &hellip;    </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip;</td>
+</tr>
+<tr>
+<td>&hellip; </td>
+<td> <em>cut line</em> </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip; <em>(operator can&rsquo;t see anything under it)</em></td>
+</tr>
+<tr>
+<td>5 min ago </td>
+<td> Sam </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip; <em>(invisible)</em></td>
+</tr>
+<tr>
+<td>&hellip; </td>
+<td> &hellip;    </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip;</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>Operator looks at this and assigns ambulances to calls. Obviously you want to be at the top here, but it&rsquo;s sorted according to some complex algorithm taking into account urgency, time of the call and possibly more factors.</p>
+
+<p>The algorithm is set up or trained to minimize harm, so that less people die or get complications. But various considerations immediately start to arrive.</p>
+
+<h2>Software Glitch</h2>
+
+<p>What if algorithm works for most but penalizes some? And this some never show over the cut line until list is full enough. Operator won&rsquo;t see you, ambulance won&rsquo;t come. Such software glitch could kill you.</p>
+
+<p>How is this possible? &hellip; many factors, black box, unpredictable algorithm results &hellip;
+&hellip; reference to Summa Technologiae?</p>
+
+<p> or a group of people?</p>
+
+<h2>Statistical Bug</h2>
+
+<p>Another possibility is penalization of a group of people united by location, age, race, gender or whatever. Algorithms know nothing about equality or ethics, at least by default. So it&rsquo;s quite possible that algorithm that will &ldquo;reduce harm&rdquo; the best will not work equally well for everyone. E.g. &hellip;</p>
+
+<p>The thing with this issue is that you can&rsquo;t spot it until you run statistics on system performance over significant period. So if such bug got itself into a system it will lurk there for years undetected. We will need statistical debugging to catch those and even better statistical testing: modelling work of the system with generated or historical input.</p>
+
+<p>I need to say that it&rsquo;s not enough to just test algorithm to be fair, you need to test the whole system. Let&rsquo;s look how UI can get into equation:</p>
+
+<table>
+<thead>
+<tr>
+<th>Time </th>
+<th> Name </th>
+<th> Condition </th>
+<th> Address </th>
+<th> Urgency </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&hellip; </td>
+<td> &hellip;    </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip;</td>
+</tr>
+<tr>
+<td>4 min ago </td>
+<td> John </td>
+<td> Food poisoning </td>
+<td> &hellip; </td>
+<td> Medium</td>
+</tr>
+<tr>
+<td>4 min ago </td>
+<td> John </td>
+<td> Food poisoning </td>
+<td> &hellip; </td>
+<td> Medium</td>
+</tr>
+<tr>
+<td>&hellip; </td>
+<td> &hellip;    </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip;</td>
+</tr>
+</tbody>
+</table>
+
+
+<!-- TODO: large table -->
+
+
+
+
+<!-- a bit later positions could be updated and Johns drawn apart -->
+
+
+<p>Here we have 2 very similar rows, so there is a possibility for operator to pass by second John.
+Even if probability of that is small, say 5%, in the end it can result into ambulance coming to average John 25 seconds later comparing to Arthur. So it&rsquo;s now bad to have widespread (common?) name.</p>
+
+<p>We should also take into account operator: what if we use colors in UI to indicate things? Colors have different meanings in different cultures, so operator will subconsciously look up things in different order depending on her culture. And what if operator is colorblind?</p>
+
+<p>These were only a handful of possible scenarios, and you can&rsquo;t really foresee their full variety,
+it is the reason why this is so complex.</p>
+
+<p>? For some group it could be actually worse with new system than it were with paper and pencil.</p>
+
+<h2>Security Bug?</h2>
+
+<p>Any software glitches or statistical bugs described above could be implanted intentionally. What if there is a person skilled and wuzzy enough to hack into the system? What if he also doesn&rsquo;t like jews? Then he could alter the algorithm to lower anybody with jew-like name and serious condition in the table, lower not too much and not all the time. This kind of thing could stick in the system for years.</p>
+
+<h2>Not a Bug</h2>
+
+<p>Introduce time of arrival, traffic, a region behind a bridge.</p>
+
+<p>Feature &ndash; in order to minimize harm we should penalize anyone behind the bridge or even just gave up on them. Math is merciless.</p>
+
+<h2>No way back</h2>
+
+<p>Dismantling system will kill people. Even downgrading will.</p>
+
+<!-- Larger system could try to get rid of older people or ... -->
+
+
+<ul>
+<li>works for most, but doesn&rsquo;t work for some or group of people,</li>
+<li>statistical bug, (statistical debugging)</li>
+<li>security issues,</li>
+<li>not a bug, feature (traffic example),</li>
+<li>no way back.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/thoughts/'>Thoughts</a>
+  
+</span>
+
+
+    </p>
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>
+    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
+    I write in python, js and occasionally english.
+    I also borrow ideas from a variety of languages.
+    You might want to <a href="https://twitter.com/hackflow" target="_blank">follow me</a>
+    or look up <a href="http://github.com/Suor">my Github profile</a>.
+  </p>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/06/22/why-every-language-needs-its-underscore/">Why Every Language Needs Its Underscore</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/09/on-orm-cache-invalidation/">On ORM Cache Invalidation</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/Suor">@Suor</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'Suor',
+            count: 5,
+            skip_forks: true,
+            skip: 'Suor.github.io,sublime-text-2-User',
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Alexander Schepanovski -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

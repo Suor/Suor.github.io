@@ -30,7 +30,9 @@
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
-    <meta property="twitter:card" content="summary">
+    
+        <meta property="twitter:card" content="summary">
+    
     <meta property="twitter:site" content="hackflow">
     <meta property="twitter:url" content="http://hackflow.com/blog/2014/09/07/growing-over-backward-incompatibility">
     <meta property="twitter:title" content="Growing Over Backward Incompatibility">
@@ -117,24 +119,20 @@
 <!--more-->
 
 
-<a name="Possible.strategies"></a>
 <h2>Possible strategies</h2>
 
 <p>Most languages don&rsquo;t have any explicit strategy for backward incompatible changes, which is pitiful. Mainly because not having a strategy means you are using the worst one. But let&rsquo;s review possible strategies.</p>
 
-<a name="Grow.as.it.goes..then.break.big"></a>
 <h4>Grow as it goes, then break big</h4>
 
 <p>This results into separation like Python 2/3, Perl 5/6 or even in total abandonment. The major issue is that it creates a gap that most people don&rsquo;t have enough incentive to jump over. It creates additional headache to library developers making hard to support their creations across incompatibility boundary. This in its turn causes chicken and egg problem of no libraries, no users. In its worst separation could divide both ecosystem and community in half, lessening the project considerably.</p>
 
-<a name="Move.fast..break.things"></a>
 <h4>Move fast, break things</h4>
 
 <p>Works well in earlier development stages. I never complained when upgrading Node.js from 0.1.x to 0.2.x broke my app as well as several dependencies. However, this effectively reduces library availability, since many authors just can&rsquo;t or interested enough to keep up with the development pace. I was astonished to hear from some of my ruby friends that they avoid using libraries not updated within 3 months as possibly abandoned ones.</p>
 
 <p>It also poses a strain on language users forced to change their coding habits and to constantly seek for and adapt a replacement libraries for abandoned ones. Some of them consequently settle with particular language or framework version causing an erosion of a community and ecosystem.</p>
 
-<a name="Stay.small"></a>
 <h4>Stay small</h4>
 
 <p>&hellip; and useless. A viable strategy for very domain specific or otherwise having narrow field languages, e.g. for education. In any other case wider audience will need language to be extended to be useful for them. The alternative is to stay small &hellip;</p>
@@ -152,7 +150,6 @@ Unlike libraries frameworks divide people.
  -->
 
 
-<a name="Rolling.deprecation"></a>
 <h4>Rolling deprecation</h4>
 
 <p>This is when you introduce new things leaving old intact, but marking them as deprecated. After several releases deprecated things are removed and new things take their place. Using this strategy you can continuously introduce changes while still providing a compatibility guarantee for several releases. There are, however, some considerations to this strategy.</p>
@@ -181,7 +178,6 @@ Unlike libraries frameworks divide people.
 <!-- not friendly with semver -->
 
 
-<a name="Rolling.a.language"></a>
 <h2>Rolling a language</h2>
 
 <p>Making an operator work differently depending on context seems impossible, but also offers a hint to resolve both itself and API uglifying issue. So obviously first we need a way to tell new code from old. The simplest thing is just stating this explicitly, and this is already used in Python 2:</p>
@@ -209,14 +205,12 @@ Unlike libraries frameworks divide people.
 
 <p>So this is it, the idea I started this post to promote. Lower I&rsquo;ll just address any issues/objections that I can think of.</p>
 
-<a name="Issues"></a>
 <h2>Issues</h2>
 
 <p>Let&rsquo;s start from the ones from rolling deprecation section. First (ugly APIs) and last (no way to break) are resolved automatically, second &ndash; the need to ship several implementations bundled &ndash; remains. We can manage that by carefully storing all active implementations and providing a limit on supported versions, e.g. make <code>use v5.10</code> an error in 5.20 version of a language. We&rsquo;ll need to make this span large and stable enough though.</p>
 
 <p>There is also an issue of how do we start this process. It&rsquo;s however rather trivial, say our language is at version 3.4 now, when to add our rolling model in 3.5, we add some form of <code>use</code> statement there and in absence of it just assume 3.4 semantics.</p>
 
-<a name="Easy.parts"></a>
 <h3>Easy parts</h3>
 
 <p>These ones are almost automatically solved by version declaration, still some elaboration will probably close unneeded questions.</p>
@@ -242,7 +236,6 @@ Unlike libraries frameworks divide people.
 
 <p><strong>Standard library changes</strong>. The easiest way is just shipping several versions of it and patching import statement to load appropriate library version. Different versions of standard libs can share code for efficiency, but that&rsquo;s optional.</p>
 
-<a name="Passing.over.boundary"></a>
 <h3>Passing over boundary</h3>
 
 <p>Real issues start to arise when we pass something from newer code to older one or vice a versa. Say we have an instance of built-in or standard library type which has changed and pass it to the code that expects to treat it as an instance of an older version of same type.</p>
@@ -255,7 +248,6 @@ Unlike libraries frameworks divide people.
 
 <p>What if internal representation of a type changes? The thing is that shouldn&rsquo;t matter if nobody looks inside. We should still support all the interfaces and we&rsquo;ll be good. This puts a restriction on a kind of access language users, including library authors, have to instances of built-in types. E.g. if instance data is represented with C struct then we shouldn&rsquo;t allow direct access to its members, casting, etc. Everything should be done via functions or at least macros, which could be updated to handle newer representation.</p>
 
-<a name="Wrap-up"></a>
 <h3>Wrap-up</h3>
 
 <p>There are obviously some things I haven&rsquo;t addressed. And this approach doesn&rsquo;t make language developers lives easier. It could however make it more fun both for developers and their users. Cause this way things don&rsquo;t need to stay broken or weird cause that&rsquo;s how they are. An ability to change language in a backward incompatible manner should in the end bring better languages for everyone. It also feels like freedom.</p>
