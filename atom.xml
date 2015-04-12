@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-04-12T18:37:24+07:00</updated>
+  <updated>2015-04-12T18:41:52+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,600 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 2]]></title>
+    <link href="http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2/"/>
+    <updated>2015-04-12T18:41:00+07:00</updated>
+    <id>http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2</id>
+    <content type="html"><![CDATA[<p><em>(This is second part of my PiterPy talk adaptation, first part is available <a href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/">here</a>)</em></p>
+
+<p>Previously I described various ways AST could be used to alter Python language. Now I will concentrate on translation, and we will translate Python to JavaScript.</p>
+
+<!--more-->
+
+
+<h2>Translation</h2>
+
+<p>Unlike all Part 1 examples this one started from real need, the one as mundane as form validation:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto"></p>
+
+<p>Here we have a form with a validation error visible, we typically want this to be shown as soon as possible, so we implement these checks in browser in JavaScript. But we still need to check everything on the server to not let broken data into our database.</p>
+
+<p>Usually we just duplicate logic and this works. Until we get many forms and all of them are like this:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/car-form-full.png"></p>
+
+<p>When we arrive to this scale code duplication starts to cause problems duplication always does:
+some things are checked only in one place, some things are not updated accordingly and contradict each other. We show weird errors to our users and save broken data to our database.</p>
+
+<p>In ideal world we wish to write every rule just once and then use it in both environments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Clean raw value</span>
+</span><span class='line'><span class="n">clean</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">r&#39;\s+&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Validate clean value</span>
+</span><span class='line'><span class="n">validate</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1000</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">100000000</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So we naturally came to translation. We want to write validation in python, translate it to JavaScript and use on front-end automatically.</p>
+
+<h2>The Easy Part</h2>
+
+<p>Let&rsquo;s start from something simple, like translating a plain lambda like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">translate</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We will use AST to for translation, so first we need to get it for this lambda. It&rsquo;s hard to get source for lambda to parse it, so we&rsquo;ll use <a href="https://github.com/srossross/Meta">meta</a> library to decompile its bytecode:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">meta.decompiler</span> <span class="kn">import</span> <span class="n">decompile_func</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">tree</span> <span class="o">=</span> <span class="n">decompile_func</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once we do that we get a tree like this:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto"></p>
+
+<p>I simplified it to look prettier, but all significant aspects are still here.</p>
+
+<p>The easiest way to render it to a new language is to start from leaves: numbers, variable names and operators mostly look the same in JavaScript. We will employ <code>ast.NodeVisitor</code> to walk the tree:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Translator</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeVisitor</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">visit_Num</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>        <span class="n">node</span><span class="o">.</span><span class="n">js</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">visit_Name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>        <span class="n">node</span><span class="o">.</span><span class="n">js</span> <span class="o">=</span> <span class="s">&#39;null&#39;</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s">&#39;None&#39;</span> <span class="k">else</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">visit_LtE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>        <span class="n">node</span><span class="o">.</span><span class="n">js</span> <span class="o">=</span> <span class="s">&#39;&lt;=&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After using this we come to:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/translation-1.dot.svg" style="display: block; margin: 0 auto"></p>
+
+<p>When leaf nodes are done we can compile code for ones depending on them:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">visit_Compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># Visit sub-nodes</span>
+</span><span class='line'>    <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+</span><span class='line'>    <span class="c"># Concatenate sub-node parts,</span>
+</span><span class='line'>    <span class="c"># use parentheses to not worry about operator precedence</span>
+</span><span class='line'>    <span class="n">node</span><span class="o">.</span><span class="n">js</span> <span class="o">=</span> <span class="s">&#39;(</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">js</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">js</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">js</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And we&rsquo;ve got to:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/translation-2.dot.svg" style="display: block; margin: 0 auto"></p>
+
+<p>We can continue going up the tree and finally get:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">translate</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">)</span>
+</span><span class='line'><span class="n">function</span> <span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">)}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay! We did it. But&hellip;</p>
+
+<h2>Complications</h2>
+
+<p>What about translating code like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">10</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is no chained comparisons in JavaScript, the best we can do is translating this to:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="nx">x</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">x</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is also no <code>not in</code> operator in JavaScript, combining all that <code>Compare</code> translation complicates to (not necessary to read and understand all this, just appreciate the complication):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">visit_Compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>    <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">ops</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">ops</span>
+</span><span class='line'>    <span class="n">operands</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="p">]</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">comparators</span>
+</span><span class='line'>    <span class="n">pairs</span> <span class="o">=</span> <span class="n">pairwise</span><span class="p">(</span><span class="n">operands</span><span class="p">)</span>  <span class="c"># adjacent pairs of operands</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">node</span><span class="o">.</span><span class="n">js</span> <span class="o">=</span> <span class="s">&#39; &amp;&amp; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> \
+</span><span class='line'>        <span class="p">(</span><span class="s">&#39;!&#39;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">NotIn</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">l</span><span class="o">.</span><span class="n">js</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">js</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">js</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">for</span> <span class="n">op</span><span class="p">,</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">pairs</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Another complication is keyword arguments and star arguments. We can deal with them by complecting our code even more or by refusing to handle this case at all:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">visit_Call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">assert</span> <span class="n">node</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">is</span> <span class="bp">None</span> \
+</span><span class='line'>        <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">starargs</span> <span class="ow">is</span> <span class="bp">None</span>
+</span><span class='line'>    <span class="c"># ...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we are translating only subset of Python, but this should be okay since translation is not our goal, it&rsquo;s code deduplication for validation rules. So as long as translator works for this particular use case we are fine.</p>
+
+<h2>Closures</h2>
+
+<p>We are still not done yet. We probably don&rsquo;t want to write same validation rules over and over,
+so we will end with code like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">up_to</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">limit</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="n">limit</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">translate</span><span class="p">(</span><span class="n">up_to</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+</span><span class='line'><span class="n">function</span> <span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">v</span> <span class="o">&lt;=</span> <span class="n">limit</span><span class="p">)}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s easy to see that <code>limit</code> in JavaScript code refers to non-existing variable. To fix that we need to introspect values enclosed within a function, thankfully Python introspection has our back:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">u50</span> <span class="o">=</span> <span class="n">up_to</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">u50</span><span class="o">.</span><span class="n">__closure__</span>
+</span><span class='line'><span class="p">(</span><span class="o">&lt;</span><span class="n">cell</span> <span class="n">at</span> <span class="o">...</span><span class="p">:</span> <span class="nb">int</span> <span class="nb">object</span> <span class="o">...&gt;</span><span class="p">,)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here the closure is a tuple containing single cell with an int object in it. Makes sense since we are enclosing <code>50</code>. It&rsquo;s fairly easy to get cell contents:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">cell_contents</span>
+</span><span class='line'>      <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">u50</span><span class="o">.</span><span class="n">__closure__</span><span class="p">]</span>
+</span><span class='line'><span class="p">[</span><span class="mi">50</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s also easy to introspect free variables refering to enclosed values:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">u50</span><span class="o">.</span><span class="n">__code__</span><span class="o">.</span><span class="n">co_freevars</span>
+</span><span class='line'><span class="p">(</span><span class="s">&#39;limit&#39;</span><span class="p">,)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This <code>co_freevars</code> always have the same length and order as cells in closure, so we can pair them up and translate the whole thing to:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span><span class="kd">function</span> <span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">limit</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">(</span><span class="nx">v</span> <span class="o">&lt;=</span> <span class="nx">limit</span><span class="p">)}</span>
+</span><span class='line'><span class="p">}())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So we&rsquo;ve got a closure. This highlights how we are not really translating functions, but closures,
+which are functions plus context.</p>
+
+<h2>More Closures</h2>
+
+<p>Unfortunately <code>func.__closure__</code> doesn&rsquo;t capture everything, any global names and built-ins are still uncovered. Let&rsquo;s translate this one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">len50</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">50</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can access function globals and built-ins namespaces with:</p>
+
+<div class="break-code">
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">len50</span><span class="o">.</span><span class="n">__globals__</span>
+</span><span class='line'><span class="p">{</span><span class="s">&#39;len50&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">function</span> <span class="o">&lt;</span><span class="k">lambda</span><span class="o">&gt;</span> <span class="n">at</span> <span class="mh">0x7f705a92a848</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;__builtins__&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;__builtin__&#39;</span> <span class="p">(</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;dis&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;dis&#39;</span> <span class="kn">from</span> <span class="s">&#39;/usr/lib/python2.7/dis.pyc&#39;</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;translate&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">function</span> <span class="n">js</span><span class="o">.</span><span class="n">translate</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">:</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&lt;section&gt;</span><span class="se">\n</span><span class="s">&lt;pre&gt;&lt;code class=&quot;python&quot;&gt;&gt;&gt;&gt; [cell.cell_contents</span><span class="se">\n</span><span class="s">...&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">__builtin__</span><span class="o">.</span><span class="n">__dict__</span>
+</span><span class='line'><span class="p">{</span><span class="s">&#39;bytearray&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">type</span> <span class="s">&#39;bytearray&#39;</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;IndexError&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">type</span> <span class="s">&#39;exceptions.IndexError&#39;</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">all</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;vars&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">vars</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;SyntaxError&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="nb">type</span> <span class="s">&#39;exceptions.SyntaxError&#39;</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;isinstance&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span> <span class="n">function</span> <span class="nb">isinstance</span><span class="o">&gt;</span><span class="p">,</span> <span class="s">&#39;copyright&#39;</span><span class="p">:</span> <span class="n">Copyright</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="mi">2001</span><span class="o">-</span><span class="mi">2014</span> <span class="n">Python</span> <span class="n">Software</span> <span class="n">Foundatio</span><span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+</div>
+
+
+<p>So we only need to detect global names used by a function. We could have walked the AST, but then we would need to separate local and enclosed non-local names from global ones. The easier way is to introspect bytecode, which looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">len50</span><span class="o">.</span><span class="n">__code__</span><span class="o">.</span><span class="n">co_code</span>
+</span><span class='line'><span class="s">&#39;t</span><span class="se">\x00\x00</span><span class="s">|</span><span class="se">\x00\x00\x83\x01\x00</span><span class="s">d</span><span class="se">\x01\x00</span><span class="s">k</span><span class="se">\x01\x00</span><span class="s">S&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just a binary string, not that pretty. But python standard library provides us <a href="https://docs.python.org/2/library/dis.html">dis</a> module to handle that:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">dis</span><span class="o">.</span><span class="n">dis</span><span class="p">(</span><span class="n">len50</span><span class="p">)</span>
+</span><span class='line'><span class="mi">1</span>       <span class="mi">0</span> <span class="n">LOAD_GLOBAL</span>         <span class="mi">0</span> <span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+</span><span class='line'>        <span class="mi">3</span> <span class="n">LOAD_FAST</span>           <span class="mi">0</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span class='line'>        <span class="mi">6</span> <span class="n">CALL_FUNCTION</span>       <span class="mi">1</span>
+</span><span class='line'>        <span class="mi">9</span> <span class="n">LOAD_CONST</span>          <span class="mi">1</span> <span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</span><span class='line'>       <span class="mi">12</span> <span class="n">COMPARE_OP</span>          <span class="mi">1</span> <span class="p">(</span><span class="o">&lt;=</span><span class="p">)</span>
+</span><span class='line'>       <span class="mi">15</span> <span class="n">RETURN_VALUE</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The thing to see here is <code>LOAD_GLOBAL</code> instruction, it corresponds to global variable use. <code>dis</code> module only prints bytecode nicely, but doesn&rsquo;t let us really in. So we go for another asset &mdash; <a href="https://pypi.python.org/pypi/byteplay">byteplay</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">byteplay</span> <span class="kn">import</span> <span class="n">Code</span><span class="p">,</span> <span class="n">LOAD_GLOBAL</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Wrap code into byteplay object</span>
+</span><span class='line'><span class="n">code</span> <span class="o">=</span> <span class="n">Code</span><span class="o">.</span><span class="n">from_code</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">__code__</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># Iterate over instructions and collect names</span>
+</span><span class='line'><span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">param</span> <span class="k">for</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">code</span><span class="o">.</span><span class="n">code</span>
+</span><span class='line'>               <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="n">LOAD_GLOBAL</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So we collected all refered global names, we can translate them unless they are implemented in C.
+To handle that we can supply a dict like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">BUILTINS</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="o">...</span>
+</span><span class='line'>    <span class="nb">len</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With code which doesn&rsquo;t make sense in Python. However, it will make sense after translation:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">translate</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">50</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="n">function</span> <span class="p">(){</span>
+</span><span class='line'>    <span class="n">var</span> <span class="nb">len</span> <span class="o">=</span> <span class="n">function</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">length</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">function</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">50</span><span class="p">)}</span>
+</span><span class='line'><span class="p">}())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Actually we could have used strings in <code>BUILTINS</code> dict, but with lambdas we can refer to other things in our implementations:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">BUILTINS</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>    <span class="o">...</span>
+</span><span class='line'>    <span class="n">identity</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+</span><span class='line'>    <span class="nb">all</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">seq</span><span class="p">:</span> <span class="n">seq</span><span class="o">.</span><span class="n">every</span><span class="p">(</span><span class="n">identity</span><span class="p">),</span>
+</span><span class='line'>    <span class="o">...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which enables us to make things like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="p">(</span><span class="kd">function</span> <span class="p">(){</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">all</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>            <span class="kd">var</span> <span class="nx">identity</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="k">return</span> <span class="nx">x</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">seq</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="k">return</span> <span class="nx">seq</span><span class="p">.</span><span class="nx">every</span><span class="p">(</span><span class="nx">identity</span><span class="p">)}</span>
+</span><span class='line'>        <span class="p">}()),</span>
+</span><span class='line'>        <span class="nx">len</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">length</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">xs</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">((</span><span class="nx">len</span><span class="p">(</span><span class="nx">xs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">all</span><span class="p">(</span><span class="nx">xs</span><span class="p">))}</span>
+</span><span class='line'><span class="p">}())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here <code>all()</code> is defined as a nested closure. Also the whole thing starts to look complex.
+Fortunately we don&rsquo;t need to write this, we don&rsquo;t even need to read this, we only deal with
+python lambdas. And that one is just a single line for the mess above:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">lambda</span> <span class="n">xs</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Meeting Halfway</h2>
+
+<p>We&rsquo;ve already come a long way, however, some things still won&rsquo;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Does&#39;t work, it&#39;s s.trim() in JavaScript</span>
+</span><span class='line'><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To fix this we will need to write shims for all python types and convert everything before passing to our function. This sounds like a lot of work, so went another way &mdash; just don&rsquo;t write like that, write this way instead:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Does work if &quot;string&quot; is in BUILTINS</span>
+</span><span class='line'><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">string</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Look, system does many things to make everything work, now we can come along and finally meet halfway. This approach worked wonderfully for us, we managed to get practical solution with:</p>
+
+<ul>
+<li>no runtime,</li>
+<li>no shims,</li>
+<li>only 300 lines of code.</li>
+</ul>
+
+
+<p>Compare this to full-blown python to js translator. Anyway let&rsquo;s see what it have brought to us.</p>
+
+<h2>Demos</h2>
+
+<p>Here is how validation looks. It updates as we type and wholly executed in the browser:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto"></p>
+
+<p>And we don&rsquo;t write any JavaScript to achieve that. We write this instead:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">PriceField</span><span class="p">(</span><span class="n">FlexField</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">clean</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;\s+&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+</span><span class='line'>    <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
+</span><span class='line'>        <span class="p">[</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">re_test</span><span class="p">(</span><span class="s">r&#39;^[\s\d]*$&#39;</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="s">&#39;Enter a number&#39;</span><span class="p">],</span>
+</span><span class='line'>        <span class="p">[</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">100000000</span><span class="p">,</span> <span class="s">&#39;Specify adequate price&#39;</span><span class="p">],</span>
+</span><span class='line'>        <span class="p">[</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">1000</span><span class="p">,</span> <span class="s">&#39;Specify price in rubles, ...&#39;</span><span class="p">],</span>
+</span><span class='line'>    <span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This works both in browser and server-side so we don&rsquo;t need to duplicate logic or messages. Also having lots of similar fields we can reuse everything: fields, predicates, cleanup functions, rules, which are just lambdas plus text messages. So it really looks like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">PriceField</span><span class="p">(</span><span class="n">FlexField</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">clean</span> <span class="o">=</span> <span class="n">clean</span><span class="o">.</span><span class="n">posint</span>
+</span><span class='line'>    <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
+</span><span class='line'>        <span class="n">rule</span><span class="o">.</span><span class="n">posint</span><span class="p">,</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">test</span><span class="o">.</span><span class="n">lt</span><span class="p">(</span><span class="mi">100000000</span><span class="p">),</span> <span class="s">&#39;Specify adequate price&#39;</span><span class="p">],</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">test</span><span class="o">.</span><span class="n">ge</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="s">&#39;Specify price in rubles, ...&#39;</span><span class="p">],</span>
+</span><span class='line'>    <span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can also employ inheritance:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">PriceField</span><span class="p">(</span><span class="n">PosIntegerField</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">rules</span> <span class="o">=</span> <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Computed Properties</h3>
+
+<p>We really got more from this system than just validation. And first thing to show is computed properties. These are visibility, labels, choices and more. I&rsquo;ll demo it with another tiny screencast:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto"></p>
+
+<p>Here we can see several aspects &mdash; when user selects &ldquo;exchange to a car&rdquo; a new drop-down appears,
+and when a label changes depending on who pays extra. Here is how it looks in code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">ExtraPaymentField</span><span class="p">(</span><span class="n">FlexField</span><span class="p">):</span>
+</span><span class='line'>    <span class="c"># Relabel depending on who pays extra</span>
+</span><span class='line'>    <span class="n">label</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;Max&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_terms</span> <span class="o">=</span> <span class="n">MY_EXTRA</span> <span class="k">else</span> <span class="s">&#39;Min&#39;</span><span class="p">)</span> \
+</span><span class='line'>                         <span class="o">+</span> <span class="s">&#39; extra payment&#39;</span>
+</span><span class='line'>    <span class="c"># Show if there is an extra payment involved</span>
+</span><span class='line'>    <span class="n">visible</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_terms</span> <span class="o">!=</span> <span class="n">NO_EXTRA</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render in an appropriate state from the start (less flickering in browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.</p>
+
+<p>Other thing to note is that now we have dependencies, e.g. label text and visibility depends on <code>exchange_terms</code> field value. We could have added some tricky introspection, but we instead required programmers to specify dependencies explicitly:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">ExtraPaymentField</span><span class="p">(</span><span class="n">FlexField</span><span class="p">):</span>
+</span><span class='line'>    <span class="nd">@depends</span><span class="p">(</span><span class="s">&#39;exchange_terms&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">visible</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_terms</span> <span class="o">!=</span> <span class="n">NO_EXTRA</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is inline with our meeting halfway principle and it worked this time too.</p>
+
+<h3>Passing Data</h3>
+
+<p>The last demo for today will show how easily we can pass data to client. Here I show how field values could be automatically selected:</p>
+
+<p><img src="http://hackflow.com/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto"></p>
+
+<p>To look through car models we need to pass their list to browser and we can do this simply by enclosing data structure with a function:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">models</span> <span class="o">=</span> <span class="n">CarModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s">&#39;pk&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">value</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="n">first</span><span class="p">(</span><span class="n">pk</span> <span class="k">for</span> <span class="n">pk</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">models</span>
+</span><span class='line'>                              <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span> <span class="ow">in</span> <span class="n">title</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This lambda uses <code>models</code> so they are translated to JavaScripts array of arrays and passed along with function. This is very handy when, for example, creating chained selects and under many other circumstances.</p>
+
+<h2>The Bigger System</h2>
+
+<p>You probably already noticed that there is a bigger system besides translator here. These are all its parts:</p>
+
+<ul>
+<li>declarative descriptions of fields, models, forms, filters, listings and detail pages,</li>
+<li>translation of clean, validate and property compute functions,</li>
+<li>transparent data forwarding.</li>
+</ul>
+
+
+<p>There is the thing with tools that when you introduce some new very useful one you get a whole lot of new possibilities, you can make much faster something that took ages previously or you can even do things, which were impossible before.</p>
+
+<p>This also works for developer tools. Introduction of this system had led to a population boom &mdash; we&rsquo;ve got from 7 forms to 51, and you can double that number &lsquo;cause we also autogenerate filtering form for each of them. We also got to 500+ database tables. All of this without loosing our sanity or growing our code base to some insane LOC number.</p>
+
+<h2>Decency</h2>
+
+<p>In python world we have this stigma on metaprogramming. Like it&rsquo;s dirty and should not be used in any serious setting. It&rsquo;s true that this is a complex technique that brings its costs. But as any other consideration this has its limits.</p>
+
+<p>By promoting reasonable considerations to emotional and even kind of religious level we loose an ability to judge it mindfully. We dismiss something even before considering it seriously. And doing so we miss great solutions.</p>
+
+<p>This worked for us. What will do for you?</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 1]]></title>
