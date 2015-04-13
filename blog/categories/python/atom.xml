@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-04-13T08:32:45+07:00</updated>
+  <updated>2015-04-13T08:37:40+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -907,10 +907,7 @@ else:
 
 <p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p>
 
-<!-- NOTE: this is only about 1/3 of the thing, he-he ;) -->
-
-
-
+<p><strong>P.S.</strong> Second part is available <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">here</a>.</p>
 ]]></content>
   </entry>
   
