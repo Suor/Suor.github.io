@@ -327,7 +327,7 @@ Note this code is simplified and hence broken, e.g. it will insert `return` into
 
 This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.
 
-<!-- NOTE: this is only about 1/3 of the thing, he-he ;) -->
+**P.S.** Second part is available [here](/blog/2015/04/12/metaprogramming-beyond-decency-part-2/).
 
 
 [slides]: http://hackflow.com/slides/metaprogramming/
