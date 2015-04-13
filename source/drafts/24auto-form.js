@@ -5,6 +5,8 @@ $('#f_city [selected]').text('Krasnoyarsk');
 $('#l_model_lookup').text('Model lookup');
 $('#l_brand').text('Brand');
 $('#l_model').text('Model');
+$('#line_model [selected]').text('Choose a brand');
+$('#line_model .flexform_line__help').text('Choose a model or use a lookup field')
 
 $('#l_year_made').text('Year made')
 $('#f_year_made').removeClass('small');
@@ -22,6 +24,7 @@ $('#line_time_used .flexform_line__help').text('A period last owner used a car')
 
 // car form price
 $('h3.flexform_group__title').text('Terms');
+$('#line_price .flexform_line__help').text('A price in rubles (digits only)')
 
 $('#l_price').text('Price')
 $('#g_haggle label').contents().each(function () {
@@ -39,6 +42,18 @@ $('label[for=f_exchange_2').contents().each(function () {
     if (this.nodeType == 3) this.data = 'To other';
 })
 
+// car exchange
+$('#l_exchange_condition').text('Terms of exchange')
+$('#f_exchange_condition [value=1]').text('no extra payment')
+$('#f_exchange_condition [value=2]').text('I pay extra')
+$('#f_exchange_condition [value=3]').text('I want extra')
+// $('#l_exchange_money').text('Terms of exchange')
+
+$('#g_exchange_money').contents().each(function () {
+    if (this.nodeType == 3) this.remove();
+})
+
+$('.button-big').text('Sell a car')
 
 
 // unbind and resetup
@@ -65,11 +80,11 @@ setupForm(
 return data["cities"];
 
 }
-}}}, {"required": "Обязательное поле","name": "user_is_board_agent","clean": function (value) {
+}}}, {"required": "Required field","name": "user_is_board_agent","clean": function (value) {
     return ((value != "False") && (value != ""));
 }}, {"name": "model_lookup","clean": function (value) {
     return value;
-}}, {"required": "Обязательное поле","name": "brand","clean": (function (){
+}}, {"required": "Required field","name": "brand","clean": (function (){
     var int = function (x) {
         return x * 1;
     },
@@ -84,10 +99,10 @@ return data["cities"];
     if (self.brand_id) {
     return data["brand_models"][self.brand_id];
 }
-return [["", "Выберите бренд"]];
+return [["", "Choose a brand"]];
 
 }
-}},"required": "Выберите модель или воспользуйтесь полем поиска","name": "model","clean": (function (){
+}},"required": "Choose a model or use a lookup field","name": "model","clean": (function (){
     var int = function (x) {
         return x * 1;
     },
@@ -98,7 +113,7 @@ return [["", "Выберите бренд"]];
     return function (value) {
         return int(re.sub("\\s+", "", value));
     }
-}()),"help_text": "Выберите модель или воспользуйтесь поиском","aliases": ["model_id"]}, {"name": "production_month","clean": (function (){
+}()),"help_text": "Choose a model or use a lookup field","aliases": ["model_id"]}, {"name": "production_month","clean": (function (){
     var int = function (x) {
         return x * 1;
     },
@@ -547,13 +562,13 @@ return null;
     return !!x;
 }}, {"name": "service_history","clean": function (x) {
     return !!x;
-}}, {"required": "Обязательное поле","name": "disabilities","clean": function (x) {
+}}, {"required": "Required field","name": "disabilities","clean": function (x) {
     return !!x;
 }}, {"name": "roadworthy","clean": function (x) {
     return !!x;
 }}, {"name": "accident","clean": function (x) {
     return !!x;
-}}, {"required": "Обязательное поле","name": "crashed","clean": function (x) {
+}}, {"required": "Required field","name": "crashed","clean": function (x) {
     return !!x;
 }}, {"required": "Опишите повреждения","computed": {"visible": {"depends": ["crashed"],"f": function (self, data) {
     return self.crashed;
@@ -1529,7 +1544,7 @@ return null;
     return function (value) {
         return value ? string.split(value, ",") : [];
     }
-}())}, {"required": "Обязательное поле","name": "allow_questions","clean": function (x) {
+}())}, {"required": "Required field","name": "allow_questions","clean": function (x) {
     return !!x;
 }}, {"name": "price","rules": [{"test": (function (){
     var test = (function (){
@@ -1662,9 +1677,9 @@ return null;
     }
 }()),"name": "exchange_condition"}, {"computed": {"help_text": {"depends": ["exchange_condition"],"f": function (self, data) {
     if ((self.exchange_condition == 2)) {
-    return "Укажите максимальную сумму, которою готовы доплатить по обмену";
+    return "";
 }
-return "Укажите минимальную сумму, которую хотите получить по обмену";
+return "";
 
 }
 },"visible": {"depends": ["exchange_condition"],"f": function (self, data) {
@@ -1673,9 +1688,9 @@ return "Укажите минимальную сумму, которую хот�
 }
 },"title": {"depends": ["exchange_condition"],"f": function (self, data) {
     if ((self.exchange_condition == 2)) {
-    return "Доплата, не более";
+    return "Max extra payment";
 }
-return "Доплата, не менее";
+return "Min extra payment";
 
 }
 }},"required": "Укажите доплату","raw": [{"test": (function (){
@@ -1722,7 +1737,7 @@ return "Доплата, не менее";
         return int(re.sub("\\s+", "", value));
     }
 }()),"help_text": "Укажите минимальную сумму, которую хотите получить по обмену","name": "exchange_money"}, {"required": "Выберите модели для обмена","computed": {"visible": {"depends": ["exchange_condition"],"f": function (self, data) {
-    return ((self.exchange == 1) && (self.exchange_condition != ""));
+    return false;
 
 }
 }},"clean": function (value) {

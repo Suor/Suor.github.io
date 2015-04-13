@@ -1,23 +1,25 @@
 ---
 layout: post
 title: "Metaprogramming Beyond Decency: Part 2"
-comments: false
-published: false
-sharing: false
-categories: [Python]
+date: 2015-04-12 18:41
+comments: true
+sharing: true
+image: http://hackflow.com/images/metaprogramming/rule-tree.dot.png
+categories: [Python, UI]
+reddit_url: http://www.reddit.com/r/programming/comments/32bp3p/practical_python_to_javascript_translation/
 ---
 
 *(This is second part of my PiterPy talk adaptation, first part is available [here][first-part])*
 
-Previously I described various ways AST could be used to alter Python language. Now I will concentrate on translation, and we will translate Python to JavaScript.
 
+Previously I described various ways AST could be used to alter Python language. Now I will concentrate on translation, and we will translate Python to JavaScript.
 
 <!--more-->
 
 
 ## Translation
 
-Unlike all previous examples this one started from real need, the one as mundane as form validation:
+Unlike all Part 1 examples this one started from real need, the one as mundane as form validation:
 
 <img src="/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto">
 
@@ -26,9 +28,8 @@ Here we have a form with a validation error visible, we typically want this to b
 Usually we just duplicate logic and this works. Until we get many forms and all of them are like this:
 
 <img src="/images/metaprogramming/car-form-full.png">
-<!-- TODO: shrink image -->
 
-And when we arrive to this scale code duplication starts to cause problems duplication always does:
+When we arrive to this scale code duplication starts to cause problems duplication always does:
 some things are checked only in one place, some things are not updated accordingly and contradict each other. We show weird errors to our users and save broken data to our database.
 
 In ideal world we wish to write every rule just once and then use it in both environments:
@@ -41,18 +42,18 @@ clean = lambda x: int(re.sub(r'\s+', '', x))
 validate = lambda x: 1000 <= x < 100000000
 ```
 
-So we naturally came to translation. We want to write validation in python and translate them to JavaScript and use on front-end automatically.
+So we naturally came to translation. We want to write validation in python, translate it to JavaScript and use on front-end automatically.
 
 
 ## The Easy Part
 
-Let start from something simple, like translating a plain lambda like this:
+Let's start from something simple, like translating a plain lambda like this:
 
 ```python
 >>> translate(lambda v: v <= 100)
 ```
 
-We will use AST to for translation, so first we need to get it for a lambda. It's hard to get source for lambda to parse it, so we'll use [meta][] library to decompile its bytecode:
+We will use AST to for translation, so first we need to get it for this lambda. It's hard to get source for lambda to parse it, so we'll use [meta][] library to decompile its bytecode:
 
 ```python
 from meta.decompiler import decompile_func
@@ -60,7 +61,7 @@ from meta.decompiler import decompile_func
 tree = decompile_func(lambda v: v <= 100)
 ```
 
-Once we did that we get a tree like this:
+Once we do that we get a tree like this:
 
 <img src="/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto">
 
@@ -91,7 +92,7 @@ def visit_Compare(self, node):
     # Visit sub-nodes
     self.generic_visit(node)
     # Concatenate sub-node parts,
-    # use parentheses to not worry about operator priorities
+    # use parentheses to not worry about operator precedence
     node.js = '(%s %s %s)' % (node.left.js, node.op.js, node.right.js)
 ```
 
@@ -132,7 +133,7 @@ def visit_Compare(self, node):
 
     ops = node.ops
     operands = [node.left] + node.comparators
-    pairs = pairwise(operands)
+    pairs = pairwise(operands)  # adjacent pairs of operands
 
     node.js = ' && '.join('%s(%s %s %s)' % \
         ('!' if isinstance(op, ast.NotIn) else '',
@@ -199,7 +200,7 @@ This `co_freevars` always have the same length and order as cells in closure, so
 ```
 
 So we've got a closure. This highlights how we are not really translating functions, but closures,
-which are function plus context.
+which are functions plus context.
 
 
 ## More Closures
@@ -254,8 +255,8 @@ names = {param for cmd, param in code.code
                if cmd == LOAD_GLOBAL}
 ```
 
-So we collected all global refered names, we can translate them unless they are implemented in C.
-To handle them we can supply a dict like:
+So we collected all refered global names, we can translate them unless they are implemented in C.
+To handle that we can supply a dict like:
 
 ```python
 BUILTINS = {
@@ -277,7 +278,7 @@ With code which doesn't make sense in Python. However, it will make sense after 
 }())
 ```
 
-Actually we could have used strings in `BUILTINS` dict, but with lambdas we can refer to other built-ins and each other:
+Actually we could have used strings in `BUILTINS` dict, but with lambdas we can refer to other things in our implementations:
 
 ```python
 BUILTINS = {
@@ -306,7 +307,7 @@ Which enables us to make things like:
 }())
 ```
 
-Here `all()` is defined as nested closure. Also the whole thing starts to look complex.
+Here `all()` is defined as a nested closure. Also the whole thing starts to look complex.
 Fortunately we don't need to write this, we don't even need to read this, we only deal with
 python lambdas. And that one is just a single line for the mess above:
 
@@ -317,7 +318,137 @@ lambda xs: len(xs) >= 1 and all(xs)
 
 ## Meeting Halfway
 
-...
+We've already come a long way, however, some things still won't work:
+
+```python
+# Does't work, it's s.trim() in JavaScript
+lambda s: s.strip()
+```
+
+To fix this we will need to write shims for all python types and convert everything before passing to our function. This sounds like a lot of work, so went another way -- just don't write like that, write this way instead:
+
+```python
+# Does work if "string" is in BUILTINS
+lambda s: string.strip(s)
+```
+
+Look, system does many things to make everything work, now we can come along and finally meet halfway. This approach worked wonderfully for us, we managed to get practical solution with:
+
+- no runtime,
+- no shims,
+- only 300 lines of code.
+
+Compare this to full-blown python to js translator. Anyway let's see what it have brought to us.
+
+
+## Demos
+
+Here is how validation looks. It updates as we type and wholly executed in the browser:
+
+<img src="/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto">
+
+And we don't write any JavaScript to achieve that. We write this instead:
+
+```python
+class PriceField(FlexField):
+    clean = lambda v: int(re.sub('\s+', '', v))
+    rules = [
+        [lambda t: re_test(r'^[\s\d]*$', t), 'Enter a number'],
+        [lambda v: v < 100000000, 'Specify adequate price'],
+        [lambda v: v >= 1000, 'Specify price in rubles, ...'],
+    ]
+```
+
+This works both in browser and server-side so we don't need to duplicate logic or messages. Also having lots of similar fields we can reuse everything: fields, predicates, cleanup functions, rules, which are just lambdas plus text messages. So it really looks like:
+
+```python
+class PriceField(FlexField):
+    clean = clean.posint
+    rules = [
+        rule.posint,
+        [test.lt(100000000), 'Specify adequate price'],
+        [test.ge(1000), 'Specify price in rubles, ...'],
+    ]
+```
+
+We can also employ inheritance:
+
+```python
+class PriceField(PosIntegerField):
+    rules = ...
+```
+
+
+### Computed Properties
+
+We really got more from this system than just validation. And first thing to show is computed properties. These are visibility, labels, choices and more. I'll demo it with another tiny screencast:
+
+<img src="/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto">
+
+Here we can see several aspects -- when user selects "exchange to a car" a new drop-down appears,
+and when a label changes depending on who pays extra. Here is how it looks in code:
+
+```python
+class ExtraPaymentField(FlexField):
+    # Relabel depending on who pays extra
+    label = lambda self: ('Max' if self.exchange_terms = MY_EXTRA else 'Min') \
+                         + ' extra payment'
+    # Show if there is an extra payment involved
+    visible = lambda self: self.exchange_terms != NO_EXTRA
+```
+
+Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render in an appropriate state from the start (less flickering in browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.
+
+Other thing to note is that now we have dependencies, e.g. label text and visibility depends on `exchange_terms` field value. We could have added some tricky introspection, but we instead required programmers to specify dependencies explicitly:
+
+```python
+class ExtraPaymentField(FlexField):
+    @depends('exchange_terms')
+    def visible(self):
+        return self.exchange_terms != NO_EXTRA
+```
+
+This is inline with our meeting halfway principle and it worked this time too.
+
+
+### Passing Data
+
+The last demo for today will show how easily we can pass data to client. Here I show how field values could be automatically selected:
+
+<img src="/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto">
+
+To look through car models we need to pass their list to browser and we can do this simply by enclosing data structure with a function:
+
+```python
+models = CarModel.objects.values_list('pk', 'title')
+
+value = lambda self: first(pk for pk, title in models
+                              if self.lookup in title)
+```
+
+This lambda uses `models` so they are translated to JavaScripts array of arrays and passed along with function. This is very handy when, for example, creating chained selects and under many other circumstances.
+
+
+## The Bigger System
+
+You probably already noticed that there is a bigger system besides translator here. These are all its parts:
+
+- declarative descriptions of fields, models, forms, filters, listings and detail pages,
+- translation of clean, validate and property compute functions,
+- transparent data forwarding.
+
+There is the thing with tools that when you introduce some new very useful one you get a whole lot of new possibilities, you can make much faster something that took ages previously or you can even do things, which were impossible before.
+
+This also works for developer tools. Introduction of this system had led to a population boom -- we've got from 7 forms to 51, and you can double that number 'cause we also autogenerate filtering form for each of them. We also got to 500+ database tables. All of this without loosing our sanity or growing our code base to some insane LOC number.
+
+
+## Decency
+
+In python world we have this stigma on metaprogramming. Like it's dirty and should not be used in any serious setting. It's true that this is a complex technique that brings its costs. But as any other consideration this has its limits.
+
+By promoting reasonable considerations to emotional and even kind of religious level we loose an ability to judge it mindfully. We dismiss something even before considering it seriously. And doing so we miss great solutions.
+
+This worked for us. What will do for you?
 
 
 [first-part]: http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/
