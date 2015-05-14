@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-04-13T08:37:40+07:00</updated>
+  <updated>2015-05-14T12:42:34+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -541,10 +541,7 @@ models = CarModel.objects.values_list(&lsquo;pk&rsquo;, &lsquo;title&rsquo;)</p>
     <link href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/"/>
     <updated>2015-03-29T20:08:00+07:00</updated>
     <id>http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency</id>
-    <content type="html"><![CDATA[<p><em>(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)</em></p>
-
-<!-- TODO: add links -->
-
+    <content type="html"><![CDATA[<p><em>(This an adaptation of a talk I gave at PiterPy. <a href="http://hackflow.com/slides/metaprogramming/">Slides</a> and <a href="http://www.youtube.com/watch?v=Q8qxeFGNT9A">video</a> are available in russian)</em></p>
 
 <p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
 fun and profit.</p>
