@@ -8,8 +8,7 @@ categories: [Python]
 reddit_url: http://www.reddit.com/r/programming/comments/30p2zw/python_metaprogramming_beyond_decency/
 ---
 
-*(This an adaptation of a talk I gave at PiterPy, video in russian will be available in a few weeks)*
-<!-- TODO: add links -->
+*(This an adaptation of a talk I gave at PiterPy. [Slides](http://hackflow.com/slides/metaprogramming/) and [video](http://www.youtube.com/watch?v=Q8qxeFGNT9A) are available in russian)*
 
 Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
 fun and profit.
