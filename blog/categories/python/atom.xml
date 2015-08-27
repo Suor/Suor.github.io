@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-05-14T12:42:34+07:00</updated>
+  <updated>2015-08-27T15:18:22+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -475,7 +475,7 @@ visible = lambda self: self.exchange_terms != NO_EXTRA
 
 <p>```</p>
 
-<p>Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render in an appropriate state from the start (less flickering in browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.</p>
+<p>Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render a form in an appropriate state from the start (less flickering in the browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.</p>
 
 <p>Other thing to note is that now we have dependencies, e.g. label text and visibility depends on <code>exchange_terms</code> field value. We could have added some tricky introspection, but we instead required programmers to specify dependencies explicitly:</p>
 
@@ -489,7 +489,7 @@ def visible(self):
 
 <p>```</p>
 
-<p>This is inline with our meeting halfway principle and it worked this time too.</p>
+<p>This is in line with our meeting halfway principle and it worked this time too.</p>
 
 <h3>Passing Data</h3>
 
