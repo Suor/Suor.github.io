@@ -397,7 +397,7 @@ class ExtraPaymentField(FlexField):
     visible = lambda self: self.exchange_terms != NO_EXTRA
 ```
 
-Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render in an appropriate state from the start (less flickering in browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.
+Additional benefit we get here is that we can compute visibility server-side and do 2 things: first, render a form in an appropriate state from the start (less flickering in the browser) and, second, discard any input we got from invisible fields automatically. Another example of additional benefit is calculated choices, able to get them on back-end we can check if value is one of them.
 
 Other thing to note is that now we have dependencies, e.g. label text and visibility depends on `exchange_terms` field value. We could have added some tricky introspection, but we instead required programmers to specify dependencies explicitly:
 
@@ -408,7 +408,7 @@ class ExtraPaymentField(FlexField):
         return self.exchange_terms != NO_EXTRA
 ```
 
-This is inline with our meeting halfway principle and it worked this time too.
+This is in line with our meeting halfway principle and it worked this time too.
 
 
 ### Passing Data
