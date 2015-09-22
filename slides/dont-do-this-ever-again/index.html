@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Никогда больше так не делай</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+        <style>
+            .reveal pre code {
+                font-size: 195%;
+                line-height: 150%;
+            }
+            .small-code pre code, pre.small-code code {
+                font-size: 150%;
+                line-height: 130%;
+            }
+            .tiny-code pre code, pre.tiny-code code {
+                font-size: 135%;
+                line-height: 111%;
+            }
+            .default-code pre code, pre.default-code code {
+                font-size: 110%;
+                line-height: 125%;
+            }
+            .break-word, .break-word code {
+                word-wrap: break-word !important;
+            }
+
+            /* Bring back roll-in for fragments */
+            .reveal .slides section .fragment.roll-in {
+			  -webkit-transform: rotateX(90deg);
+			          transform: rotateX(90deg);
+			 }
+			 .reveal .slides section .fragment.roll-in.visible {
+			    -webkit-transform: none;
+			        -ms-transform: none;
+			            transform: none;
+			 }
+
+        </style>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+<section>
+	<h2>Никогда больше <br>так не делай</h2>
+</section>
+
+<!-- <section>
+	<p>About me slide?</p>
+</section>
+ -->
+
+<section>
+	<p>Ревью кода</p>
+</section>
+
+
+<section data-markdown><script type="text/template">
+### Линтеры
+- обеспечение стиля
+- автоматизация ревью
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Обеспечение cтиля
+- никакой демократии
+- PEP8
+- pep8
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Автоматизация ревью
+- никакого согласия
+- pylint, pyflakes, mccabe, django-lint, ...
+</script></section>
+
+
+<style type="text/css">
+#auto-review .fragment {transition-duration: 0s;}
+</style>
+<section id="auto-review" data-markdown><script type="text/template">
+### Автоматизация ревью
+
+обнаружение &rarr; решение
+<span class="fragment fade-out" data-fragment-index="1" style="position: absolute">&rarr;&nbsp;автоматизация
+</span><span class="fragment" data-fragment-index="1" style="text-decoration: line-through; color: red;">&rarr;&nbsp;автоматизация</span>
+<span class="fragment" data-fragment-index="2" style="margin-left: 11.5em">&rarr;&nbsp;формализация</span>
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Линтеры
+- кем-то написаны <!-- .element: class="fragment roll-in" -->
+- ограниченно настраиваемы <!-- .element: class="fragment roll-in" -->
+	- игнорировать часть файлов
+	- включать и выключать фичи
+- нет способа добавить свои правила <!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section>
+	<p>Единственный способ добавить правило<br>&mdash; написать свой линтер</p>
+</section>
+
+<section data-markdown><script type="text/template">
+### Написать свой
+- очень сложно <!-- .element: class="fragment roll-in" -->
+- очень хлопотно <!-- .element: class="fragment roll-in" -->
+- вообще непонятно с чего начать <!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section>
+	Написали свой &mdash; стало на одного понимающего человека больше.
+</section>
+
+<section>
+    <p>Как сделать это простым?</p>
+</section>
+
+
+<!-- <section data-markdown><script type="text/template">
+- import urllib2
+- True if ... else False
+- for i in range(len(arr)):
+- for item in Model.objects.filter(...)
+    - .iterator()
+    - .select_related()
+</script></section>
+ -->
+
+<section data-markdown><script type="text/template">
+## Как вообще их пишут?
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Регулярные выражения <span class="fragment roll-in">&nbsp;:D</span>
+<ul>
+<li class="fragment roll-in">неплохо сработают для &nbsp;`import urllib2`</li>
+<li class="fragment roll-in">нельзя разобрать язык</li>
+<li class="fragment roll-in">одноразовое решение</li>
+</ul>
+</script></section>
+
+<section data-markdown><script type="text/template">
+	### Парсинг
+	&mdash; разбор текста в какое-то структурированное представление.
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+## AST
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+import inspect, ast
+source = inspect.getsource(func)
+tree = ast.parse(source)
+```
+</script></section>
+
+<style>
+img.fragment.visible.grow-up  {margin-top: -1.2em}
+</style>
+<section>
+    <pre><code class="python">lambda x: x + 1</code></pre>
+    <img src="ast-example.dot.svg" class="fragment grow grow-up">
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> tree
+<_ast.Lambda at 0x7f7e2359e490>
+```
+```python
+>>> tree.body
+<_ast.Return at 0x7f3e75f869d0>
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section>
+<pre><code class="python break-word">>>> import ast
+>>> print ast.dump(tree)
+Lambda(args=arguments(args=[Name(id='x', ctx=Param())], ...), body=BinOp(left=Name(id='x', ctx=Load()), op=Add(), right=Num(n=1)))
+</code></pre>
+</section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> import astor
+>>> print astor.dump(tree)
+Lambda(
+    args=arguments(args=...),
+    body=BinOp(...)
+```
+</script></section>
+
+<section data-markdown><script type="text/template">
+```python
+>>> print astor.to_source(tree)
+(lambda x: (x + 1))
+```
+</script></section>
+
+<!-- TODO: картинка дерева TrueFalse -->
+<section data-markdown class="small-code"><script type="text/template">
+### Поиск чего-то в AST
+```python
+True if ... else False
+```
+```python
+for node in ast.walk(tree):
+	if isinstance(node, ast.IfExp) \
+		and isinstance(node.body, ast.Name) \
+		and node.body.id == 'True' \
+		and isinstance(node.orelse, ast.Name)
+		and node.orelse.id == 'False':
+		# ...
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<!-- TODO: картинка дерева for i in range(len(arr)): pass -->
+<section data-markdown class="default-code"><script type="text/template">
+### Поиск чего-то в AST
+```python
+for i in range(len(arr)):
+	...
+```
+```python
+for node in ast.walk(tree):
+	if isinstance(node, ast.For) \
+		and isinstance(node.target, ast.Name) \
+		and isinstance(node.iter, ast.Call) \
+			and isinstance(node.iter.func, ast.Name) \
+			and node.iter.func.id == 'range' \
+		and len(node.iter.args) == 1 \
+		and isinstance(node.iter.args[1], ast.Call) \
+			and isinstance(node.iter.args[1].func, ast.Name)
+			and node.iter.args[1].func.id == 'len' \
+			and len(node.iter.args[1].args) == 1:
+		# ...
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+
+<section>
+	<p>Идея: сопоставление с шаблоном</p>
+</section>
+
+<section data-markdown><script type="text/template">
+### AST Pattern Matching
+```python
+template = ast.IfExpr(
+	body=ast.Name(id='True'),
+	orelse=ast.Name(id='False')
+)
+nodes = match(template, tree)
+```
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### AST Pattern Matching
+```python
+template = ast.For(
+	target=ast.Name,
+	iter=ast.Call(
+		func=ast.Name(id='range'),
+		args=[ast.Call(
+			func=ast.Name(id='len')
+			args=[ast.Expr])]
+	)
+)
+```
+</script></section>
+
+
+<section>
+	<p>Идея: матчить код с помощью кода</p>
+</section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### Сопоставление с кодом
+- синтаксическая валидность <!-- .element: class="fragment roll-in" -->
+- нужно вставлять генерики <!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### Сопоставление с кодом
+```python
+True if ast.Expr else False
+```
+```python
+for ast.Name in range(len(ast.Expr)):
+	ast.statements
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### Сопоставление с кодом
+```python
+def template(cond=ast.Expr):
+	True if cond else False
+```
+```python
+def template(i=ast.Name, arr=ast.Expr,
+			 body=ast.statements)
+	for i in range(len(arr)):
+		body
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### Сопоставление с кодом
+```python
+def useless_ifelse(cond=ast.Expr):
+	True if cond else False
+
+template = compile_template(useless_ifelse)
+nodes = match(template, tree)
+```
+```python
+nodes[0].captures['cond'] # ast.BinOp(...)
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+
+<section data-markdown class="small-code"><script type="text/template">
+### DSL для правил
+```python
+class UselessIfElse(Pattern):
+	def wrong(cond=ast.Expr):
+		True if cond else False
+
+	def right():
+		bool(cond)
+
+```
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### DSL для правил
+```python
+class ForCollect(Pattern):
+	def wrong(res=ast.Name, v=ast.Name,
+			  arr=ast.Expr, expr=ast.Expr)
+		res = []
+		for v in arr:
+		    res.append(expr)
+
+	def right():
+		res = [expr for v in arr]
+```
+</script></section>
+
+
+<!-- <section data-markdown><script type="text/template">
+## Контекст
+</script></section>
+ -->
+
+<section data-markdown><script type="text/template">
+## Контекст
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Контекст: родители, соседи
+```python
+for i in range(len(arr)):
+	... i ...
+	... ... arr[i] ...
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown><script type="text/template">
+### Контекст: лексические области видимости
+```python
+for i in range(len(arr)):
+	... lambda i: ...
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+### Flaws
+https://github.com/Suor/flaws
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+## Что дальше?
+</script></section>
+
+<!-- <section>
+	<p>Идея: регулярные выражения над AST</p>
+</section>
+ -->
+
+<section data-markdown class="small-code"><script type="text/template">
+### регулярные выражения над AST
+```python
+def template(i=ast.Name, arr=ast.Expr,
+			 range=astre.alt(range, xrange),
+			 body=astre.plus(ast.stmt)):
+	for i in range(len(arr)):
+		body
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### вывод типов
+```python
+class UselessIfElse(Pattern):
+	def wrong(cond=ast.Expr):
+		True if cond else False
+
+	def make_right(cond):
+		if is_bool(cond):
+			return lambda: cond
+		else:
+			return lambda: bool(cond)
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+<section data-markdown class="small-code"><script type="text/template">
+### вывод типов
+```python
+for item in Model.objects.filter(...):
+	...
+```
+```python
+qs = get_some_queryset(...)
+for item in qs:
+	...
+```
+<!-- .element: class="fragment roll-in" -->
+</script></section>
+
+
+<section>
+    <h2>Спасибо</h2>
+    <p _class="fragment">Вопросы?</p>
+</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				slideNumber: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
