@@ -64,3 +64,29 @@ article p+ul {
     font-weight: bold;
     background: url("/images/noise.png?1330434582") repeat scroll left top #F7F3F7;
 }
+
+// Note box
+.note-box {
+    margin: 0 2em;
+    // background: #4c96c6;
+    // background-color: rgba(0,0,0,0.2);
+    background-color: #ccc;
+    border: 1px solid #a7a7a7;
+    padding: 1em 1.3em 0.55em;
+}
+.note-box h3 {
+    font-size: 1.2em;
+}
+.note-box p {
+    // font-size: 0.85em;
+    // line-height: 145%;
+    margin-bottom: 0.8em;
+    // color: white;
+}
+.note-box p code {
+    border-color: #bbb;
+    background: #d7d7d7;
+    color: #444;
+}
+.note-box p:empty {display: none}
+.note-box figure {margin-bottom: 0.8em}
