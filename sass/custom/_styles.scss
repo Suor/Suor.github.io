@@ -8,6 +8,10 @@ article p+ul {
     margin-top: -1.5em;
 }
 
+article .entry-content *+table th, article .entry-content *+table td {
+    padding-right: 0.6em;
+}
+
 .break-code pre {
     white-space: pre-wrap;
 }
@@ -75,7 +79,7 @@ article p+ul {
     padding: 1em 1.3em 0.55em;
 }
 .note-box h3 {
-    font-size: 1.2em;
+    font-size: 1.15em;
 }
 .note-box p {
     // font-size: 0.85em;

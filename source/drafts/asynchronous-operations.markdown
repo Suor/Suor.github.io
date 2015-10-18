@@ -184,6 +184,8 @@ callcc {|cont|
 In real world `call-with-current-continuation` is far more powerful when I had time to show here.
 It enables a brave one to implement from scratch all sort of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.
 
+If you are willing to dive deeper here is [a really nice intro][scheme-callcc]. And I am coming back to Earth now.
+
 </section>
 
 [cps]: https://en.wikipedia.org/wiki/Continuation-passing_style
@@ -227,17 +229,18 @@ Combinators have many useful properties:
 - and control flow is separated from the actual things you do.
 
 The errors point allows us to not write `if (err) return ...` everywhere and the last one
-enables us to easily switch flow:
+enables us to easily switch flow: we can easily substitute `.series()` with `.parallel()` above and make those gets faster.
 
-```js
-function getKeys(callback) {
-    // parallel now
-    async.parallel([
-        redis.get.bind(redis, 'some-key'),
-        redis.get.bind(redis, 'other-key')
-    ], callback)
-}
-```
+<section class="note-box">
+
+### JavaScript particularly awkward partial application side note
+
+...
+
+***TODO: move this down? after Thinking or Passing Values?***
+
+</section>
+
 
 ### Thinking
 
@@ -254,11 +257,14 @@ var getKeys = pf.parallel(
 )
 ```
 
-Here I use my [point-free][] library, specifically designed to facilitate such thinking. ...
+Here I use my [point-free][] library, specifically designed to facilitate such thinking. Its premise is extremely simple: provide same combinators as async.js in a [curried][currying] form.
+This makes sense 'cause partial application is awkward in JavaScript while reverse of it is just a call. But the ...
 
 ```
 serial
 ... -> getA -> getB -> setSum -> ...
+
+async.js vs point-free combinators: async.js adds closures
 
 combinators
          serial
@@ -267,14 +273,14 @@ combinators
   /       \
 getA     getB
 ```
-**TODO: make a proper image, also how callbacks look?**
+***TODO: make a proper image, also how do callbacks look?***
 
 Obviously there are more ways to combine async calls than just serially or parallel. To appreciate that let's first look at how values are passed.
 
 
 ### Passing values
 
-When passing function result as callback argument we suddenly get distinction between merely serial action and serial interdependent ones. See how we need to use special waterfall combinator to pass values:
+When passing function result as callback argument we suddenly get distinction between merely serial actions and serial interdependent ones. See how we need to use special waterfall combinator to pass values:
 
 ```js
 var updateSum = pf.waterfall(
@@ -298,36 +304,155 @@ var values;
 async.series([
     function (callback) {
         getKeys(function (err, _values) {
-            if (err) return callback(err);
             // Save result to shared namespace
             values = _values;
             callback();
         })
     },
     function (callback) {
+        // Fetch getKeys() result from closure
         redis.set('sum', values[0] + values[1], callback)
     }
 ], done)
 ```
 
-Using waterfall everywhere is also inconvenient, this will limit our ability to use partial application. Looks like thinking on the level of particular
+Using waterfall everywhere is inconvenient too, this will limit our ability to use partial application, so we are stuck with at least two serial combinators.
 
-But notice how we think of particular values
+Looks like thinking on the level of separate values hasn't helped us much. Let's go back to combining async functions and return to `pf.waterfall()` example:
 
-A need is the mother of all inventions
-
-```haskell
-updateSum = setSum . serial [get redis "some-key", get redis "other-key"]
+```js
+var updateSum = pf.waterfall(
+    pf.parallel(
+        redis.get.bind(redis, 'some-key'),
+        redis.get.bind(redis, 'other-key'),
+    ),
+    setSum
+)
 ```
+
+Waterfall here is actually just a function composition. By using that plus partial application plus combinators we significantly reduce value and callback book-keeping. Note that async.js approach of combined calls won't be as composable -- it won't let us nest combinators without
+function literals.
+
+Also this is interesting to see how we naturally came to lots of higher order functional stuff. I wonder if async programming was a significant contributor to this trend.
+
+
+
+
+### Collections
+
+Those two redis gets are really the same call applied to several different values. In sync world
+we used to employ `map()` to do that. No reason we can't do it here, we'll need special async map though:
+
+```js
+var getKey = redis.get.bind(redis); // We gonna need it a lot :)
+var getKeys = pf.map(['some-key', 'other-key'], getKey);
+```
+
+This looks neat, but if we try to make this function more general -- accept desired keys as argument -- when we'll be forced to use a closure:
+
+```js
+function getKeys(keys, callback) {
+    async.map(keys, getKey, callback)
+    // or pf.map(keys, getKey)(callback)
+}
+```
+
+However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of `async.map()` and pass through the rest. This is slightly trickier than we used to and `.bind()` won't help us here, but [lodash][] will:
+
+```js
+var _ = require('lodash');
+
+var getKeys = _.partial(pf.map, _, getKey);
+```
+
+Native support for this is even nicer:
+
+```js
+var getKeys = pf.map(pf._, getKey);
+```
+***TODO: implement and release this***
+
+
+### Duplication
+
+Other collection based combinators include `.each()`, `.filter()`, `.some()`, `.detect()`, `.reduce()` and more:
+
+```js
+var keyExists = redis.exists.bind(redis);
+
+// Filter keys with async test
+async.filter(keys, keyExists, function (err, lessKeys) {
+    // Only existing keys here
+})
+
+// Check if at least one key exists
+async.some(keys, keyExists, function (err, exists) {
+    // ...
+})
+
+// Find some existing key
+async.detect(keys, keyExists, function (err, key) {
+    // ...
+})
+```
+
+As you may have noticed all these combinators duplicate `Array.prototype` and lodash utilities, which is a waste, but let me show you something worse.
+
+First you should note that all three of the above perform their tests in parallel, which means among other things that `async.detect()` won't necessary return first existing key. To achieve that, while still not fetching more keys than needed, we should do that serially and there is a function exactly for this purpose -- `async.detectSeries()`. It works the same as its parallel counterpart, but serially.
+
+Async.js also includes `.mapSeries()`, `.eachSeries()`, `.filterSeries()` and more. Surprisingly this is not 1-to-1 correspondence, some combinators do not have serial versions and quite ironically `.some()` is not among them.
+
+Another orthogonal aspect is limiting concurrency in parallel combinators. Say we wish to limit number of concurrent calls to redis:
+
+```js
+async.mapLimit(keys, 4, getKey, function (err, values) {
+    // ...
+})
+```
+
+As you may guess there are all sort of `.*Limit()` things in async.js. Again there are gaps, but `.some()` is covered this time. Overall we get cross-product of API endpoints:
+
+Feature     | Sync | Async | Async serial | Async limited
+---         | ---  | ---   | ---          | ---
+map         | [].map | async.map | async.mapSeries | async.mapLimit
+detect      | _.detect | async.detect | async.detectSeries | async.detectLimit
+some        | [].some | async.some | - | async.someLimit
+mapcat      | _.map.flatten | async.concat | async.concatSeries | -
+...         | ... | ... | ... | ...
+
+There are other kinds of duplication involved, including duplicating language syntax, but let me deal with this first.
+
+
+### Decorators
+
+So async combinator is a thing that takes some async functions in and makes another async function, which represents all the inputs combined in a particular way. There is no reason why combinator can't take single input function and this is what a decorator is.
+
+There is no need to coordinate execution of a single function, so ... but `.limit()` does that, though for different calls ...
+
+```js
+var getKeys = pf.map(pf._, pf.limit(4, getKey));
+```
+
+<section class="note-box">
+
+### A Redis and "Do it at home, not in production" side note
+
+...
+
+</section>
+
 
 [async.js]: https://www.npmjs.com/package/async
 [point-free]: https://github.com/Suor/point-free
 [pfs]: https://en.wikipedia.org/wiki/Tacit_programming
-
+[currying]: https://en.wikipedia.org/wiki/Currying
+[lodash]: https://lodash.com
 
 
 ## Thunks
 
+Thunks take another try? on continuation-passing style.
+is another take? on CPS
 ...
 
 
@@ -366,4 +491,17 @@ and .map() and friends are replaced with built-ins
 if using `yield` you don't need `.spread()`
 + no need for `.catch()`
 
+Hard to perceive, losing touch with there are you in overall structure.
+Code blocks too heavy, headings are not noticable enough to server as markers.
 
+
+```haskell
+updateSum = setSum $ serial [get redis "some-key", get redis "other-key"]
+```
+
+```js
+var updateSum = pf.waterfall(
+    pf.map(pf._, getKey),
+    setSum
+)
+```
