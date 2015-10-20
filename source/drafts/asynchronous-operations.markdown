@@ -362,7 +362,7 @@ However, if we look closer at this, we can see that the whole thing is just anot
 ```js
 var _ = require('lodash');
 
-var getKeys = _.partial(pf.map, _, getKey);
+var getKeys = _.partial(async.map, _, getKey);
 ```
 
 Native support for this is even nicer:
@@ -371,6 +371,8 @@ Native support for this is even nicer:
 var getKeys = pf.map(pf._, getKey);
 ```
 ***TODO: implement and release this***
+
+NOTE: this is ambiguous. Should partially applied `pf.map()` return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?
 
 
 ### Duplication
@@ -455,6 +457,8 @@ Thunks take another try? on continuation-passing style.
 is another take? on CPS
 ...
 
+This things is very unstandardized: chaining or not? eager or lazy execution? allow sync callback? extra methods?
+
 
 ## Promises
 
@@ -501,7 +505,13 @@ updateSum = setSum $ serial [get redis "some-key", get redis "other-key"]
 
 ```js
 var updateSum = pf.waterfall(
-    pf.map(pf._, getKey),
+    pf.map(pf._, pf.limit(4, getKey)),
     setSum
 )
 ```
+
+```js
+// Is it possible?
+var mapSerial = pf.map(pf._, pf.limit(1, pf._));
+```
+
