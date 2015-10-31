@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Asynchronous operations - Hackflow</title>
+  <title>Asynchronous Operations - Hackflow</title>
   <meta name="author" content="Alexander Schepanovski">
 
   
-  <meta name="description" content="
-">
+  <meta name="description" content="In several recent years the concept of async programming has become popular. This is mostly related to the rise of Node.js, but supporting techniques &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -36,9 +35,8 @@
     
     <meta property="twitter:site" content="hackflow">
     <meta property="twitter:url" content="http://hackflow.com/drafts/asynchronous-operations.html">
-    <meta property="twitter:title" content="Asynchronous operations">
-    <meta property="twitter:description" content="
-">
+    <meta property="twitter:title" content="Asynchronous Operations">
+    <meta property="twitter:description" content="In several recent years the concept of async programming has become popular. This is mostly related to the rise of Node.js, but supporting techniques also made their way to Python, Clojure, .NET and &hellip;">
 
 
   
@@ -112,7 +110,721 @@
   </header>
 
 
-<div class="entry-content">
+<div class="entry-content"><p>In several recent years the concept of async programming has become popular. This is mostly related to the rise of Node.js, but supporting techniques also made their way to <a href="https://docs.python.org/3/whatsnew/3.5.html#pep-492-coroutines-with-async-and-await-syntax">Python</a>, <a href="http://clojure.com/blog/2013/06/28/clojure-core-async-channels.html">Clojure</a>, <a href="https://msdn.microsoft.com/en-us/library/hh191443.aspx">.NET</a> and more. Older asynchronous platforms became more popular and completely new ones now include this from the start.</p>
+
+<p>Ways of doing async programming also gradually changed from simple callbacks to special syntactic support by various platforms. Here I want to lay out an overview of this path and relative wins and setbacks along it.</p>
+
+<!-- such technologies as Go, Erlang, Twisted, EventMachine, asyncio and more also contributed. There are a variety of approaches to async programming: callbacks, green threads,actors and CSP. -->
+
+
+
+
+<!-- Async programming was a way to go if you need to support many concurrent connections for a while
+Node.js introduced async programming to the masses
+ -->
+
+
+
+
+<!--more-->
+
+
+<p>&hellip; I will use JS, but many things apply to other platforms &hellip;</p>
+
+<h2>Callbacks</h2>
+
+<p>It&rsquo;s the simplest way to do async programming. You make a call and supply a function to call you back then the thing is done:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// ... do something with someValue ...</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Often we can&rsquo;t do anything meaningful here until we get that <code>someValue</code>, in this case all the continuation of our program goes into that callback function we are passing to <code>redis.get()</code>. This is why such way of programming is sometimes called <a href="https://en.wikipedia.org/wiki/Continuation-passing_style">continuation-passing style</a>.</p>
+
+<p>Obviously, there are other ways to pass callback, results and errors. Here I use Node.js convention:</p>
+
+<ul>
+<li>callback goes as last argument to a call,</li>
+<li>error is passed as first callback argument,</li>
+<li>results go as any additional callback arguments.</li>
+</ul>
+
+
+<p>This is a very tight way to go about this: errors and results are handled simultaneously and original call gets callback right away. I&rsquo;ll show later why this matters.</p>
+
+<h3>Serial calls</h3>
+
+<p>Anyway, when we need to chain several calls we end up shifting right:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">otherValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="nx">someValue</span> <span class="o">+</span> <span class="nx">otherValue</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;done&#39;</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">})</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This could obviously be solved by decomposition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">getSum</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">otherValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">someValue</span> <span class="o">+</span> <span class="nx">otherValue</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">})</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">getSum</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">sum</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">sum</span><span class="p">,</span> <span class="nx">sum</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;done&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The issue with this is that it&rsquo;s verbose and not always desirable. We generally want to factor code into meaningful pieces, each of which has some sense in problem solution. We don&rsquo;t want to partition a chunk of code just because it&rsquo;s too long.</p>
+
+<p>Another issue I happily left out till now is error handling. Since we get error and result in a single place we need to handle both there, even if this means just passing an error up:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">getSum</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">otherValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+</span><span class='line'>            <span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">someValue</span> <span class="o">+</span> <span class="nx">otherValue</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">})</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This repetitive line keeps haunting async code written in this style. But let&rsquo;s move to parallel calls, that is why we use async platforms after all.</p>
+
+<h3>Parallel calls</h3>
+
+<p>Those <code>redis.get()</code> calls don&rsquo;t need to be serial, so we can launch both of them in parallel like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">someValue</span><span class="p">;</span>
+</span><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">_someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">someValue</span> <span class="o">=</span> <span class="nx">_someValue</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="c1">// This second call is started right away</span>
+</span><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">otherValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">someValue</span> <span class="o">+</span> <span class="nx">otherValue</span><span class="p">);</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This however won&rsquo;t work, <code>other-key</code> could be fetched before <code>some-key</code> and hence <code>someValue</code> in <code>console.log()</code> could be undefined. To fix this we will need some coordination code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Keep track of number of things to do</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">tasks</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">someValue</span><span class="p">,</span> <span class="nx">otherValue</span><span class="p">;</span>
+</span><span class='line'><span class="kd">function</span> <span class="nx">done</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">tasks</span><span class="o">--</span><span class="p">;</span>
+</span><span class='line'>    <span class="c1">// Only use results when both are ready</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">tasks</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">someValue</span> <span class="o">+</span> <span class="nx">otherValue</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">_someValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">someValue</span> <span class="o">=</span> <span class="nx">_someValue</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">done</span><span class="p">();</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">_otherValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">otherValue</span> <span class="o">=</span> <span class="nx">_otherValue</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">done</span><span class="p">();</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that I left out error handling and this is still messy. And obviously this can be (and should be) abstracted away.</p>
+
+<p><section class="note-box"></p>
+
+<h3>A side note on CPS, just to make this section more fun</h3>
+
+<p>In the code above we pass continuations as functions, but some languages, notably <a href="http://community.schemewiki.org/?call-with-current-continuation">Scheme</a> and <a href="http://ruby-doc.org/core-2.2.0/Continuation.html">Ruby</a> have syntactic support to literally pass continuation of your program:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s2">&quot;continuation&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">some_value</span> <span class="o">=</span> <span class="nb">callcc</span> <span class="p">{</span><span class="o">|</span><span class="n">cont</span><span class="o">|</span> <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="n">cont</span><span class="p">)}</span>
+</span><span class='line'><span class="c1"># ... we only get here once redis.get() calls cont</span>
+</span><span class='line'><span class="n">other_value</span> <span class="o">=</span> <span class="nb">callcc</span> <span class="p">{</span><span class="o">|</span><span class="n">cont</span><span class="o">|</span> <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="n">cont</span><span class="p">)}</span>
+</span><span class='line'><span class="c1"># ... and here</span>
+</span><span class='line'><span class="nb">callcc</span> <span class="p">{</span><span class="o">|</span><span class="n">cont</span><span class="o">|</span> <span class="n">redis</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="n">some_value</span> <span class="o">+</span> <span class="n">other_value</span><span class="p">,</span> <span class="n">cont</span><span class="p">)}</span>
+</span><span class='line'><span class="c1"># ... sum is already written, do more stuff</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can go even farther and hide all those <code>callcc</code>s and blocks into redis calls and make code look identical to sync one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_value</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">other_value</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">redis</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="n">some_value</span> <span class="o">+</span> <span class="n">other_value</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This can be implemented by queueing continuation to resume on redis response and passing control to event loop. So looks like we got the best of both worlds here: simple syntax and efficiency.</p>
+
+<p>This, however, will limit our power &mdash; having such redis API we loose the ability to run calls in parallel:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># TODO: check if this is correct ruby</span>
+</span><span class='line'><span class="nb">callcc</span> <span class="p">{</span><span class="o">|</span><span class="n">cont</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">tasks</span> <span class="o">=</span> <span class="mi">2</span>
+</span><span class='line'>    <span class="n">done</span> <span class="o">=</span> <span class="nb">proc</span> <span class="p">{</span>
+</span><span class='line'>        <span class="o">--</span><span class="n">tasks</span>
+</span><span class='line'>        <span class="n">cont</span><span class="o">.</span><span class="n">call</span> <span class="k">if</span> <span class="n">tasks</span><span class="o">.</span><span class="n">zero?</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In real world <code>call-with-current-continuation</code> is far more powerful when I had time to show here.
+It enables a brave one to implement from scratch all sort of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.</p>
+
+<p>If you are willing to dive deeper here is <a href="http://community.schemewiki.org/?call-with-current-continuation">a really nice intro</a>. And I am coming back to Earth now.</p>
+
+<p></section></p>
+
+<h2>Combinators</h2>
+
+<p>We saw how both serial and parallel calls could benefit from some general abstraction. And during earlier Node.js years there were lots of control flow libraries introduced. One that has grown to be the most popular is <a href="https://www.npmjs.com/package/async">async.js</a>, which lets you combine calls like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">async</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;async&#39;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">series</span><span class="p">([</span>
+</span><span class='line'>        <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)},</span>
+</span><span class='line'>        <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)}</span>
+</span><span class='line'>    <span class="p">],</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">results</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nx">results</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Or using partial application:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">series</span><span class="p">([</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;some-key&#39;</span><span class="p">),</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;other-key&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">],</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">results</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Combinators have many useful properties:</p>
+
+<ul>
+<li>repetitive code is abstracted away,</li>
+<li>results are collected with order preserved,</li>
+<li>errors are passed through automatically,</li>
+<li>and control flow is separated from the actual things you do.</li>
+</ul>
+
+
+<p>The errors point allows us to not write <code>if (err) return ...</code> everywhere and the last one
+enables us to easily switch flow: we can easily substitute <code>.series()</code> with <code>.parallel()</code> above and make those gets faster.</p>
+
+<p><section class="note-box"></p>
+
+<h3>JavaScript particularly awkward partial application side note</h3>
+
+<p>&hellip;</p>
+
+<p><strong><em>TODO: move this down? after Thinking or Passing Values?</em></strong></p>
+
+<p></section></p>
+
+<h3>Thinking</h3>
+
+<p>In traditional imperative programming we decompose our program into serial steps. Callbacks force us to think in continuations. And combinators naturally make us construct our program by combining async calls.</p>
+
+<p>The next step is shifting to combining functions. Essentially go <a href="https://en.wikipedia.org/wiki/Tacit_programming">point free style</a> by getting rid of callbacks:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">pf</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;point-free&#39;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">parallel</span><span class="p">(</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;some-key&#39;</span><span class="p">),</span>
+</span><span class='line'>    <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;other-key&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here I use my <a href="https://github.com/Suor/point-free">point-free</a> library, specifically designed to facilitate such thinking. Its premise is extremely simple: provide same combinators as async.js in a <a href="https://en.wikipedia.org/wiki/Currying">curried</a> form.
+This makes sense &lsquo;cause partial application is awkward in JavaScript while reverse of it is just a call. But the &hellip;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">serial</span>
+</span><span class='line'><span class="p">...</span> <span class="o">-&gt;</span> <span class="nx">getA</span> <span class="o">-&gt;</span> <span class="nx">getB</span> <span class="o">-&gt;</span> <span class="nx">setSum</span> <span class="o">-&gt;</span> <span class="p">...</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">js</span> <span class="nx">vs</span> <span class="nx">point</span><span class="o">-</span><span class="nx">free</span> <span class="nx">combinators</span><span class="o">:</span> <span class="nx">async</span><span class="p">.</span><span class="nx">js</span> <span class="nx">adds</span> <span class="nx">closures</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">combinators</span>
+</span><span class='line'>         <span class="nx">serial</span>
+</span><span class='line'>        <span class="o">/</span>      <span class="o">\</span>
+</span><span class='line'>   <span class="nx">parallel</span>    <span class="nx">setSum</span>
+</span><span class='line'>  <span class="o">/</span>       <span class="o">\</span>
+</span><span class='line'><span class="nx">getA</span>     <span class="nx">getB</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong><em>TODO: make a proper image, also how do callbacks look?</em></strong></p>
+
+<p>Obviously there are more ways to combine async calls than just serially or parallel. To appreciate that let&rsquo;s first look at how values are passed.</p>
+
+<h3>Passing values</h3>
+
+<p>When passing function result as callback argument we suddenly get distinction between merely serial actions and serial interdependent ones. See how we need to use special waterfall combinator to pass values:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">updateSum</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">waterfall</span><span class="p">(</span>
+</span><span class='line'>    <span class="nx">pf</span><span class="p">.</span><span class="nx">serial</span><span class="p">(</span>
+</span><span class='line'>        <span class="c1">// Using literal functions to illustrate that</span>
+</span><span class='line'>        <span class="c1">// we don&#39;t want anything passed from one to another</span>
+</span><span class='line'>        <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)},</span>
+</span><span class='line'>        <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;other-key&#39;</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)},</span>
+</span><span class='line'>    <span class="p">),</span>
+</span><span class='line'>    <span class="c1">// Yet we want result from the serial call here</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="p">(</span><span class="nx">values</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="nx">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nx">values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">callback</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Normally we use closure or other shared namespace for serial statements, so we have no need to care if one statement uses the results of another. This is also possible here, but way to awkward:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">values</span><span class="p">;</span>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">series</span><span class="p">([</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">getKeys</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">_values</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="c1">// Save result to shared namespace</span>
+</span><span class='line'>            <span class="nx">values</span> <span class="o">=</span> <span class="nx">_values</span><span class="p">;</span>
+</span><span class='line'>            <span class="nx">callback</span><span class="p">();</span>
+</span><span class='line'>        <span class="p">})</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// Fetch getKeys() result from closure</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="nx">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nx">values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">callback</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">],</span> <span class="nx">done</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using waterfall everywhere is inconvenient too, this will limit our ability to use partial application, so we are stuck with at least two serial combinators.</p>
+
+<p>Looks like thinking on the level of separate values hasn&rsquo;t helped us much. Let&rsquo;s go back to combining async functions and return to <code>pf.waterfall()</code> example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">updateSum</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">waterfall</span><span class="p">(</span>
+</span><span class='line'>    <span class="nx">pf</span><span class="p">.</span><span class="nx">parallel</span><span class="p">(</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;some-key&#39;</span><span class="p">),</span>
+</span><span class='line'>        <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;other-key&#39;</span><span class="p">),</span>
+</span><span class='line'>    <span class="p">),</span>
+</span><span class='line'>    <span class="nx">setSum</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Waterfall here is actually just a function composition. By using that plus partial application plus combinators we significantly reduce value and callback book-keeping. Note that async.js approach of combined calls won&rsquo;t be as composable &mdash; it won&rsquo;t let us nest combinators without
+function literals.</p>
+
+<p>Also this is interesting to see how we naturally came to lots of higher order functional stuff. I wonder if async programming was a significant contributor to this trend.</p>
+
+<h3>Collections</h3>
+
+<p>Those two redis gets are really the same call applied to several different values. In sync world
+we used to employ <code>map()</code> to do that. No reason we can&rsquo;t do it here, we&rsquo;ll need special async map though:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKey</span> <span class="o">=</span> <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">);</span> <span class="c1">// We gonna need it a lot :)</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">([</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="s1">&#39;other-key&#39;</span><span class="p">],</span> <span class="nx">getKey</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This looks neat, but if we try to make this function more general &mdash; accept desired keys as argument &mdash; when we&rsquo;ll be forced to use a closure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">getKeys</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">async</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1">// or pf.map(keys, getKey)(callback)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of <code>async.map()</code> and pass through the rest. This is slightly trickier than we used to and <code>.bind()</code> won&rsquo;t help us here, but <a href="https://lodash.com">lodash</a> will:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">_</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;lodash&#39;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">partial</span><span class="p">(</span><span class="nx">async</span><span class="p">.</span><span class="nx">map</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Native support for this is even nicer:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong><em>TODO: implement and release this</em></strong></p>
+
+<p>NOTE: this is ambiguous. Should partially applied <code>pf.map()</code> return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?</p>
+
+<h3>Duplication</h3>
+
+<p>Other collection based combinators include <code>.each()</code>, <code>.filter()</code>, <code>.some()</code>, <code>.detect()</code>, <code>.reduce()</code> and more:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">keyExists</span> <span class="o">=</span> <span class="nx">redis</span><span class="p">.</span><span class="nx">exists</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Filter keys with async test</span>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">keyExists</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">lessKeys</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Only existing keys here</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Check if at least one key exists</span>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">some</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">keyExists</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">exists</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Find some existing key</span>
+</span><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">detect</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">keyExists</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may have noticed all these combinators duplicate <code>Array.prototype</code> and lodash utilities, which is a waste, but let me show you something worse.</p>
+
+<p>First you should note that all three of the above perform their tests in parallel, which means among other things that <code>async.detect()</code> won&rsquo;t necessary return first existing key. To achieve that, while still not fetching more keys than needed, we should do that serially and there is a function exactly for this purpose &mdash; <code>async.detectSeries()</code>. It works the same as its parallel counterpart, but serially.</p>
+
+<p>Async.js also includes <code>.mapSeries()</code>, <code>.eachSeries()</code>, <code>.filterSeries()</code> and more. Surprisingly this is not 1-to-1 correspondence, some combinators do not have serial versions and quite ironically <code>.some()</code> is not among them.</p>
+
+<p>Another orthogonal aspect is limiting concurrency in parallel combinators. Say we wish to limit number of concurrent calls to redis:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">mapLimit</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">values</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you may guess there are all sort of <code>.*Limit()</code> things in async.js. Again there are gaps, but <code>.some()</code> is covered this time. Overall we get cross-product of API endpoints:</p>
+
+<table>
+<thead>
+<tr>
+<th>Feature     </th>
+<th> Sync </th>
+<th> Async </th>
+<th> Async serial </th>
+<th> Async limited</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>map         </td>
+<td> [].map </td>
+<td> async.map </td>
+<td> async.mapSeries </td>
+<td> async.mapLimit</td>
+</tr>
+<tr>
+<td>detect      </td>
+<td> _.detect </td>
+<td> async.detect </td>
+<td> async.detectSeries </td>
+<td> async.detectLimit</td>
+</tr>
+<tr>
+<td>some        </td>
+<td> [].some </td>
+<td> async.some </td>
+<td> &ndash; </td>
+<td> async.someLimit</td>
+</tr>
+<tr>
+<td>mapcat      </td>
+<td> _.map.flatten </td>
+<td> async.concat </td>
+<td> async.concatSeries </td>
+<td> &ndash;</td>
+</tr>
+<tr>
+<td>&hellip;         </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip; </td>
+<td> &hellip;</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>There are other kinds of duplication involved, including duplicating language syntax, but let me deal with this first.</p>
+
+<h3>Decorators</h3>
+
+<p>So async combinator is a thing that takes some async functions in and makes another async function, which represents all the inputs combined in a particular way. There is no reason why combinator can&rsquo;t take single input function and this is what a decorator is.</p>
+
+<p>There is no need to coordinate execution of a single function, so &hellip; but <code>.limit()</code> does that, though for different calls &hellip;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><section class="note-box"></p>
+
+<h3>A Redis and &ldquo;Do it at home, not in production&rdquo; side note</h3>
+
+<p>&hellip;</p>
+
+<p></section></p>
+
+<h2>Thunks</h2>
+
+<p>Thunks take another try? on continuation-passing style.
+is another take? on CPS
+&hellip;</p>
+
+<p>This things is very unstandardized: chaining or not? eager or lazy execution? allow sync callback? extra methods?</p>
+
+<h2>Promises</h2>
+
+<p>&hellip;</p>
+
+<p>Why async/await is better than generators?</p>
+
+<p>callbacks
+continuation passing style
+other approaches
+combinators and decorators
+approaches comparison
+ecosystem and limiting need of it
+combinator for threads and actors?
+explicit green threads/fibers (gevent, ruby:Fiber, node-fibers)</p>
+
+<p>tornado has callbacks, futures, coroutines, @gen.coroutine to wrap generators
+@asyncio.coroutine to wrap generator</p>
+
+<p>C# has async on generators? delegates/callbacks?</p>
+
+<p>combinators, decorators, primitives?</p>
+
+<p>core-async = CSP</p>
+
+<p>if using generators or async/await no need in serial or waterfall,
+and .map() and friends are replaced with built-ins</p>
+
+<p>if using <code>yield</code> you don&rsquo;t need <code>.spread()</code>
++ no need for <code>.catch()</code></p>
+
+<p>Hard to perceive, losing touch with there are you in overall structure.
+Code blocks too heavy, headings are not noticable enough to server as markers.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='haskell'><span class='line'><span class="nf">updateSum</span> <span class="ow">=</span> <span class="n">setSum</span> <span class="o">$</span> <span class="n">serial</span> <span class="p">[</span><span class="n">get</span> <span class="n">redis</span> <span class="s">&quot;some-key&quot;</span><span class="p">,</span> <span class="n">get</span> <span class="n">redis</span> <span class="s">&quot;other-key&quot;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">updateSum</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">waterfall</span><span class="p">(</span>
+</span><span class='line'>    <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">)),</span>
+</span><span class='line'>    <span class="nx">setSum</span>
+</span><span class='line'><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Is it possible?</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">mapSerial</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">));</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 </div>
 
 
