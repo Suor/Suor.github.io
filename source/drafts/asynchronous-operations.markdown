@@ -20,7 +20,8 @@ Node.js introduced async programming to the masses
 
 <!--more-->
 
-... I will use JS, but many things apply to other platforms ...
+I will mostly use JS for examples, as it has most complete and illustrative async story,
+but things I'll cover apply to other platforms as well.
 
 [python-async]: https://docs.python.org/3/whatsnew/3.5.html#pep-492-coroutines-with-async-and-await-syntax
 [clojure-async]: http://clojure.com/blog/2013/06/28/clojure-core-async-channels.html
@@ -29,7 +30,7 @@ Node.js introduced async programming to the masses
 
 ## Callbacks
 
-It's the simplest way to do async programming. You make a call and supply a function to call you back then the thing is done:
+It's the simplest way to do async programming. You make a call and supply a function to call you back when the thing is done:
 
 ```js
 redis.get('some-key', function (err, someValue) {
@@ -37,7 +38,7 @@ redis.get('some-key', function (err, someValue) {
 })
 ```
 
-Often we can't do anything meaningful here until we get that `someValue`, in this case all the continuation of our program goes into that callback function we are passing to `redis.get()`. This is why such way of programming is sometimes called [continuation-passing style][cps].
+Often we can't do anything meaningful here until we get that `someValue`, in this case all the continuation of our program goes into that callback function we are passing to `redis.get()`. This is why such a way of programming is sometimes called [continuation-passing style][cps].
 
 Obviously, there are other ways to pass callback, results and errors. Here I use Node.js convention:
 
@@ -182,7 +183,7 @@ callcc {|cont|
 ```
 
 In real world `call-with-current-continuation` is far more powerful when I had time to show here.
-It enables a brave one to implement from scratch all sort of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.
+It enables a brave one to implement from scratch all sorts of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.
 
 If you are willing to dive deeper here is [a really nice intro][scheme-callcc]. And I am coming back to Earth now.
 
@@ -195,7 +196,7 @@ If you are willing to dive deeper here is [a really nice intro][scheme-callcc]. 
 
 ## Combinators
 
-We saw how both serial and parallel calls could benefit from some general abstraction. And during earlier Node.js years there were lots of control flow libraries introduced. One that has grown to be the most popular is [async.js][], which lets you combine calls like this:
+We saw how both serial and parallel calls could benefit from some general abstraction. And during Node.js years there were lots of control flow libraries introduced. One that has grown to be the most popular is [async.js][], which lets you combine calls like this:
 
 ```js
 var async = require('async');
@@ -231,13 +232,51 @@ Combinators have many useful properties:
 The errors point allows us to not write `if (err) return ...` everywhere and the last one
 enables us to easily switch flow: we can easily substitute `.series()` with `.parallel()` above and make those gets faster.
 
+Often overlooked requirement for using combinators is standardization of callback interface. Node.js has it defined and enforced with standard library, but many other platforms aren't. This is probably why this solution virtually exclusive to Node.js.
+
+
 <section class="note-box">
 
 ### JavaScript particularly awkward partial application side note
 
-...
+Partial application is simply fixing one or some function arguments. This is partial application of `sum()` function done by hand:
 
-***TODO: move this down? after Thinking or Passing Values?***
+```js
+var add5 = function (y) {
+    return sum(5, y); // Fix first argument to be 5
+}
+```
+
+Same with [underscore][]/[lodash][]:
+
+```js
+var add5 = _.partial(sum, 5);
+```
+
+This is nice, this, however, doesn't work with methods. The reason is JavaScript just doesn't have method type. When you copy function from object property you loose reference to the object and if you call that copy later `this` would be assigned to global object within. E.g. this won't work:
+
+```js
+var redisGet = redis.get; // reference to `redis` is lost here
+redisGet('some-key', callback);
+```
+
+The solution is explicitly passing object when partially applying method. This looks stupid, but works:
+
+```js
+// `redis` becomes `this` and 'some-key' - first argument
+redis.get.bind(redis, 'some-key')
+
+// And my favorite
+doThings(..., console.log.bind(console))
+```
+
+There is a proposal to make this simpler in future JavaScript with [bind operator][bind]:
+
+```js
+doThings(..., ::console.log)
+```
+
+Partial application with arguments will still be awkward though. Also the proposal may not pass anyway.
 
 </section>
 
@@ -246,7 +285,7 @@ enables us to easily switch flow: we can easily substitute `.series()` with `.pa
 
 In traditional imperative programming we decompose our program into serial steps. Callbacks force us to think in continuations. And combinators naturally make us construct our program by combining async calls.
 
-The next step is shifting to combining functions. Essentially go [point free style][pfs] by getting rid of callbacks:
+The next step is shifting to combining async tasks. Essentially go [point free style][pfs] by getting rid of callbacks:
 
 ```js
 var pf = require('point-free');
@@ -258,7 +297,9 @@ var getKeys = pf.parallel(
 ```
 
 Here I use my [point-free][] library, specifically designed to facilitate such thinking. Its premise is extremely simple: provide same combinators as async.js in a [curried][currying] form.
-This makes sense 'cause partial application is awkward in JavaScript while reverse of it is just a call. But the ...
+This makes sense because partial application is awkward in JavaScript while reverse of it is just a call.
+
+Here is an illustration of building up your application by combining async actions compared to building from serial steps:
 
 ```
 serial
@@ -351,28 +392,18 @@ var getKeys = pf.map(['some-key', 'other-key'], getKey);
 This looks neat, but if we try to make this function more general -- accept desired keys as argument -- when we'll be forced to use a closure:
 
 ```js
-function getKeys(keys, callback) {
-    async.map(keys, getKey, callback)
-    // or pf.map(keys, getKey)(callback)
+function getKeys(keys) {
+    return pf.map(keys, getKey)
 }
 ```
 
-However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of `async.map()` and pass through the rest. This is slightly trickier than we used to and `.bind()` won't help us here, but [lodash][] will:
+However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of `pf.map()` and pass through the first. This is slightly trickier than we used to and `.bind()` won't help us here, but [lodash][] will:
 
 ```js
 var _ = require('lodash');
 
-var getKeys = _.partial(async.map, _, getKey);
+var getKeys = _.partial(pf.map, _, getKey);
 ```
-
-Native support for this is even nicer:
-
-```js
-var getKeys = pf.map(pf._, getKey);
-```
-***TODO: implement and release this***
-
-NOTE: this is ambiguous. Should partially applied `pf.map()` return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?
 
 
 ### Duplication
@@ -429,26 +460,35 @@ There are other kinds of duplication involved, including duplicating language sy
 
 So async combinator is a thing that takes some async functions in and makes another async function, which represents all the inputs combined in a particular way. There is no reason why combinator can't take single input function and this is what a decorator is.
 
-There is no need to coordinate execution of a single function, so ... but `.limit()` does that, though for different calls ...
+Using a decorator we can decompose `async.mapLimit()` above into 2 independent operations:
+
+- limiting parallel calls to `getKey()`
+- using regular `async.map()`
+
+Like this:
 
 ```js
-var getKeys = pf.map(pf._, pf.limit(4, getKey));
+async.map(keys, pf.limit(4, getKey), function (err, values) {
+    // ...
+})
 ```
 
-<section class="note-box">
+To make calls sequential we can just limit to 1 concurrent call:
 
-### A Redis and "Do it at home, not in production" side note
+```js
+var getKeySerial = pf.limit(1, getKey);
+```
 
-...
-
-</section>
+And then use it anywhere: in `.map()`, `.filter()`, `.some()`. This way we can defeat duplication in async.js.
 
 
 [async.js]: https://www.npmjs.com/package/async
 [point-free]: https://github.com/Suor/point-free
 [pfs]: https://en.wikipedia.org/wiki/Tacit_programming
 [currying]: https://en.wikipedia.org/wiki/Currying
+[underscore]: http://underscorejs.org/
 [lodash]: https://lodash.com
+[bind]: https://github.com/zenparsing/es-function-bind
 
 
 ## Thunks
@@ -515,3 +555,23 @@ var updateSum = pf.waterfall(
 var mapSerial = pf.map(pf._, pf.limit(1, pf._));
 ```
 
+
+-- collections
+
+Native support for this is even nicer:
+
+```js
+var getKeys = pf.map(pf._, getKey);
+```
+***TODO: implement and release this***
+
+NOTE: this is ambiguous. Should partially applied `pf.map()` return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?
+
+
+<section class="note-box">
+
+### A Redis and "Do it at home, not in production" side note
+
+...
+
+</section>
