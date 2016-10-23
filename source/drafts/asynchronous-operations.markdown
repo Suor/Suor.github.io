@@ -28,6 +28,13 @@ but things I'll cover apply to other platforms as well.
 [dotnet-async]: https://msdn.microsoft.com/en-us/library/hh191443.aspx
 
 
+## Prehistory
+
+... why we started to use async (threads are too costly)
+... say about using narration/succession ?
+... link to https://github.com/alexhultman/The-real-history-of-async-networking
+
+
 ## Callbacks
 
 It's the simplest way to do async programming. You make a call and supply a function to call you back when the thing is done:
