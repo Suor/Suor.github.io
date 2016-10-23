@@ -83,7 +83,7 @@ getSum(function (err, sum) {
 
 The issue with this is that it's verbose and not always desirable. We generally want to factor code into meaningful pieces, each of which has some sense in problem solution. We don't want to partition a chunk of code just because it's too long.
 
-Another issue I happily left out till now is error handling. Since we get error and result in a single place we need to handle both there, even if this means just passing an error up:
+Another issue I happily left out till now is error handling. Since we get both error and result in a single place we need to handle both there, even if this means just passing the error through:
 
 ```js
 function getSum(callback) {
@@ -116,7 +116,7 @@ redis.get('other-key', function (err, otherValue) {
 });
 ```
 
-This however won't work, `other-key` could be fetched before `some-key` and hence `someValue` in `console.log()` could be undefined. To fix this we will need some coordination code:
+This however won't work, `other-key` could be fetched before `some-key` and hence `someValue` in `console.log()` could be undefined. To fix this we will need to write some coordination code:
 
 ```js
 // Keep track of number of things to do
