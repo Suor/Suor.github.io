@@ -5,7 +5,7 @@ comments: true
 date: 2023-03-26 15:00
 categories: [CS, Python]
 hn_id: 35313565
-reddit_url: https://www.reddit.com/r/programming/comments/122k3w3/ban_1n_in_django/
+reddit_url: https://www.reddit.com/r/Python/comments/122kkrs/how_to_ban_1n_in_django/
 ---
 
 I always thought of 1+N as a thing that you just keep in your head, catch on code reviews or via performance regressions. This worked well for a long time, however, the less control we have over our SQL queries the more likely it will sneak through those guards.
@@ -107,3 +107,5 @@ _DA_get_original, DeferredAttribute.__get__ = DeferredAttribute.__get__, _Deferr
 ```
 
 Which is ready to be used as is. Simply need to put or import it somewhere.
+
+**P.S.** A small bonus - how I tried to [make ChatGPT write this post](https://gist.github.com/Suor/af424c3501792dba6fcf907506987571) for me. It was mostly failure :), but refactoring the code sample was done nicely.
