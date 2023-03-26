@@ -97,11 +97,11 @@ Still not impressed? Then look here:
 from funcy import re_finder, re_all, partial, mapcat
 
 # Get a number out of every word
-map(re_finder('\d+'), words)
+map(re_finder(r'\d+'), words)
 
 # Parse simple ini file into dict
 # (re_finder returns tuples when there is more that one capture in regexp)
-dict(imap(re_finder('(\w+)=(\w+)'), ini.splitlines()))
+dict(imap(re_finder(r'(\w+)=(\w+)'), ini.splitlines()))
 
 # Find all numbers in all the strings and return as flat list
 mapcat(partial(re_all, r'\d+'), bunch_of_strings)
