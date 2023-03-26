@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T15:07:36+07:00</updated>
+  <updated>2023-03-26T19:10:40+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -759,7 +759,9 @@ if [x] + xs: x * product(xs)
 
 <p><code>@patterns</code> here rewrites function into something we meant. It can&rsquo;t obviously be implemented as ordinary decorator, since calling original function will crash. So <code>@patterns</code> reads function code instead, parses it into abstract syntax tree, transforms that to a meaningful one and then compiles back:</p>
 
-<p><blockquote><p>Code  →  AST  →  New AST  →  New Code</p></blockquote></p>
+<p>{% blockquote %}
+Code  →  AST  →  New AST  →  New Code
+{% endblockquote %}</p>
 
 <!-- TODO: make it pretty -->
 
@@ -823,7 +825,11 @@ or stored procedures, to Python 3 after all.</p>
 
 <p>These are various ways it flows:</p>
 
-<p><blockquote><p>Code  →  AST  →  New AST  →  New Code<br/>Code  →  AST  →  JavaScript<br/>Bytecode  →  AST  →  SQL</p></blockquote></p>
+<p>{% blockquote %}
+Code  →  AST  →  New AST  →  New Code
+Code  →  AST  →  JavaScript
+Bytecode  →  AST  →  SQL
+{% endblockquote %}</p>
 
 <!-- TODO: make a flowchart? -->
 
