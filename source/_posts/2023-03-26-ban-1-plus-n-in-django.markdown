@@ -4,6 +4,8 @@ title: "Ban 1+N in Django"
 comments: true
 date: 2023-03-26 15:00
 categories: [CS, Python]
+hn_id: 35313565
+reddit_url: https://www.reddit.com/r/programming/comments/122k3w3/ban_1n_in_django/
 ---
 
 I always thought of 1+N as a thing that you just keep in your head, catch on code reviews or via performance regressions. This worked well for a long time, however, the less control we have over our SQL queries the more likely it will sneak through those guards.
