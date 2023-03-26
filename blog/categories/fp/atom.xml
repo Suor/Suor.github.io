@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FP | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-10-31T20:23:05+07:00</updated>
+  <updated>2023-03-26T15:07:36+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -848,13 +848,13 @@ from funcy import re_finder, re_all, partial, mapcat</p>
 
 <h1>Get a number out of every word</h1>
 
-<p>map(re_finder(&lsquo;\d+&rsquo;), words)</p>
+<p>map(re_finder(r'\d+&lsquo;), words)</p>
 
 <h1>Parse simple ini file into dict</h1>
 
 <h1>(re_finder returns tuples when there is more that one capture in regexp)</h1>
 
-<p>dict(imap(re_finder(&lsquo;(\w+)=(\w+)&rsquo;), ini.splitlines()))</p>
+<p>dict(imap(re_finder(r'(\w+)=(\w+)&lsquo;), ini.splitlines()))</p>
 
 <h1>Find all numbers in all the strings and return as flat list</h1>
 

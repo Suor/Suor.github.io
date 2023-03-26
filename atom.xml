@@ -4,7 +4,7 @@
   <title><![CDATA[Hackflow]]></title>
   <link href="http://hackflow.com/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-10-31T20:23:05+07:00</updated>
+  <updated>2023-03-26T15:07:36+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,172 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ban 1+N in Django]]></title>
+    <link href="http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django/"/>
+    <updated>2023-03-26T15:00:00+07:00</updated>
+    <id>http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django</id>
+    <content type="html"><![CDATA[<p>I always thought of 1+N as a thing that you just keep in your head, catch on code reviews or via performance regressions. This worked well for a long time, however, the less control we have over our SQL queries the more likely it will sneak through those guards.</p>
+
+<!--more-->
+
+
+<h2>A small history dive</h2>
+
+<p>This used to be very visible and meant almost &ldquo;do not perform SQL queries in a cycle&rdquo;:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">books</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT id, title, author_id FROM books&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>  <span class="c"># 1</span>
+</span><span class='line'><span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">author_id</span> <span class="ow">in</span> <span class="n">books</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT full_name FROM authors WHERE id=?&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">author_id</span><span class="p">])</span>  <span class="c"># +N</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With ORM and lazy loading this became a little bit less obvious:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">books</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c"># 1</span>
+</span><span class='line'><span class="k">for</span> <span class="n">book</span> <span class="ow">in</span> <span class="n">books</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s">&quot;Book title: {book.title}, author: {book.author.full_name}&quot;</span><span class="p">)</span>  <span class="c"># +N</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With something so innocent as an attribute access making an SQL query, it&rsquo;s much easier to miss it. Especially when this code spreads out, the ORM objects are passed to templates, which also have loops and sure they can do attribute access.</p>
+
+<p>As project grows, as its database schema becomes more complicated, as your team grows too, this keeps adding up. And magic also adds up. One particular mention should be a GraphQL library, which resolves onto ORM automatically.</p>
+
+<h2>Back to the present</h2>
+
+<p>I tumbled on a couple of 1+Ns while reading a project code for an unrelated reason and it got me thinking &ndash; do I ever want Django to do that lazy loading stuff? And the answer was never. This was a misfeature for me, the need for such thing is quite circumstantial, usually when you load a list of things you need the same data about all of them, so it doesn&rsquo;t make sense to lazy load extra data for each object separately. Either eager load or batch lazy load, the latter Django does not do.</p>
+
+<p>So, anyway, if I don&rsquo;t need this than I might as well prohibit it, which turned out to be quite easy to do:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">_DeferredAttribute_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">return</span> <span class="bp">self</span>
+</span><span class='line'>    <span class="n">data</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">__dict__</span>
+</span><span class='line'>    <span class="n">field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">attname</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c"># Raise an exception to prevent an SQL query</span>
+</span><span class='line'>    <span class="n">attr</span> <span class="o">=</span> <span class="n">f</span><span class="s">&quot;{instance.__class__.__name__}.{field_name}&quot;</span>
+</span><span class='line'>    <span class="n">message</span> <span class="o">=</span> <span class="n">f</span><span class="s">&quot;Lazy fetching of {attr} may cause 1+N issue&quot;</span>
+</span><span class='line'>    <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">DeferredAttribute</span><span class="o">.</span><span class="n">__get__</span> <span class="o">=</span> <span class="n">_DeferredAttribute_get</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This way 1+N will blow up instead. Great, we&rsquo;ll catch it during tests. The thing is, however, if 1+Ns were passing our defences before they will probably continue now and this will explode in production. With this in mind, a flood guard and some explanations it transforms into:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">os</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">django.db.models.query_utils</span> <span class="kn">import</span> <span class="n">DeferredAttribute</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+</span><span class='line'><span class="n">attrs_seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">_DeferredAttribute_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+</span><span class='line'>    <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>  <span class="c"># monkeys go early, settings might not be available yet</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">return</span> <span class="bp">self</span>
+</span><span class='line'>    <span class="n">data</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">__dict__</span>
+</span><span class='line'>    <span class="n">field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">attname</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c"># Normally this accessor won&#39;t be called if field_name is in __dict__,</span>
+</span><span class='line'>    <span class="c"># we need this part so that DeferredAttribute descendants with __set__ play nice.</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c"># If it&#39;s not there already then prevent an SQL query or at least notify we are doing smth bad</span>
+</span><span class='line'>    <span class="n">attr</span> <span class="o">=</span> <span class="n">f</span><span class="s">&quot;{instance.__class__.__name__}.{field_name}&quot;</span>
+</span><span class='line'>    <span class="c"># Only trigger this check once per attr to not flood Sentry with identical messages</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attrs_seen</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">attrs_seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">message</span> <span class="o">=</span> <span class="n">f</span><span class="s">&quot;Lazy fetching of {attr} may cause 1+N issue&quot;</span>
+</span><span class='line'>        <span class="c"># We stop in DEBUG mode and if inside tests but let production to proceed.</span>
+</span><span class='line'>        <span class="c"># Using LookupError instead of AttributeError here to prevent higher level &quot;handling&quot; this.</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span> <span class="ow">or</span> <span class="s">&quot;PYTEST_CURRENT_TEST&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+</span><span class='line'>            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">else</span><span class="p">:</span>
+</span><span class='line'>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c"># Proceed normally</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">_DA_get_original</span><span class="o">.</span><span class="n">original</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">_DA_get_original</span><span class="p">,</span> <span class="n">DeferredAttribute</span><span class="o">.</span><span class="n">__get__</span> <span class="o">=</span> <span class="n">DeferredAttribute</span><span class="o">.</span><span class="n">__get__</span><span class="p">,</span> <span class="n">_DeferredAttribute_get</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which is ready to be used as is. Simply need to put or import it somewhere.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 2]]></title>
@@ -2759,11 +2925,11 @@ http_retry = retry(DOWNLOAD_TRIES, HttpError)
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">re_finder</span><span class="p">,</span> <span class="n">re_all</span><span class="p">,</span> <span class="n">partial</span><span class="p">,</span> <span class="n">mapcat</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Get a number out of every word</span>
-</span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
+</span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Parse simple ini file into dict</span>
 </span><span class='line'><span class="c"># (re_finder returns tuples when there is more that one capture in regexp)</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
+</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Find all numbers in all the strings and return as flat list</span>
 </span><span class='line'><span class="n">mapcat</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">re_all</span><span class="p">,</span> <span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">bunch_of_strings</span><span class="p">)</span>

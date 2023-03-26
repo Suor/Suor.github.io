@@ -127,11 +127,18 @@ Node.js introduced async programming to the masses
 <!--more-->
 
 
-<p>&hellip; I will use JS, but many things apply to other platforms &hellip;</p>
+<p>I will mostly use JS for examples, as it has most complete and illustrative async story,
+but things I&rsquo;ll cover apply to other platforms as well.</p>
+
+<h2>Prehistory</h2>
+
+<p>&hellip; why we started to use async (threads are too costly)
+&hellip; say about using narration/succession ?
+&hellip; link to <a href="https://github.com/alexhultman/The-real-history-of-async-networking">https://github.com/alexhultman/The-real-history-of-async-networking</a></p>
 
 <h2>Callbacks</h2>
 
-<p>It&rsquo;s the simplest way to do async programming. You make a call and supply a function to call you back then the thing is done:</p>
+<p>It&rsquo;s the simplest way to do async programming. You make a call and supply a function to call you back when the thing is done:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -142,7 +149,7 @@ Node.js introduced async programming to the masses
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Often we can&rsquo;t do anything meaningful here until we get that <code>someValue</code>, in this case all the continuation of our program goes into that callback function we are passing to <code>redis.get()</code>. This is why such way of programming is sometimes called <a href="https://en.wikipedia.org/wiki/Continuation-passing_style">continuation-passing style</a>.</p>
+<p>Often we can&rsquo;t do anything meaningful here until we get that <code>someValue</code>, in this case all the continuation of our program goes into that callback function we are passing to <code>redis.get()</code>. This is why such a way of programming is sometimes called <a href="https://en.wikipedia.org/wiki/Continuation-passing_style">continuation-passing style</a>.</p>
 
 <p>Obviously, there are other ways to pass callback, results and errors. Here I use Node.js convention:</p>
 
@@ -209,7 +216,7 @@ Node.js introduced async programming to the masses
 
 <p>The issue with this is that it&rsquo;s verbose and not always desirable. We generally want to factor code into meaningful pieces, each of which has some sense in problem solution. We don&rsquo;t want to partition a chunk of code just because it&rsquo;s too long.</p>
 
-<p>Another issue I happily left out till now is error handling. Since we get error and result in a single place we need to handle both there, even if this means just passing an error up:</p>
+<p>Another issue I happily left out till now is error handling. Since we get both error and result in a single place we need to handle both there, even if this means just passing the error through:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -259,7 +266,7 @@ Node.js introduced async programming to the masses
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>This however won&rsquo;t work, <code>other-key</code> could be fetched before <code>some-key</code> and hence <code>someValue</code> in <code>console.log()</code> could be undefined. To fix this we will need some coordination code:</p>
+<p>This however won&rsquo;t work, <code>other-key</code> could be fetched before <code>some-key</code> and hence <code>someValue</code> in <code>console.log()</code> could be undefined. To fix this we will need to write some coordination code:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -362,7 +369,7 @@ Node.js introduced async programming to the masses
 
 
 <p>In real world <code>call-with-current-continuation</code> is far more powerful when I had time to show here.
-It enables a brave one to implement from scratch all sort of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.</p>
+It enables a brave one to implement from scratch all sorts of wonderful and scary things: arbitrary loops with nesting and early exit, exceptions and their handling, generators, coroutines and more.</p>
 
 <p>If you are willing to dive deeper here is <a href="http://community.schemewiki.org/?call-with-current-continuation">a really nice intro</a>. And I am coming back to Earth now.</p>
 
@@ -370,7 +377,7 @@ It enables a brave one to implement from scratch all sort of wonderful and scary
 
 <h2>Combinators</h2>
 
-<p>We saw how both serial and parallel calls could benefit from some general abstraction. And during earlier Node.js years there were lots of control flow libraries introduced. One that has grown to be the most popular is <a href="https://www.npmjs.com/package/async">async.js</a>, which lets you combine calls like this:</p>
+<p>We saw how both serial and parallel calls could benefit from some general abstraction. And during Node.js years there were lots of control flow libraries introduced. One that has grown to be the most popular is <a href="https://www.npmjs.com/package/async">async.js</a>, which lets you combine calls like this:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -425,13 +432,62 @@ It enables a brave one to implement from scratch all sort of wonderful and scary
 <p>The errors point allows us to not write <code>if (err) return ...</code> everywhere and the last one
 enables us to easily switch flow: we can easily substitute <code>.series()</code> with <code>.parallel()</code> above and make those gets faster.</p>
 
+<p>Often overlooked requirement for using combinators is standardization of callback interface. Node.js has it defined and enforced with standard library, but many other platforms aren&rsquo;t. This is probably why this solution virtually exclusive to Node.js.</p>
+
 <p><section class="note-box"></p>
 
 <h3>JavaScript particularly awkward partial application side note</h3>
 
-<p>&hellip;</p>
+<p>Partial application is simply fixing one or some function arguments. This is partial application of <code>sum()</code> function done by hand:</p>
 
-<p><strong><em>TODO: move this down? after Thinking or Passing Values?</em></strong></p>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">add5</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">y</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nx">y</span><span class="p">);</span> <span class="c1">// Fix first argument to be 5</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Same with <a href="http://underscorejs.org/">underscore</a>/<a href="https://lodash.com">lodash</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">add5</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">partial</span><span class="p">(</span><span class="nx">sum</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is nice, this, however, doesn&rsquo;t work with methods. The reason is JavaScript just doesn&rsquo;t have method type. When you copy function from object property you loose reference to the object and if you call that copy later <code>this</code> would be assigned to global object within. E.g. this won&rsquo;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">redisGet</span> <span class="o">=</span> <span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">;</span> <span class="c1">// reference to `redis` is lost here</span>
+</span><span class='line'><span class="nx">redisGet</span><span class="p">(</span><span class="s1">&#39;some-key&#39;</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The solution is explicitly passing object when partially applying method. This looks stupid, but works:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// `redis` becomes `this` and &#39;some-key&#39; - first argument</span>
+</span><span class='line'><span class="nx">redis</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="s1">&#39;some-key&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// And my favorite</span>
+</span><span class='line'><span class="nx">doThings</span><span class="p">(...,</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">console</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is a proposal to make this simpler in future JavaScript with <a href="https://github.com/zenparsing/es-function-bind">bind operator</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">doThings</span><span class="p">(...,</span> <span class="o">::</span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Partial application with arguments will still be awkward though. Also the proposal may not pass anyway.</p>
 
 <p></section></p>
 
@@ -439,7 +495,7 @@ enables us to easily switch flow: we can easily substitute <code>.series()</code
 
 <p>In traditional imperative programming we decompose our program into serial steps. Callbacks force us to think in continuations. And combinators naturally make us construct our program by combining async calls.</p>
 
-<p>The next step is shifting to combining functions. Essentially go <a href="https://en.wikipedia.org/wiki/Tacit_programming">point free style</a> by getting rid of callbacks:</p>
+<p>The next step is shifting to combining async tasks. Essentially go <a href="https://en.wikipedia.org/wiki/Tacit_programming">point free style</a> by getting rid of callbacks:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -457,7 +513,9 @@ enables us to easily switch flow: we can easily substitute <code>.series()</code
 
 
 <p>Here I use my <a href="https://github.com/Suor/point-free">point-free</a> library, specifically designed to facilitate such thinking. Its premise is extremely simple: provide same combinators as async.js in a <a href="https://en.wikipedia.org/wiki/Currying">curried</a> form.
-This makes sense &lsquo;cause partial application is awkward in JavaScript while reverse of it is just a call. But the &hellip;</p>
+This makes sense because partial application is awkward in JavaScript while reverse of it is just a call.</p>
+
+<p>Here is an illustration of building up your application by combining async actions compared to building from serial steps:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -595,35 +653,22 @@ we used to employ <code>map()</code> to do that. No reason we can&rsquo;t do it 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">getKeys</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">async</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span>
-</span><span class='line'>    <span class="c1">// or pf.map(keys, getKey)(callback)</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">getKeys</span><span class="p">(</span><span class="nx">keys</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">)</span>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of <code>async.map()</code> and pass through the rest. This is slightly trickier than we used to and <code>.bind()</code> won&rsquo;t help us here, but <a href="https://lodash.com">lodash</a> will:</p>
+<p>However, if we look closer at this, we can see that the whole thing is just another partial application: we fixate second argument of <code>pf.map()</code> and pass through the first. This is slightly trickier than we used to and <code>.bind()</code> won&rsquo;t help us here, but <a href="https://lodash.com">lodash</a> will:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 </pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">_</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;lodash&#39;</span><span class="p">);</span>
 </span><span class='line'>
-</span><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">partial</span><span class="p">(</span><span class="nx">async</span><span class="p">.</span><span class="nx">map</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">partial</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure>
 
-
-<p>Native support for this is even nicer:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong><em>TODO: implement and release this</em></strong></p>
-
-<p>NOTE: this is ambiguous. Should partially applied <code>pf.map()</code> return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?</p>
 
 <h3>Duplication</h3>
 
@@ -739,20 +784,33 @@ we used to employ <code>map()</code> to do that. No reason we can&rsquo;t do it 
 
 <p>So async combinator is a thing that takes some async functions in and makes another async function, which represents all the inputs combined in a particular way. There is no reason why combinator can&rsquo;t take single input function and this is what a decorator is.</p>
 
-<p>There is no need to coordinate execution of a single function, so &hellip; but <code>.limit()</code> does that, though for different calls &hellip;</p>
+<p>Using a decorator we can decompose <code>async.mapLimit()</code> above into 2 independent operations:</p>
+
+<ul>
+<li>limiting parallel calls to <code>getKey()</code></li>
+<li>using regular <code>async.map()</code></li>
+</ul>
+
+
+<p>Like this:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">));</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">async</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">),</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">values</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'><span class="p">})</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p><section class="note-box"></p>
+<p>To make calls sequential we can just limit to 1 concurrent call:</p>
 
-<h3>A Redis and &ldquo;Do it at home, not in production&rdquo; side note</h3>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeySerial</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">limit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
 
-<p>&hellip;</p>
 
-<p></section></p>
+<p>And then use it anywhere: in <code>.map()</code>, <code>.filter()</code>, <code>.some()</code>. This way we can defeat duplication in async.js.</p>
 
 <h2>Thunks</h2>
 
@@ -822,7 +880,26 @@ Code blocks too heavy, headings are not noticable enough to server as markers.</
 </span></code></pre></td></tr></table></div></figure>
 
 
+<p>&mdash; collections</p>
 
+<p>Native support for this is even nicer:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">getKeys</span> <span class="o">=</span> <span class="nx">pf</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">pf</span><span class="p">.</span><span class="nx">_</span><span class="p">,</span> <span class="nx">getKey</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong><em>TODO: implement and release this</em></strong></p>
+
+<p>NOTE: this is ambiguous. Should partially applied <code>pf.map()</code> return thunk-returning function, like all point-free stuff is or return node-style function like all point-free stuff returns?</p>
+
+<p><section class="note-box"></p>
+
+<h3>A Redis and &ldquo;Do it at home, not in production&rdquo; side note</h3>
+
+<p>&hellip;</p>
+
+<p></section></p>
 </div>
 
 
@@ -896,6 +973,10 @@ Code blocks too heavy, headings are not noticable enough to server as markers.</
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
       </li>
     
@@ -909,10 +990,6 @@ Code blocks too heavy, headings are not noticable enough to server as markers.</
     
       <li class="post">
         <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/22/why-every-language-needs-its-underscore/">Why Every Language Needs Its Underscore</a>
       </li>
     
   </ul>
@@ -956,7 +1033,7 @@ Code blocks too heavy, headings are not noticable enough to server as markers.</
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2015 - Alexander Schepanovski -
+  Copyright &copy; 2023 - Alexander Schepanovski -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Python | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2015-10-31T20:23:05+07:00</updated>
+  <updated>2023-03-26T15:07:36+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -12,6 +12,119 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ban 1+N in Django]]></title>
+    <link href="http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django/"/>
+    <updated>2023-03-26T15:00:00+07:00</updated>
+    <id>http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django</id>
+    <content type="html"><![CDATA[<p>I always thought of 1+N as a thing that you just keep in your head, catch on code reviews or via performance regressions. This worked well for a long time, however, the less control we have over our SQL queries the more likely it will sneak through those guards.</p>
+
+<!--more-->
+
+
+<h2>A small history dive</h2>
+
+<p>This used to be very visible and meant almost &ldquo;do not perform SQL queries in a cycle&rdquo;:</p>
+
+<p>```python
+books = c.execute(&ldquo;SELECT id, title, author_id FROM books&rdquo;).fetchall()  # 1
+for id, title, author_id in books:</p>
+
+<pre><code>c.execute("SELECT full_name FROM authors WHERE id=?", [author_id])  # +N
+</code></pre>
+
+<p>```</p>
+
+<p>With ORM and lazy loading this became a little bit less obvious:</p>
+
+<p>```python
+books = Book.objects.filter(&hellip;)  # 1
+for book in books:</p>
+
+<pre><code>print(f"Book title: {book.title}, author: {book.author.full_name}")  # +N
+</code></pre>
+
+<p>```</p>
+
+<p>With something so innocent as an attribute access making an SQL query, it&rsquo;s much easier to miss it. Especially when this code spreads out, the ORM objects are passed to templates, which also have loops and sure they can do attribute access.</p>
+
+<p>As project grows, as its database schema becomes more complicated, as your team grows too, this keeps adding up. And magic also adds up. One particular mention should be a GraphQL library, which resolves onto ORM automatically.</p>
+
+<h2>Back to the present</h2>
+
+<p>I tumbled on a couple of 1+Ns while reading a project code for an unrelated reason and it got me thinking &ndash; do I ever want Django to do that lazy loading stuff? And the answer was never. This was a misfeature for me, the need for such thing is quite circumstantial, usually when you load a list of things you need the same data about all of them, so it doesn&rsquo;t make sense to lazy load extra data for each object separately. Either eager load or batch lazy load, the latter Django does not do.</p>
+
+<p>So, anyway, if I don&rsquo;t need this than I might as well prohibit it, which turned out to be quite easy to do:</p>
+
+<p>```python
+from django.db.models.query_utils import DeferredAttribute</p>
+
+<p>def _DeferredAttribute_get(self, instance, cls=None):</p>
+
+<pre><code>if instance is None:
+    return self
+data = instance.__dict__
+field_name = self.field.attname
+if field_name in data:
+    return data[field_name]
+
+# Raise an exception to prevent an SQL query
+attr = f"{instance.__class__.__name__}.{field_name}"
+message = f"Lazy fetching of {attr} may cause 1+N issue"
+raise LookupError(message)
+</code></pre>
+
+<p>DeferredAttribute.<strong>get</strong> = _DeferredAttribute_get
+```</p>
+
+<p>This way 1+N will blow up instead. Great, we&rsquo;ll catch it during tests. The thing is, however, if 1+Ns were passing our defences before they will probably continue now and this will explode in production. With this in mind, a flood guard and some explanations it transforms into:</p>
+
+<p>```python
+import logging
+import os
+from django.db.models.query_utils import DeferredAttribute</p>
+
+<p>logger = logging.getLogger(<strong>name</strong>)
+attrs_seen = set()</p>
+
+<p>def _DeferredAttribute_get(self, instance, cls=None):</p>
+
+<pre><code>from django.conf import settings  # monkeys go early, settings might not be available yet
+
+if instance is None:
+    return self
+data = instance.__dict__
+field_name = self.field.attname
+
+# Normally this accessor won't be called if field_name is in __dict__,
+# we need this part so that DeferredAttribute descendants with __set__ play nice.
+if field_name in data:
+    return data[field_name]
+
+# If it's not there already then prevent an SQL query or at least notify we are doing smth bad
+attr = f"{instance.__class__.__name__}.{field_name}"
+# Only trigger this check once per attr to not flood Sentry with identical messages
+if attr not in attrs_seen:
+    attrs_seen.add(attr)
+    message = f"Lazy fetching of {attr} may cause 1+N issue"
+    # We stop in DEBUG mode and if inside tests but let production to proceed.
+    # Using LookupError instead of AttributeError here to prevent higher level "handling" this.
+    if settings.DEBUG or "PYTEST_CURRENT_TEST" in os.environ:
+        raise LookupError(message)
+    else:
+        logger.exception(message)
+
+# Proceed normally
+return _DA_get_original.original(self, instance, cls)
+</code></pre>
+
+<p><em>DA_get_original, DeferredAttribute.<strong>get</strong> = DeferredAttribute.<strong>get</strong>, </em>DeferredAttribute_get
+```</p>
+
+<p>Which is ready to be used as is. Simply need to put or import it somewhere.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 2]]></title>
@@ -1198,13 +1311,13 @@ from funcy import re_finder, re_all, partial, mapcat</p>
 
 <h1>Get a number out of every word</h1>
 
-<p>map(re_finder(&lsquo;\d+&rsquo;), words)</p>
+<p>map(re_finder(r'\d+&lsquo;), words)</p>
 
 <h1>Parse simple ini file into dict</h1>
 
 <h1>(re_finder returns tuples when there is more that one capture in regexp)</h1>
 
-<p>dict(imap(re_finder(&lsquo;(\w+)=(\w+)&rsquo;), ini.splitlines()))</p>
+<p>dict(imap(re_finder(r'(\w+)=(\w+)&lsquo;), ini.splitlines()))</p>
 
 <h1>Find all numbers in all the strings and return as flat list</h1>
 
@@ -1374,153 +1487,6 @@ print line
 <p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p>
 
 <p>So, how about <a href="https://github.com/Suor/funcy">extending your vocabulary</a>?</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Abstracting Control Flow]]></title>
-    <link href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/"/>
-    <updated>2013-10-08T12:13:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/08/abstracting-control-flow</id>
-    <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p>
-
-<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
-
-<p> <!--more--></p>
-
-<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
-
-<h2>Abstractions</h2>
-
-<p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
-
-<ol>
-<li>Select a piece of functionality or behavior.</li>
-<li>Name it.</li>
-<li>Implement it.</li>
-<li>Hide our implementation behind chosen name.</li>
-</ol>
-
-
-<p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p>
-
-<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
-
-<h2>Back to real-life</h2>
-
-<p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
-
-<p>``` python
-urls = &hellip;
-photos = []</p>
-
-<p>for url in urls:</p>
-
-<pre><code>for attempt in range(DOWNLOAD_TRIES):
-    try:
-        photos.append(download_image(url))
-        break
-    except ImageTooSmall:
-        pass # skip small images
-    except (urllib2.URLError, httplib.BadStatusLine, socket.error), e:
-        if attempt + 1 == DOWNLOAD_TRIES:
-            raise
-</code></pre>
-
-<p>```</p>
-
-<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
-
-<p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
-
-<p><code>python
-photos = map(download_image, urls)
-</code></p>
-
-<p>Let&rsquo;s try fishing out other aspects, starting with skipping small images. That could be done like:</p>
-
-<p>``` python
-@contextmanager
-def ignore(error):</p>
-
-<pre><code>try:
-    yield
-except error:
-    pass
-</code></pre>
-
-<p>photos = []
-for url in urls:</p>
-
-<pre><code>with ignore(ImageTooSmall):
-    photos.append(download_image(url))
-</code></pre>
-
-<p>```</p>
-
-<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it the same way we handled <code>ignore</code>:</p>
-
-<p>``` python
-with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)):</p>
-
-<pre><code># ... do stuff
-</code></pre>
-
-<p>```</p>
-
-<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run its block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
-
-<p>``` python
-@decorator
-def retry(call, tries, errors=Exception):</p>
-
-<pre><code>for attempt in range(tries):
-    try:
-        return call()
-    except errors:
-        if attempt + 1 == tries:
-            raise
-</code></pre>
-
-<p>http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
-photos = map(http_retry(download_image), urls)
-```</p>
-
-<p>As we can see, it even works with <code>map</code> naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
-
-<p>``` python
-@decorator
-def ignore(call, errors=Exception):</p>
-
-<pre><code>try:
-    return call()
-except errors:
-    return None
-</code></pre>
-
-<p>ignore_small = ignore(ImageTooSmall)
-http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error))
-download = http_retry(ignore_small(download_image))
-photos = filter(None, map(download, urls))
-```</p>
-
-<h2>How is this better?</h2>
-
-<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>
-
-<ul>
-<li>every single aspect is visible,</li>
-<li>it&rsquo;s named,</li>
-<li>it can be taken out and brought back easily,</li>
-<li>it can be reused.</li>
-</ul>
-
-
-<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective. Still I hope this post will help somebody to write better code.</p>
-
-<p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
-
-<p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href="http://underscorejs.org/#functions">function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href="https://github.com/Suor/patterns">pattern matching</a>, <a href="https://github.com/Suor/overload">function overload</a>, caching decorators and much more.</p>
 ]]></content>
   </entry>
   

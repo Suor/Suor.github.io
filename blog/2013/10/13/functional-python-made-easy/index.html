@@ -234,11 +234,11 @@
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">re_finder</span><span class="p">,</span> <span class="n">re_all</span><span class="p">,</span> <span class="n">partial</span><span class="p">,</span> <span class="n">mapcat</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Get a number out of every word</span>
-</span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
+</span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Parse simple ini file into dict</span>
 </span><span class='line'><span class="c"># (re_finder returns tuples when there is more that one capture in regexp)</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
+</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
 </span><span class='line'>
 </span><span class='line'><span class="c"># Find all numbers in all the strings and return as flat list</span>
 </span><span class='line'><span class="n">mapcat</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">re_all</span><span class="p">,</span> <span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">bunch_of_strings</span><span class="p">)</span>
@@ -527,6 +527,10 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
       </li>
     
@@ -540,10 +544,6 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
     
       <li class="post">
         <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/06/22/why-every-language-needs-its-underscore/">Why Every Language Needs Its Underscore</a>
       </li>
     
   </ul>
@@ -587,7 +587,7 @@ And the two fundamental are <code>walk</code> and <code>select</code>, a version
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2015 - Alexander Schepanovski -
+  Copyright &copy; 2023 - Alexander Schepanovski -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
