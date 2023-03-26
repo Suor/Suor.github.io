@@ -4,7 +4,7 @@
   <title><![CDATA[Category: CS | Hackflow]]></title>
   <link href="http://hackflow.com/blog/categories/cs/atom.xml" rel="self"/>
   <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T19:10:40+07:00</updated>
+  <updated>2023-03-26T19:40:04+07:00</updated>
   <id>http://hackflow.com/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
@@ -123,6 +123,8 @@ return _DA_get_original.original(self, instance, cls)
 ```</p>
 
 <p>Which is ready to be used as is. Simply need to put or import it somewhere.</p>
+
+<p><strong>P.S.</strong> A small bonus &ndash; how I tried to <a href="https://gist.github.com/Suor/af424c3501792dba6fcf907506987571">make ChatGPT write this post</a> for me. It was mostly failure :), but refactoring the code sample was done nicely.</p>
 ]]></content>
   </entry>
   
