@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: FP | Hackflow]]></title>
-  <link href="http://hackflow.com/blog/categories/fp/atom.xml" rel="self"/>
-  <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T19:40:04+07:00</updated>
-  <id>http://hackflow.com/</id>
+  <link href="http://suor.github.io/blog/categories/fp/atom.xml" rel="self"/>
+  <link href="http://suor.github.io/"/>
+  <updated>2023-03-27T08:15:25+07:00</updated>
+  <id>http://suor.github.io/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Boiling React Down to a Few Lines in jQuery]]></title>
-    <link href="http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
+    <link href="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
     <updated>2015-03-08T20:08:00+07:00</updated>
-    <id>http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
+    <id>http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
     <content type="html"><![CDATA[<p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p>
 
 <!--more-->
@@ -75,19 +75,19 @@ $('#inc').on('click', function () {
 <p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
 Let me draw you a picture. This is how first variant works:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
 
 <p>And this is how second one does:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
 
 <p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
 
 <p>And even with our bastardized React-like code we get:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
 
 <p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
 In second one we have just <code>N</code> event links and <code>M</code> element links.
@@ -419,9 +419,9 @@ It may not have magical powers and top speed, but it got components and is still
   
   <entry>
     <title type="html"><![CDATA[Why Every Language Needs Its Underscore]]></title>
-    <link href="http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore/"/>
+    <link href="http://suor.github.io/blog/2014/06/22/why-every-language-needs-its-underscore/"/>
     <updated>2014-06-22T19:39:00+08:00</updated>
-    <id>http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore</id>
+    <id>http://suor.github.io/blog/2014/06/22/why-every-language-needs-its-underscore</id>
     <content type="html"><![CDATA[<p><em>(This is an adaptation of a talk I gave at PyCon and DevDay. <a href="http://www.slideshare.net/hackflow/why-underscore">Slides</a> and <a href="http://www.youtube.com/watch?v=lGAC6ftYUS0#t=12100">video</a> are available in russian)</em></p>
 
 <p>Do you know what <a href="http://underscorejs.org/">underscore</a> is? In its most general it&rsquo;s a JavaScript library that makes life better. For whoever writes in JavaScript. I mostly write Python and I also wanted my life better, so I went ahead and wrote <a href="https://github.com/Suor/funcy">a similar library for Python</a>. But the thing is you need to understand a magic behind something to properly replicate it. So what&rsquo;s the magic behind _?</p>
@@ -462,7 +462,7 @@ images = map(http_retry(download_image), urls)
 </div>
 
 
-<p>If it seems hard at first, then it&rsquo;s okay. It involves some functions and <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstractions</a> most probably new to you. Once you get used to it you&rsquo;ll find that the latter variant is not only shorter, but is also simpler.</p>
+<p>If it seems hard at first, then it&rsquo;s okay. It involves some functions and <a href="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/">control flow abstractions</a> most probably new to you. Once you get used to it you&rsquo;ll find that the latter variant is not only shorter, but is also simpler.</p>
 
 <h3>Dirty dictionary</h3>
 
@@ -753,9 +753,9 @@ prev = x
   
   <entry>
     <title type="html"><![CDATA[Functional Python Made Easy]]></title>
-    <link href="http://hackflow.com/blog/2013/10/13/functional-python-made-easy/"/>
+    <link href="http://suor.github.io/blog/2013/10/13/functional-python-made-easy/"/>
     <updated>2013-10-13T19:22:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/13/functional-python-made-easy</id>
+    <id>http://suor.github.io/blog/2013/10/13/functional-python-made-easy</id>
     <content type="html"><![CDATA[<p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
 
 <p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
@@ -1029,9 +1029,9 @@ print line
   
   <entry>
     <title type="html"><![CDATA[Abstracting Control Flow]]></title>
-    <link href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/"/>
+    <link href="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/"/>
     <updated>2013-10-08T12:13:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/08/abstracting-control-flow</id>
+    <id>http://suor.github.io/blog/2013/10/08/abstracting-control-flow</id>
     <content type="html"><![CDATA[<p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p>
 
 <p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>

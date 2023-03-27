@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Algorithms | Hackflow]]></title>
-  <link href="http://hackflow.com/blog/categories/algorithms/atom.xml" rel="self"/>
-  <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T19:40:04+07:00</updated>
-  <id>http://hackflow.com/</id>
+  <link href="http://suor.github.io/blog/categories/algorithms/atom.xml" rel="self"/>
+  <link href="http://suor.github.io/"/>
+  <updated>2023-03-27T08:15:25+07:00</updated>
+  <id>http://suor.github.io/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[On ORM Cache Invalidation]]></title>
-    <link href="http://hackflow.com/blog/2014/03/09/on-orm-cache-invalidation/"/>
+    <link href="http://suor.github.io/blog/2014/03/09/on-orm-cache-invalidation/"/>
     <updated>2014-03-09T19:50:00+08:00</updated>
-    <id>http://hackflow.com/blog/2014/03/09/on-orm-cache-invalidation</id>
+    <id>http://suor.github.io/blog/2014/03/09/on-orm-cache-invalidation</id>
     <content type="html"><![CDATA[<p>Cache invalidation is probably one of the hardest things in computer programming. I understand it as finding a subtle compromise between completeness, redundancy and complexity. I would like to tap into this topic in a context of caching queries built via ORM.</p>
 
 <!--more-->

@@ -1,63 +1,65 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://hackflow.com/blog/2013/10/08/abstracting-control-flow/</loc>
+        <loc>http://suor.github.io/blog/2013/10/08/abstracting-control-flow/</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2013/10/13/functional-python-made-easy/</loc>
+        <loc>http://suor.github.io/blog/2013/10/13/functional-python-made-easy/</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2013/11/03/painless-decorators/</loc>
+        <loc>http://suor.github.io/blog/2013/11/03/painless-decorators/</loc>
+        <lastmod>2023-03-27T07:58:46+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/blog/2014/03/09/on-orm-cache-invalidation/</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2014/03/09/on-orm-cache-invalidation/</loc>
+        <loc>http://suor.github.io/blog/2014/06/22/why-every-language-needs-its-underscore/</loc>
+        <lastmod>2023-03-27T07:58:35+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/blog/2014/09/07/growing-over-backward-incompatibility/</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2014/06/22/why-every-language-needs-its-underscore/</loc>
+        <loc>
+            http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/
+        </loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2014/09/07/growing-over-backward-incompatibility/</loc>
+        <loc>http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/</loc>
+        <lastmod>2023-03-27T07:59:07+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/blog/2015/04/12/metaprogramming-beyond-decency-part-2/</loc>
+        <lastmod>2023-03-27T07:59:35+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/blog/2023/03/26/ban-1-plus-n-in-django/</loc>
+        <lastmod>2023-03-26T20:45:28+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/blog/archives/</loc>
+        <lastmod>2023-03-27T07:59:35+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/</loc>
+        <lastmod>2023-03-27T07:59:35+07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://suor.github.io/pages/reform-showcase.html</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/</loc>
+        <loc>http://suor.github.io/404.html</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
     <url>
-        <loc>http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/</loc>
-        <lastmod>2023-03-26T17:30:15+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2/</loc>
-        <lastmod>2023-03-26T19:07:29+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django/</loc>
-        <lastmod>2023-03-26T19:40:04+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/blog/archives/</loc>
-        <lastmod>2023-03-26T19:40:04+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/</loc>
-        <lastmod>2023-03-26T19:40:04+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/pages/reform-showcase.html</loc>
-        <lastmod>2023-03-26T17:30:15+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/404.html</loc>
-        <lastmod>2023-03-26T17:30:15+07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://hackflow.com/robots.txt</loc>
+        <loc>http://suor.github.io/robots.txt</loc>
         <lastmod>2023-03-26T17:30:15+07:00</lastmod>
     </url>
 </urlset>

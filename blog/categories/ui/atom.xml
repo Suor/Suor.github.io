@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: UI | Hackflow]]></title>
-  <link href="http://hackflow.com/blog/categories/ui/atom.xml" rel="self"/>
-  <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T19:40:04+07:00</updated>
-  <id>http://hackflow.com/</id>
+  <link href="http://suor.github.io/blog/categories/ui/atom.xml" rel="self"/>
+  <link href="http://suor.github.io/"/>
+  <updated>2023-03-27T08:15:25+07:00</updated>
+  <id>http://suor.github.io/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
     
@@ -15,10 +15,10 @@
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 2]]></title>
-    <link href="http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2/"/>
+    <link href="http://suor.github.io/blog/2015/04/12/metaprogramming-beyond-decency-part-2/"/>
     <updated>2015-04-12T18:41:00+07:00</updated>
-    <id>http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2</id>
-    <content type="html"><![CDATA[<p><em>(This is second part of my PiterPy talk adaptation, first part is available <a href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/">here</a>)</em></p>
+    <id>http://suor.github.io/blog/2015/04/12/metaprogramming-beyond-decency-part-2</id>
+    <content type="html"><![CDATA[<p><em>(This is second part of my PiterPy talk adaptation, first part is available <a href="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/">here</a>)</em></p>
 
 <p>Previously I described various ways AST could be used to alter Python language. Now I will concentrate on translation, and we will translate Python to JavaScript.</p>
 
@@ -29,13 +29,13 @@
 
 <p>Unlike all Part 1 examples this one started from real need, the one as mundane as form validation:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto"></p>
 
 <p>Here we have a form with a validation error visible, we typically want this to be shown as soon as possible, so we implement these checks in browser in JavaScript. But we still need to check everything on the server to not let broken data into our database.</p>
 
 <p>Usually we just duplicate logic and this works. Until we get many forms and all of them are like this:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/car-form-full.png"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/car-form-full.png"></p>
 
 <p>When we arrive to this scale code duplication starts to cause problems duplication always does:
 some things are checked only in one place, some things are not updated accordingly and contradict each other. We show weird errors to our users and save broken data to our database.</p>
@@ -74,7 +74,7 @@ from meta.decompiler import decompile_func</p>
 
 <p>Once we do that we get a tree like this:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>I simplified it to look prettier, but all significant aspects are still here.</p>
 
@@ -97,7 +97,7 @@ def visit_LtE(self, node):
 
 <p>After using this we come to:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/translation-1.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/translation-1.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>When leaf nodes are done we can compile code for ones depending on them:</p>
 
@@ -115,7 +115,7 @@ node.js = '(%s %s %s)' % (node.left.js, node.op.js, node.right.js)
 
 <p>And we&rsquo;ve got to:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/translation-2.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/translation-2.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>We can continue going up the tree and finally get:</p>
 
@@ -412,7 +412,7 @@ lambda xs: len(xs) &gt;= 1 and all(xs)
 
 <p>Here is how validation looks. It updates as we type and wholly executed in the browser:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto"></p>
 
 <p>And we don&rsquo;t write any JavaScript to achieve that. We write this instead:</p>
 
@@ -458,7 +458,7 @@ class PriceField(PosIntegerField):</p>
 
 <p>We really got more from this system than just validation. And first thing to show is computed properties. These are visibility, labels, choices and more. I&rsquo;ll demo it with another tiny screencast:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto"></p>
 
 <p>Here we can see several aspects &mdash; when user selects &ldquo;exchange to a car&rdquo; a new drop-down appears,
 and when a label changes depending on who pays extra. Here is how it looks in code:</p>
@@ -495,7 +495,7 @@ def visible(self):
 
 <p>The last demo for today will show how easily we can pass data to client. Here I show how field values could be automatically selected:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto"></p>
 
 <p>To look through car models we need to pass their list to browser and we can do this simply by enclosing data structure with a function:</p>
 
@@ -538,9 +538,9 @@ models = CarModel.objects.values_list(&lsquo;pk&rsquo;, &lsquo;title&rsquo;)</p>
   
   <entry>
     <title type="html"><![CDATA[Boiling React Down to a Few Lines in jQuery]]></title>
-    <link href="http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
+    <link href="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"/>
     <updated>2015-03-08T20:08:00+07:00</updated>
-    <id>http://hackflow.com/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
+    <id>http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery</id>
     <content type="html"><![CDATA[<p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p>
 
 <!--more-->
@@ -598,19 +598,19 @@ $('#inc').on('click', function () {
 <p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
 Let me draw you a picture. This is how first variant works:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
 
 <p>And this is how second one does:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
 
 <p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
 
 <p>And even with our bastardized React-like code we get:</p>
 
-<p><img src="http://hackflow.com/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
+<p><img src="http://suor.github.io/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
 
 <p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
 In second one we have just <code>N</code> event links and <code>M</code> element links.

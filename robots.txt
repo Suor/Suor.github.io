@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: http://hackflow.com/sitemap.xml 
+Sitemap: http://suor.github.io/sitemap.xml 

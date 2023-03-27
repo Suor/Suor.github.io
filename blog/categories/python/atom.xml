@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Python | Hackflow]]></title>
-  <link href="http://hackflow.com/blog/categories/python/atom.xml" rel="self"/>
-  <link href="http://hackflow.com/"/>
-  <updated>2023-03-26T19:40:04+07:00</updated>
-  <id>http://hackflow.com/</id>
+  <link href="http://suor.github.io/blog/categories/python/atom.xml" rel="self"/>
+  <link href="http://suor.github.io/"/>
+  <updated>2023-03-27T08:15:25+07:00</updated>
+  <id>http://suor.github.io/</id>
   <author>
     <name><![CDATA[Alexander Schepanovski]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Ban 1+N in Django]]></title>
-    <link href="http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django/"/>
+    <link href="http://suor.github.io/blog/2023/03/26/ban-1-plus-n-in-django/"/>
     <updated>2023-03-26T15:00:00+07:00</updated>
-    <id>http://hackflow.com/blog/2023/03/26/ban-1-plus-n-in-django</id>
+    <id>http://suor.github.io/blog/2023/03/26/ban-1-plus-n-in-django</id>
     <content type="html"><![CDATA[<p>I always thought of 1+N as a thing that you just keep in your head, catch on code reviews or via performance regressions. This worked well for a long time, however, the less control we have over our SQL queries the more likely it will sneak through those guards.</p>
 
 <!--more-->
@@ -130,10 +130,10 @@ return _DA_get_original.original(self, instance, cls)
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 2]]></title>
-    <link href="http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2/"/>
+    <link href="http://suor.github.io/blog/2015/04/12/metaprogramming-beyond-decency-part-2/"/>
     <updated>2015-04-12T18:41:00+07:00</updated>
-    <id>http://hackflow.com/blog/2015/04/12/metaprogramming-beyond-decency-part-2</id>
-    <content type="html"><![CDATA[<p><em>(This is second part of my PiterPy talk adaptation, first part is available <a href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/">here</a>)</em></p>
+    <id>http://suor.github.io/blog/2015/04/12/metaprogramming-beyond-decency-part-2</id>
+    <content type="html"><![CDATA[<p><em>(This is second part of my PiterPy talk adaptation, first part is available <a href="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/">here</a>)</em></p>
 
 <p>Previously I described various ways AST could be used to alter Python language. Now I will concentrate on translation, and we will translate Python to JavaScript.</p>
 
@@ -144,13 +144,13 @@ return _DA_get_original.original(self, instance, cls)
 
 <p>Unlike all Part 1 examples this one started from real need, the one as mundane as form validation:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/car-form.png" style="display: block; margin: 0 auto"></p>
 
 <p>Here we have a form with a validation error visible, we typically want this to be shown as soon as possible, so we implement these checks in browser in JavaScript. But we still need to check everything on the server to not let broken data into our database.</p>
 
 <p>Usually we just duplicate logic and this works. Until we get many forms and all of them are like this:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/car-form-full.png"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/car-form-full.png"></p>
 
 <p>When we arrive to this scale code duplication starts to cause problems duplication always does:
 some things are checked only in one place, some things are not updated accordingly and contradict each other. We show weird errors to our users and save broken data to our database.</p>
@@ -189,7 +189,7 @@ from meta.decompiler import decompile_func</p>
 
 <p>Once we do that we get a tree like this:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/rule-tree.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>I simplified it to look prettier, but all significant aspects are still here.</p>
 
@@ -212,7 +212,7 @@ def visit_LtE(self, node):
 
 <p>After using this we come to:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/translation-1.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/translation-1.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>When leaf nodes are done we can compile code for ones depending on them:</p>
 
@@ -230,7 +230,7 @@ node.js = '(%s %s %s)' % (node.left.js, node.op.js, node.right.js)
 
 <p>And we&rsquo;ve got to:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/translation-2.dot.svg" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/translation-2.dot.svg" style="display: block; margin: 0 auto"></p>
 
 <p>We can continue going up the tree and finally get:</p>
 
@@ -527,7 +527,7 @@ lambda xs: len(xs) &gt;= 1 and all(xs)
 
 <p>Here is how validation looks. It updates as we type and wholly executed in the browser:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-validation.gif" style="display: block; margin: 0 auto"></p>
 
 <p>And we don&rsquo;t write any JavaScript to achieve that. We write this instead:</p>
 
@@ -573,7 +573,7 @@ class PriceField(PosIntegerField):</p>
 
 <p>We really got more from this system than just validation. And first thing to show is computed properties. These are visibility, labels, choices and more. I&rsquo;ll demo it with another tiny screencast:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-visibility.gif" style="display: block; margin: 0 auto"></p>
 
 <p>Here we can see several aspects &mdash; when user selects &ldquo;exchange to a car&rdquo; a new drop-down appears,
 and when a label changes depending on who pays extra. Here is how it looks in code:</p>
@@ -610,7 +610,7 @@ def visible(self):
 
 <p>The last demo for today will show how easily we can pass data to client. Here I show how field values could be automatically selected:</p>
 
-<p><img src="http://hackflow.com/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto"></p>
+<p><img src="http://suor.github.io/images/metaprogramming/demo-autoselect.gif" style="display: block; margin: 0 auto"></p>
 
 <p>To look through car models we need to pass their list to browser and we can do this simply by enclosing data structure with a function:</p>
 
@@ -653,10 +653,10 @@ models = CarModel.objects.values_list(&lsquo;pk&rsquo;, &lsquo;title&rsquo;)</p>
   
   <entry>
     <title type="html"><![CDATA[Metaprogramming Beyond Decency: Part 1]]></title>
-    <link href="http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/"/>
+    <link href="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/"/>
     <updated>2015-03-29T20:08:00+07:00</updated>
-    <id>http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency</id>
-    <content type="html"><![CDATA[<p><em>(This an adaptation of a talk I gave at PiterPy. <a href="http://hackflow.com/slides/metaprogramming/">Slides</a> and <a href="http://www.youtube.com/watch?v=Q8qxeFGNT9A">video</a> are available in russian)</em></p>
+    <id>http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency</id>
+    <content type="html"><![CDATA[<p><em>(This an adaptation of a talk I gave at PiterPy. <a href="http://suor.github.io/slides/metaprogramming/">Slides</a> and <a href="http://www.youtube.com/watch?v=Q8qxeFGNT9A">video</a> are available in russian)</em></p>
 
 <p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
 fun and profit.</p>
@@ -853,7 +853,7 @@ from meta.decompiler import decompile_func</p>
 
 <p>We are using third party module <a href="https://github.com/srossross/Meta">meta</a> here, and despite saying that we decompile function it really does inspect and decompile its bytecode. Anyway, we&rsquo;ve got our AST, let&rsquo;s look at it:</p>
 
-<p><img src="http://hackflow.com/slides/metaprogramming/ast-example.dot.svg" style="width: 100%"></p>
+<p><img src="http://suor.github.io/slides/metaprogramming/ast-example.dot.svg" style="width: 100%"></p>
 
 <p>This is quite a hairy tree for something as simple as <code>lambda x: x + 1</code>. But if we look at it a bit
 more closer we can recognize all the corresponding parts. Left branch is arguments, which have single argument named <code>x</code>, but no kwarg, vararg or defaults. Right branch is a return node returning a result of binary operation with an op of addition and operands of a name <code>x</code> and a number <code>1</code>.</p>
@@ -1025,9 +1025,9 @@ else:
   
   <entry>
     <title type="html"><![CDATA[Painless Decorators]]></title>
-    <link href="http://hackflow.com/blog/2013/11/03/painless-decorators/"/>
+    <link href="http://suor.github.io/blog/2013/11/03/painless-decorators/"/>
     <updated>2013-11-03T20:07:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/11/03/painless-decorators</id>
+    <id>http://suor.github.io/blog/2013/11/03/painless-decorators</id>
     <content type="html"><![CDATA[<p>Decorators are joy to use. Write? Not so much. One needs to mess with wrappers, function metadata and a fair amount of bookkeeping. Enough things to bury any useful semantics under them. There got to be a better way.</p>
 
 <p>Let&rsquo;s find that out.</p>
@@ -1075,7 +1075,7 @@ return decorator
 
 <p>Look at that code for a minute. What a mess! And this is not about typing, it&rsquo;s really hard to see through to the point of it.</p>
 
-<p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
+<p>Let&rsquo;s see what is meaningful and what is a boilerplate here. What we care about is concentrated in <code>wrapper</code> function, it&rsquo;s <code>before</code> and <code>after</code> calls, how they surround original function call, what arguments are passed to it and what is returned. The name <code>some_decorator</code> and its arguments also matter. Anything else &ndash; nested functions and returns, <code>@wraps</code> and all extra indent &ndash; is just <a href="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/">code pattern waiting to be abstracted</a>.</p>
 
 <h2>Removing a boilerplate</h2>
 
@@ -1191,7 +1191,7 @@ def some_view(request, phone):</p>
 
 <h3>Decorators with arguments</h3>
 
-<p>To get these you just add your arguments after <code>call</code> as in this <a href="http://hackflow.com/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
+<p>To get these you just add your arguments after <code>call</code> as in this <a href="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/">control flow abstracting</a> retry decorator:</p>
 
 <p>``` python
 @decorator
@@ -1218,9 +1218,9 @@ def retry(call, tries, errors=Exception):</p>
   
   <entry>
     <title type="html"><![CDATA[Functional Python Made Easy]]></title>
-    <link href="http://hackflow.com/blog/2013/10/13/functional-python-made-easy/"/>
+    <link href="http://suor.github.io/blog/2013/10/13/functional-python-made-easy/"/>
     <updated>2013-10-13T19:22:00+08:00</updated>
-    <id>http://hackflow.com/blog/2013/10/13/functional-python-made-easy</id>
+    <id>http://suor.github.io/blog/2013/10/13/functional-python-made-easy</id>
     <content type="html"><![CDATA[<p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
 
 <p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
