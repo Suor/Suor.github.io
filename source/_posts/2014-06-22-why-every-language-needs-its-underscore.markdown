@@ -280,7 +280,7 @@ Objective-C | [Underscore.m][]
 **P.P.S.** Please stop commenting on Hacker News, a controversial penalty is killing this post. Use [reddit thread](http://www.reddit.com/r/programming/comments/28se2h/why_every_language_needs_its_underscore/) instead. Sadly, HN is not a place for discussions anymore.
 
 
-[acf]: http://hackflow.com/blog/2013/10/08/abstracting-control-flow/
+[acf]: http://suor.github.io/blog/2013/10/08/abstracting-control-flow/
 
 [pairwise]: http://funcy.readthedocs.org/en/latest/seqs.html#pairwise
 [retry]: http://funcy.readthedocs.org/en/latest/flow.html#retry

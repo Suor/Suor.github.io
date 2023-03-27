@@ -172,5 +172,5 @@ There are obvious reasons: to reduce clutter and expose your intentions. However
 You can choose for yourself what level is too high. And if python is sometimes not enough high level language for you then you should definitely upgrade it.
 
 
-[acf]: http://hackflow.com/blog/2013/10/08/abstracting-control-flow/
+[acf]: http://suor.github.io/blog/2013/10/08/abstracting-control-flow/
 [funcy-pypi]: https://pypi.python.org/pypi/funcy

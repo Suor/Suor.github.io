@@ -4,7 +4,7 @@ title: "Metaprogramming Beyond Decency: Part 2"
 date: 2015-04-12 18:41
 comments: true
 sharing: true
-image: http://hackflow.com/images/metaprogramming/rule-tree.dot.png
+image: http://suor.github.io/images/metaprogramming/rule-tree.dot.png
 categories: [Python, UI]
 reddit_url: http://www.reddit.com/r/programming/comments/32bp3p/practical_python_to_javascript_translation/
 ---
@@ -451,7 +451,7 @@ By promoting reasonable considerations to emotional and even kind of religious l
 This worked for us. What will do for you?
 
 
-[first-part]: http://hackflow.com/blog/2015/03/29/metaprogramming-beyond-decency/
+[first-part]: http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/
 
 [dis]: https://docs.python.org/2/library/dis.html
 [meta]: https://github.com/srossross/Meta
