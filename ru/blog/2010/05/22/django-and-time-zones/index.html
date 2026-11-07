@@ -1,0 +1,234 @@
+<!doctype html><html lang=ru dir=auto data-theme=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Django и часовые пояса | Hackflow</title><meta name=keywords content><meta name=description content="Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений."><meta name=author content="Alexander Schepanovski"><link rel=canonical href=https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/><link crossorigin=anonymous href=/assets/css/stylesheet.a77d46620730939f590009cf3757c4b7866cc2835e02d31b4208f0bfae38574f.css integrity="sha256-p31GYgcwk59ZAAnPN1fEt4ZswoNeAtMbQgjwv644V08=" rel="preload stylesheet" as=style><link rel=icon href=https://blog.hackflow.ru/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://blog.hackflow.ru/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://blog.hackflow.ru/favicon-32x32.png><link rel=apple-touch-icon href=https://blog.hackflow.ru/apple-touch-icon.png><link rel=mask-icon href=https://blog.hackflow.ru/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=ru href=https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-JWZ867HSYF"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-JWZ867HSYF")}</script><meta property="og:url" content="https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/"><meta property="og:site_name" content="Hackflow"><meta property="og:title" content="Django и часовые пояса"><meta property="og:description" content="Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений."><meta property="og:locale" content="ru"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2010-05-22T07:54:57+00:00"><meta property="article:modified_time" content="2010-05-22T07:54:57+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Django и часовые пояса"><meta name=twitter:description content="Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://blog.hackflow.ru/ru/posts/"},{"@type":"ListItem","position":2,"name":"Django и часовые пояса","item":"https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Django и часовые пояса","name":"Django и часовые пояса","description":"Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений.\n","keywords":[],"articleBody":"Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений.\nВ самом питоне с этим всё неплохо, есть отличный модуль pytz, а встроенный объект datetime корректно работает с часовыми поясами. Дело за малым — реализовать удобную обвязку. Первое что приходит в голову написать фильтр шаблона localtime и вызывать его таким образом:\n{{ comment.time_added|localtime }} или {{ comment.time_added|localtime|date:\"d.m.Y\" }} Но сразу возникает пара проблем. Во-первых, функция фильтра не принимает контекст, а значит не сможет определить к какому часовому поясу приводить время. Во-вторых, текущий часовой пояс может пониматься по разному: браться из настроек текущего пользователя, определяться по выбранному городу или по IP. Т.е. то, что сейчас является локальным часовым поясом зависит от приложения и соответственно такой фильтр нужно будет постоянно переписывать. И в-третьих, все эти параметры нужно передавать в контекст.\nПервая проблема решается использованием тега вместо фильтра (он может получать контекст), правда выглядеть это будет уже не так красиво:\n{% localtime comment.time_added %} или {% localtime comment.time_added as time_added %}{{ time_added|date:\"d.m.Y\" }} Особо рисковые и нетерпеливые ценители красоты могут воспользоваться патчем, он как раз позволяет передавать контекст в фильтр.\nОстались хлопоты с контекстом, можно написать свой context processor, а можно использовать стандартный django.core.context_processors.request и заполнять его свойство timezone с помощью Middleware:\n1 2 3 4 5 6 7 8 9 class TimezoneMiddleware(object): \"\"\" Записывает в request свойство timezone \"\"\" def process_request(self, request): assert hasattr(request, 'session'), \"*.TimezoneMiddleware requires session middleware to be installed.\" request.timezone = get_timezone(request) request.session['timezone'] = request.timezone return None Зависимость от session middleware можно убрать, если вы не собираетесь кэшировать часовой пояс в сессии. Функция get_timezone() будет зависеть от приложения и может выглядеть, например, так:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 def get_timezone(request): # Конструируем по пользователю if hasattr(request, 'user') and request.user.is_authenticated(): profile = request.user.get_profile() if profile.timezone: return profile.timezone # Берём из сессии if request.session.has_key('timezone'): return request.session['timezone'] # Определяем город по IP, а по городу определяем часовой пояс city_id = ip_to_city_id(request.META['REMOTE_ADDR']) if city_id: try: city = City.objects.get(pk=city_id) if city.timezone: return city.timezone except City.DoesNotExist: pass # Берём значение по умолчанию из настроек return pytz.timezone(settings.FALLBACK_TIMEZONE) Собственно, можно было бы привести код для тега и фильтра шаблона и на этом закруглится, но профессионально ленивый программист, вроде меня, решит, что писать тег или фильтр localtime каждый раз это хлопотно, плюс при выдаче форм нужно вручную преобразовывать время в полях туда и обратно, плюс в отсутствие контекста запроса (рассылка писем по крону, например) это без дополнительных телодвижений не заработает, плюс при работе в видах нужно быть постоянно начеку — календарик с событиями может выглядеть по-разному для разных часовых поясов. Что ж трудолюбивые ребята могут взять код фильтра в примере к вышеупомянутому патчу и быть таковы, остальные пусть будут готовы к небольшому колдовству.\nОчевидно, если мы хотим, чтобы даты и времена автоматически переводились в текущий временной пояс, то без некоторой магии тут действительно не обойтись. Все данные из моделей мы получаем через их поля — отлично, преобразовывая время после выборки и перед вставкой можно получить требуемый эффект. Однако, поля ничего не знают ни о контексте шаблона, ни о объекте запроса, их вообще может не быть. Очевидно, активный часовой пояс должен быть глобальным. Можно посмотреть как аналогичная ситуация разрешена в django.utils.translation и реализовать то же для часовых поясов:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 import pytz from django.utils.thread_support import currentThread _active = {} def default_timezone(): \"\"\" Возвращает часовой пояс сервера. Функция подменяет себя во время первого вызова \"\"\" from django.conf import settings _default_timezone = pytz.timezone(settings.TIME_ZONE) global default_timezone default_timezone = lambda: _default_timezone return _default_timezone def activate(tz): if isinstance(tz, pytz.tzinfo.BaseTzInfo): _active[currentThread()] = tz else: _active[currentThread()] = pytz.timezone(tz) def deactivate(): global _active if currentThread() in _active: del _active[currentThread()] def get_timezone(): tz = _active.get(currentThread(), None) if tz is not None: return tz return default_timezone() def to_active(dt): tz = get_timezone() if dt.tzinfo is None: dt = default_timezone().localize(dt) return dt.astimezone(tz) def to_default(dt): if dt.tzinfo is None: return default_timezone().localize(dt) else: return dt.astimezone(default_timezone()) Функция activate() устанавливают текущий часовой пояс, deactivate() возвращает пояс по-умолчанию. to_default() и to_active() преобразуют время к поясу сервера либо текущему. Осталось написать собственное поле модели:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 class TimezoneDateTimeField(models.DateTimeField): __metaclass__ = models.SubfieldBase def _to_python(self, value): \"\"\" Немагический метод преобразования дерьма в питоновый datetime \"\"\" return super(TimezoneDateTimeField, self).to_python(value) def to_python(self, value): \"\"\" Метод преобразования дерьма в питоновый datetime. Преобразовывает из времени сервера в текущий часовой пояс \"\"\" if value is None: return value return timezone.to_active(self._to_python(value)) def get_db_prep_value(self, value): \"\"\" Преобразовывает во время сервера для вставки в базу \"\"\" if value is not None: value = timezone.to_default(self._to_python(value)) return connection.ops.value_to_db_datetime(value) И устанавливать активный часовой пояс для каждого запроса, например, дописав TimezoneMiddleware:\n1 2 3 4 5 6 7 8 9 class TimezoneMiddleware(object): def process_request(self, request): ... timezone.activate(request.timezone) return None def process_response(self, request, response): timezone.deactivate() return response Готово, просто заменяем стандартный DateTimeField на наше поле и время преобразовывается магически везде: и в шаблонах, и в формах, и в админке. Конечно, нет предела совершенству, можно реализовать своё поле формы для навешивания активного часового пояса на время, получаемое от пользователя, можно написать-таки фильтр для тех случаев когда используется сторонние приложения и их модели с не нашими полями. Что я и сделал в одном проекте о горнолыжном отдыхе, для которого и был написан весь этот код.\nНадеюсь, все кто дочитал до этого места получили или практическую пользу, или эстетическое удовольствие, которое, полагаю, многим пишущим на Django знакомо.\nP. S. В недавно вышедшем Django 1.2 изменился интерфейс полей модели, поэтому приведённый код для TimezoneDateTimeField понадобится допилить в соответствии с инструкцией по обновлению\n","wordCount":"1008","inLanguage":"ru","datePublished":"2010-05-22T07:54:57Z","dateModified":"2010-05-22T07:54:57Z","author":{"@type":"Person","name":"Alexander Schepanovski"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/"},"publisher":{"@type":"Organization","name":"Hackflow","logo":{"@type":"ImageObject","url":"https://blog.hackflow.ru/favicon.ico"}}}</script></head><body id=top><header class=header><nav class=header-nav><div class=logo><a href=https://blog.hackflow.ru/ru/ accesskey=h title="Hackflow (Alt + H)">Hackflow</a><div class=logo-switches><button id=theme-toggle class=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button><span>|</span><ul class=lang-menu><li><a href=https://blog.hackflow.ru/ title=English aria-label=English>En</a></li></ul></div></div><ul id=menu class=menu><li><a href=https://blog.hackflow.ru/ru/archives/ title=Archive><span>Archive</span></a></li><li><a href=https://blog.hackflow.ru/ru/tags/ title=Tags><span>Tags</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">Django и часовые пояса</h1><div class=post-meta><span title='2010-05-22 07:54:57 +0000 UTC'>22 мая 2010 г.</span>&nbsp;·&nbsp;<span>5 минут</span>&nbsp;·&nbsp;<span>Alexander Schepanovski</span></div></header><div class="post-content md-content"><p>Есть несколько обыденных вещей, которые время от времени портят кровь нашему брату: падежи, числительные и часовые пояса, с проклятым переходом на летнее/зимнее время. Невольно позавидуешь китайцам у которых на всю страну всего один часовой пояс, а падежей нет и в помине. Будет совсем неплохо раз и навсегда разобраться с часовыми поясами и преобразованиями между ними хотя бы для Django-приложений.</p><p>В самом питоне с этим всё неплохо, есть отличный модуль pytz, а встроенный объект datetime корректно работает с часовыми поясами. Дело за малым — реализовать удобную обвязку. Первое что приходит в голову написать фильтр шаблона localtime и вызывать его таким образом:</p><pre tabindex=0><code> {{ comment.time_added|localtime }} или
+ {{ comment.time_added|localtime|date:&#34;d.m.Y&#34; }}
+</code></pre><p>Но сразу возникает пара проблем. Во-первых, функция фильтра не принимает контекст, а значит не сможет определить к какому часовому поясу приводить время. Во-вторых, текущий часовой пояс может пониматься по разному: браться из настроек текущего пользователя, определяться по выбранному городу или по IP. Т.е. то, что сейчас является локальным часовым поясом зависит от приложения и соответственно такой фильтр нужно будет постоянно переписывать. И в-третьих, все эти параметры нужно передавать в контекст.</p><p>Первая проблема решается использованием тега вместо фильтра (он может получать контекст), правда выглядеть это будет уже не так красиво:</p><pre tabindex=0><code> {% localtime comment.time_added %} или
+ {% localtime comment.time_added as time_added %}{{ time_added|date:&#34;d.m.Y&#34; }}
+</code></pre><p>Особо рисковые и нетерпеливые ценители красоты могут воспользоваться <a href=http://code.djangoproject.com/ticket/12116>патчем</a>, он как раз позволяет передавать контекст в фильтр.</p><p>Остались хлопоты с контекстом, можно написать <a href=http://docs.djangoproject.com/en/dev/ref/templates/api/#writing-your-own-context-processors>свой context processor</a>, а можно использовать стандартный <a href=http://docs.djangoproject.com/en/dev/ref/templates/api/#django-core-context-processors-request>django.core.context_processors.request</a> и заполнять его свойство timezone с помощью Middleware:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>TimezoneMiddleware</span><span class=p>(</span><span class=nb>object</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    Записывает в request свойство timezone
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>process_request</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>request</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>assert</span> <span class=nb>hasattr</span><span class=p>(</span><span class=n>request</span><span class=p>,</span> <span class=s1>&#39;session&#39;</span><span class=p>),</span> <span class=s2>&#34;*.TimezoneMiddleware requires session middleware to be installed.&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=n>request</span><span class=o>.</span><span class=n>timezone</span> <span class=o>=</span> <span class=n>get_timezone</span><span class=p>(</span><span class=n>request</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>request</span><span class=o>.</span><span class=n>session</span><span class=p>[</span><span class=s1>&#39;timezone&#39;</span><span class=p>]</span> <span class=o>=</span> <span class=n>request</span><span class=o>.</span><span class=n>timezone</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>None</span>
+</span></span></code></pre></td></tr></table></div></div><p>Зависимость от session middleware можно убрать, если вы не собираетесь кэшировать часовой пояс в сессии. Функция <code>get_timezone()</code> будет зависеть от приложения и может выглядеть, например, так:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>def</span> <span class=nf>get_timezone</span><span class=p>(</span><span class=n>request</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=c1># Конструируем по пользователю</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nb>hasattr</span><span class=p>(</span><span class=n>request</span><span class=p>,</span> <span class=s1>&#39;user&#39;</span><span class=p>)</span> <span class=ow>and</span> <span class=n>request</span><span class=o>.</span><span class=n>user</span><span class=o>.</span><span class=n>is_authenticated</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>        <span class=n>profile</span> <span class=o>=</span> <span class=n>request</span><span class=o>.</span><span class=n>user</span><span class=o>.</span><span class=n>get_profile</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>profile</span><span class=o>.</span><span class=n>timezone</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>profile</span><span class=o>.</span><span class=n>timezone</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># Берём из сессии</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>request</span><span class=o>.</span><span class=n>session</span><span class=o>.</span><span class=n>has_key</span><span class=p>(</span><span class=s1>&#39;timezone&#39;</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>request</span><span class=o>.</span><span class=n>session</span><span class=p>[</span><span class=s1>&#39;timezone&#39;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># Определяем город по IP, а по городу определяем часовой пояс</span>
+</span></span><span class=line><span class=cl>    <span class=n>city_id</span> <span class=o>=</span> <span class=n>ip_to_city_id</span><span class=p>(</span><span class=n>request</span><span class=o>.</span><span class=n>META</span><span class=p>[</span><span class=s1>&#39;REMOTE_ADDR&#39;</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>city_id</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>city</span> <span class=o>=</span> <span class=n>City</span><span class=o>.</span><span class=n>objects</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>pk</span><span class=o>=</span><span class=n>city_id</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=n>city</span><span class=o>.</span><span class=n>timezone</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=n>city</span><span class=o>.</span><span class=n>timezone</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=n>City</span><span class=o>.</span><span class=n>DoesNotExist</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>pass</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># Берём значение по умолчанию из настроек</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>pytz</span><span class=o>.</span><span class=n>timezone</span><span class=p>(</span><span class=n>settings</span><span class=o>.</span><span class=n>FALLBACK_TIMEZONE</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Собственно, можно было бы привести код для тега и фильтра шаблона и на этом закруглится, но профессионально ленивый программист, вроде меня, решит, что писать тег или фильтр localtime каждый раз это хлопотно, плюс при выдаче форм нужно вручную преобразовывать время в полях туда и обратно, плюс в отсутствие контекста запроса (рассылка писем по крону, например) это без дополнительных телодвижений не заработает, плюс при работе в видах нужно быть постоянно начеку — календарик с событиями может выглядеть по-разному для разных часовых поясов. Что ж трудолюбивые ребята могут взять код фильтра в примере к вышеупомянутому патчу и быть таковы, остальные пусть будут готовы к небольшому колдовству.</p><p>Очевидно, если мы хотим, чтобы даты и времена автоматически переводились в текущий временной пояс, то без некоторой магии тут действительно не обойтись. Все данные из моделей мы получаем через их поля — отлично, преобразовывая время после выборки и перед вставкой можно получить требуемый эффект. Однако, поля ничего не знают ни о контексте шаблона, ни о объекте запроса, их вообще может не быть. Очевидно, активный часовой пояс должен быть глобальным. Можно посмотреть как аналогичная ситуация разрешена в django.utils.translation и реализовать то же для часовых поясов:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>pytz</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>django.utils.thread_support</span> <span class=kn>import</span> <span class=n>currentThread</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>_active</span> <span class=o>=</span> <span class=p>{}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>default_timezone</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    Возвращает часовой пояс сервера.
+</span></span></span><span class=line><span class=cl><span class=s2>    Функция подменяет себя во время первого вызова
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=kn>from</span> <span class=nn>django.conf</span> <span class=kn>import</span> <span class=n>settings</span>
+</span></span><span class=line><span class=cl>    <span class=n>_default_timezone</span> <span class=o>=</span> <span class=n>pytz</span><span class=o>.</span><span class=n>timezone</span><span class=p>(</span><span class=n>settings</span><span class=o>.</span><span class=n>TIME_ZONE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>default_timezone</span>
+</span></span><span class=line><span class=cl>    <span class=n>default_timezone</span> <span class=o>=</span> <span class=k>lambda</span><span class=p>:</span> <span class=n>_default_timezone</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>_default_timezone</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>activate</span><span class=p>(</span><span class=n>tz</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nb>isinstance</span><span class=p>(</span><span class=n>tz</span><span class=p>,</span> <span class=n>pytz</span><span class=o>.</span><span class=n>tzinfo</span><span class=o>.</span><span class=n>BaseTzInfo</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>_active</span><span class=p>[</span><span class=n>currentThread</span><span class=p>()]</span> <span class=o>=</span> <span class=n>tz</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>_active</span><span class=p>[</span><span class=n>currentThread</span><span class=p>()]</span> <span class=o>=</span> <span class=n>pytz</span><span class=o>.</span><span class=n>timezone</span><span class=p>(</span><span class=n>tz</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>deactivate</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>global</span> <span class=n>_active</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>currentThread</span><span class=p>()</span> <span class=ow>in</span> <span class=n>_active</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>del</span> <span class=n>_active</span><span class=p>[</span><span class=n>currentThread</span><span class=p>()]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>get_timezone</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>tz</span> <span class=o>=</span> <span class=n>_active</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=n>currentThread</span><span class=p>(),</span> <span class=kc>None</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>tz</span> <span class=ow>is</span> <span class=ow>not</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>tz</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>default_timezone</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>to_active</span><span class=p>(</span><span class=n>dt</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>tz</span> <span class=o>=</span> <span class=n>get_timezone</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>dt</span><span class=o>.</span><span class=n>tzinfo</span> <span class=ow>is</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>dt</span> <span class=o>=</span> <span class=n>default_timezone</span><span class=p>()</span><span class=o>.</span><span class=n>localize</span><span class=p>(</span><span class=n>dt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>dt</span><span class=o>.</span><span class=n>astimezone</span><span class=p>(</span><span class=n>tz</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>to_default</span><span class=p>(</span><span class=n>dt</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>dt</span><span class=o>.</span><span class=n>tzinfo</span> <span class=ow>is</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>default_timezone</span><span class=p>()</span><span class=o>.</span><span class=n>localize</span><span class=p>(</span><span class=n>dt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>dt</span><span class=o>.</span><span class=n>astimezone</span><span class=p>(</span><span class=n>default_timezone</span><span class=p>())</span>
+</span></span></code></pre></td></tr></table></div></div><p>Функция <code>activate()</code> устанавливают текущий часовой пояс, <code>deactivate()</code> возвращает пояс по-умолчанию. <code>to_default()</code> и <code>to_active()</code> преобразуют время к поясу сервера либо текущему. Осталось написать собственное поле модели:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>TimezoneDateTimeField</span><span class=p>(</span><span class=n>models</span><span class=o>.</span><span class=n>DateTimeField</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>__metaclass__</span> <span class=o>=</span> <span class=n>models</span><span class=o>.</span><span class=n>SubfieldBase</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>_to_python</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>value</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        Немагический метод преобразования дерьма в питоновый datetime
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>super</span><span class=p>(</span><span class=n>TimezoneDateTimeField</span><span class=p>,</span> <span class=bp>self</span><span class=p>)</span><span class=o>.</span><span class=n>to_python</span><span class=p>(</span><span class=n>value</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>to_python</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>value</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        Метод преобразования дерьма в питоновый datetime.
+</span></span></span><span class=line><span class=cl><span class=s2>        Преобразовывает из времени сервера в текущий часовой пояс
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>value</span> <span class=ow>is</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>value</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>timezone</span><span class=o>.</span><span class=n>to_active</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>_to_python</span><span class=p>(</span><span class=n>value</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>get_db_prep_value</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>value</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        Преобразовывает во время сервера для вставки в базу
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>value</span> <span class=ow>is</span> <span class=ow>not</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>value</span> <span class=o>=</span> <span class=n>timezone</span><span class=o>.</span><span class=n>to_default</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>_to_python</span><span class=p>(</span><span class=n>value</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>connection</span><span class=o>.</span><span class=n>ops</span><span class=o>.</span><span class=n>value_to_db_datetime</span><span class=p>(</span><span class=n>value</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>И устанавливать активный часовой пояс для каждого запроса, например, дописав <code>TimezoneMiddleware</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>TimezoneMiddleware</span><span class=p>(</span><span class=nb>object</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>process_request</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>request</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=o>...</span>
+</span></span><span class=line><span class=cl>        <span class=n>timezone</span><span class=o>.</span><span class=n>activate</span><span class=p>(</span><span class=n>request</span><span class=o>.</span><span class=n>timezone</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>None</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>process_response</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>request</span><span class=p>,</span> <span class=n>response</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>timezone</span><span class=o>.</span><span class=n>deactivate</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>response</span>
+</span></span></code></pre></td></tr></table></div></div><p>Готово, просто заменяем стандартный <code>DateTimeField</code> на наше поле и время преобразовывается магически везде: и в шаблонах, и в формах, и в админке. Конечно, нет предела совершенству, можно реализовать своё поле формы для навешивания активного часового пояса на время, получаемое от пользователя, можно написать-таки фильтр для тех случаев когда используется сторонние приложения и их модели с не нашими полями. Что я и сделал в одном проекте <a href=http://www.gdesneg.ru/>о горнолыжном отдыхе</a>, для которого и был написан весь этот код.</p><p>Надеюсь, все кто дочитал до этого места получили или практическую пользу, или эстетическое удовольствие, которое, полагаю, многим пишущим на Django знакомо.</p><p><strong>P. S.</strong> В недавно вышедшем Django 1.2 изменился интерфейс полей модели, поэтому приведённый код для <code>TimezoneDateTimeField</code> понадобится допилить в соответствии с <a href=http://docs.djangoproject.com/en/dev/releases/1.2/#get-db-prep-methods-on-field>инструкцией по обновлению</a></p></div><footer class=post-footer><ul class=post-tags></ul><nav class=paginav><a class=prev href=https://blog.hackflow.ru/ru/blog/2010/06/04/nginx-thumbnail-generator/><span class=title>« Предыдущая</span>
+<span>Генератор миниатюрок из Nginx-а</span></a></nav></footer><section class=comments-section><h2>Comments
+<span class=comments-also-at>also at <a href=https://habr.com/ru/articles/94230/comments/ target=_blank rel=noopener>Хабр</a></span></h2><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://blog.hackflow.ru/ru/blog/2010/05/22/django-and-time-zones/",this.page.identifier="http://suor.github.io/ru/blog/2010/05/22/django-and-time-zones/"};(function(){var e=document,t=e.createElement("script");t.src="https://hackflow.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script></section></article></main><footer class=footer><span>&copy; 2026 <a href=https://blog.hackflow.ru/ru/>Hackflow</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top id=top-link class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey=g><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var toplink=document.getElementById("top-link");window.onscroll=function(){const e=window.innerHeight;document.body.scrollTop>e||document.documentElement.scrollTop>e?toplink.classList.remove("hidden"):toplink.classList.add("hidden")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="копировать";function s(){t.innerHTML="скопировано!",setTimeout(()=>{t.innerHTML="копировать"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

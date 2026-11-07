@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стиль тестов и агенты</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --accent: #2a78d6; --ref: #898781; --code-bg: #f3f2ee;
+  --kw: #6250d6; --str: #1f7a4d; --com: #898781; --hl: #fff1c2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --accent: #3987e5; --ref: #898781; --code-bg: #232321;
+    --kw: #9085e9; --str: #5cc28f; --com: #898781; --hl: #4a3f12;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --accent: #3987e5; --ref: #898781; --code-bg: #232321;
+  --kw: #9085e9; --str: #5cc28f; --com: #898781; --hl: #4a3f12;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 8px; }
+h2 { font-size: 20px; margin: 48px 0 8px; }
+p { margin: 0 0 12px; max-width: 72ch; }
+.lead { color: var(--ink-2); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 16px 0 12px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 14px; border: 0; background: transparent; color: var(--ink-2);
+  padding: 4px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.label { font-size: 13px; color: var(--muted); }
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .panels { grid-template-columns: 1fr; } }
+.panel h3 { font-size: 15px; margin: 0 0 2px; }
+.panel .sub { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+svg text { fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+svg .row-label { fill: var(--ink); font-size: 13px; }
+svg .tick { fill: var(--muted); font-size: 11px; }
+.tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 8px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  display: none; z-index: 10; font-variant-numeric: tabular-nums; }
+.note { font-size: 13px; color: var(--muted); margin-top: 8px; max-width: none; }
+.code-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 900px) { .code-grid { grid-template-columns: 1fr; } }
+.code-grid > div, .panels > div { min-width: 0; }
+.code-grid h3 { font-size: 15px; margin: 0 0 6px; }
+pre { margin: 0; background: var(--code-bg); border-radius: 8px; padding: 8px 2px 8px 8px; overflow-x: auto;
+  font: 11px/1.45 ui-monospace, "JetBrains Mono", Menlo, monospace; }
+pre .kw { color: var(--kw); } pre .str { color: var(--str); } pre .com { color: var(--com); font-style: italic; }
+pre mark { background: var(--hl); color: inherit; border-radius: 3px; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.flow .step { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  font-size: 14px; }
+.flow .arrow { color: var(--muted); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 12px 0; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--ink-2); font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+table.summary { table-layout: fixed; min-width: 600px; }
+table.summary th:first-child { width: 40%; }
+tr.shown td { font-weight: 600; }
+.modes { display: inline-block; max-width: 100%; margin: 12px 0; }
+.modes table { width: auto; }
+.modes td, .modes th { text-align: left; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat b { display: block; font-size: 28px; line-height: 1.2; }
+.stat span { font-size: 13px; color: var(--ink-2); }
+a { color: var(--accent); }
+ul.small { font-size: 14px; color: var(--ink-2); padding-left: 20px; }
+.seg.lang { float: right; margin: 4px 0 0 16px; }
+</style>
+</head>
+<body>
+<main>
+<div class="seg lang" id="lang"><button data-lang="en">en</button><button data-lang="ru">ru</button></div>
+<h1 data-en="Test style and agents">Стиль тестов и агенты</h1>
+<p class="lead" data-en="Tests are more and more often written by agents. Claude and I compared how an agent handles testing work when a backend's test suite is written in unittest, in pytest and in pytest with matchers, and how often its tests fail falsely.">Тесты теперь чаще пишут агенты. Мы с Клодом сравнили, как агент справляется с тестовой работой, когда корпус
+бэкенда написан в unittest, в pytest и в pytest с матчерами, и как часто его тесты ложно ломаются.</p>
+
+<h2 data-en="Results">Что получилось</h2>
+<div class="controls">
+  <span class="label" data-en="backend">бэкенд</span>
+  <div class="seg" id="scope"></div>
+  <span class="label" data-en="false failures">ложные падения</span>
+  <div class="seg" id="spur"></div>
+</div>
+<div class="panels">
+  <div class="card panel"><h3 data-en="mutmut gain ↑">Прирост mutmut ↑</h3>
+    <p class="sub" data-en="share of mutants in the changed functions that the new tests catch on top of the base tests">доля мутантов изменённых функций, которых новые тесты ловят сверх тестов базы</p>
+    <svg id="gain" width="100%"></svg></div>
+  <div class="card panel"><h3 id="spur-title"></h3>
+    <p class="sub" id="spur-sub"></p>
+    <svg id="spurious" width="100%"></svg></div>
+</div>
+<p class="note" id="tasks-note"></p>
+
+<h3 style="margin:28px 0 4px;font-size:16px" data-en="Per-task differences between modes">Разности режимов по задачам</h3>
+<p class="note" style="margin-top:0" data-en="Paired: the same task in two modes. A filled dot means the 95% interval excludes zero. On the right is the probability that the first mode is better than the second.">Парно: та же задача в двух режимах. Закрашенная точка — 95% интервал не содержит ноль. Справа — вероятность, что первый режим лучше второго.</p>
+<div class="panels">
+  <div class="card panel"><h3 data-en="mutmut gain">Прирост mutmut</h3><svg id="gain-d" width="100%"></svg></div>
+  <div class="card panel"><h3 id="spur-d-title"></h3><svg id="spurious-d" width="100%"></svg></div>
+</div>
+
+<h2 data-en="What the styles look like">Как выглядят стили</h2>
+<p data-en="An example modeled on the firewall rule tests from cfw-backend, put together for illustration: all three styles check the same thing. <code>M.dict</code> compares only the listed keys.">Пример по мотивам тестов правил файрвола из cfw-backend, собран для наглядности: все три стиля проверяют одно и то же. <code>M.dict</code> сверяет только перечисленные ключи.</p>
+<div class="code-grid">
+  <div><h3>unittest (A)</h3><pre data-code="a"></pre></div>
+  <div><h3>pytest (B, E)</h3><pre data-code="b"></pre></div>
+  <div><h3 data-en="pytest + matchers (C, F)">pytest + матчеры (C, F)</h3><pre data-code="c"></pre></div>
+</div>
+<p class="note" data-en="In unittest the environment is assembled with mixins and class decorators, in pytest with fixtures from the common-lib plugin.">В unittest окружение собирается миксинами и декораторами класса, в pytest — фикстурами из плагина common-lib.</p>
+
+<h2 data-en="How we tested">Как проверяли</h2>
+<div class="flow">
+  <span class="step" data-en="a commit from history">коммит из истории</span><span class="arrow">→</span>
+  <span class="step" data-en="throw its tests away">выбрасываем тесты</span><span class="arrow">→</span>
+  <span class="step" data-en="the agent writes them">агент их дописывает</span><span class="arrow">→</span>
+  <span class="step" data-en="measure">мерим</span>
+</div>
+<div class="stats">
+  <div class="card stat"><b>46</b><span data-en="tasks: ad 12, cfw 25, rest 9">задач: ad 12, cfw 25, rest 9</span></div>
+  <div class="card stat"><b>5</b><span data-en="modes">режимов</span></div>
+  <div class="card stat"><b>3–7</b><span data-en="generations per task">генераций на задачу</span></div>
+  <div class="card stat"><b>6800</b><span data-en="tests written, 2766 changed<br>Opus 5.5">тестов написано, 2766 изменено<br>Opus 5.5</span></div>
+</div>
+<h3 style="margin:24px 0 0;font-size:16px" data-en="Modes">Режимы</h3>
+<div class="card table-wrap modes"><table>
+  <tr><th data-en="mode">режим</th><th data-en="new tests">новые тесты</th><th data-en="existing tests">старые тесты</th></tr>
+  <tr><td>A · unittest</td><td>unittest</td><td data-en="as is">как есть</td></tr>
+  <tr><td>B · pytest rewrite</td><td>pytest</td><td data-en="translated to pytest">переведены в pytest</td></tr>
+  <tr><td>C · pytest rewrite + M</td><td>pytest + <code>M</code></td><td data-en="translated to pytest + <code>M</code>">переведены в pytest + <code>M</code></td></tr>
+  <tr><td>E · pytest</td><td data-en="pytest, following a sample">pytest по образцу</td><td data-en="as is">как есть</td></tr>
+  <tr><td>F · pytest + M</td><td data-en="pytest + <code>M</code>, following a sample">pytest + <code>M</code> по образцу</td><td data-en="as is">как есть</td></tr>
+</table></div>
+<dl>
+  <dt>mutmut</dt><dd data-en="we replace the code of the changed functions with small mutations and see how many of them the tests catch">подменяем код изменённых функций мелкими мутациями и смотрим, сколько их ловят тесты</dd>
+  <dt data-en="fragility">хрупкость</dt><dd data-en="three behavior-preserving refactorings: renaming private names, log messages, import style; a false failure is a test that was green and turned red">три рефакторинга без смены поведения: переименование приватных имён, текст логов, стиль
+    импортов; ложное падение — тест, который был зелёным и покраснел</dd>
+</dl>
+
+<h2 data-en="Test run time">Скорость прогона</h2>
+<div class="card"><svg id="speed" width="100%"></svg></div>
+<p class="note" data-en="A* — unittest before the session-wide etcd, when every test class started its own server.<br>A′ — unittest that the agent rewrote from the pytest version.">A* — unittest до сессионного etcd, когда каждый тестовый класс поднимал свой сервер.<br>
+A′ — unittest, который агент переписал из pytest-версии.</p>
+
+<h2 data-en="Caveats">Оговорки</h2>
+<ul class="small">
+  <li data-en="Tasks are real commits, but there are only 46 of them; bootstrap intervals are over tasks and generations.">Задачи — реальные коммиты, но их 46; интервалы бутстрапа по задачам и генерациям.</li>
+  <li data-en="mutmut gain is computed over the functions the commit touched; some tasks have no value, mutmut doesn't mutate their functions.">Прирост mutmut считается по функциям, которые тронул коммит; часть задач без значения — mutmut не мутирует
+    их функции.</li>
+  <li data-en="False failures in absolute numbers depend on how many tests the agent wrote: A writes more of them.">Ложные падения в штуках зависят от того, сколько тестов написал агент: в A их больше.</li>
+</ul>
+<h2 data-en="More data">Больше данных</h2>
+<p class="note" data-en="All backends, means over tasks.">Все бэкенды, средние по задачам.</p>
+<div class="card table-wrap"><table id="t-catch" class="summary"></table></div>
+<div class="card table-wrap" style="margin-top:12px"><table id="t-size" class="summary"></table></div>
+<div class="card table-wrap" style="margin-top:12px"><table id="t-cost" class="summary"></table></div>
+
+<p class="note"><span data-en="Sources:">Источники:</span> <a href="https://stash.ideco.dev/users/a.shepanovsky/repos/research/browse/pytest-modes/results/main.md">results/main.md</a>, <a href="https://stash.ideco.dev/users/a.shepanovsky/repos/research/browse/pytest-modes/results/main-intervals.md">results/main-intervals.md</a>, <a href="https://stash.ideco.dev/users/a.shepanovsky/repos/research/browse/pytest-modes/results/corpus/timing/corpus.json">results/corpus/timing/corpus.json</a>, <a href="https://stash.ideco.dev/users/a.shepanovsky/repos/research/browse/pytest-modes/results/corpus/timing/before-etcd.json">results/corpus/timing/before-etcd.json</a>. <span data-en="Built by">Собрано</span> <a href="https://stash.ideco.dev/users/a.shepanovsky/repos/research/browse/pytest-modes/viz/build_report.py">viz/build_report.py</a>.</p>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = {"main": {"gain": {"all": {"tasks": 42, "modes": {"коммит": [0.302, 0.221, 0.387], "A": [0.418, 0.326, 0.512], "B": [0.425, 0.33, 0.52], "C": [0.434, 0.34, 0.528], "E": [0.422, 0.331, 0.515], "F": [0.431, 0.338, 0.526]}, "diffs": {"B−A": [0.007, -0.01, 0.024, 0.8], "C−A": [0.016, -0.002, 0.036, 0.96], "E−A": [0.004, -0.011, 0.018, 0.71], "C−B": [0.009, -0.013, 0.033, 0.79], "F−E": [0.009, -0.005, 0.027, 0.9], "F−A": [0.013, -0.002, 0.031, 0.96], "A−коммит": [0.116, 0.066, 0.171, 1.0], "B−коммит": [0.123, 0.073, 0.177, 1.0], "C−коммит": [0.132, 0.077, 0.19, 1.0], "E−коммит": [0.12, 0.07, 0.174, 1.0], "F−коммит": [0.129, 0.078, 0.184, 1.0]}}, "ad": {"tasks": 11, "modes": {"коммит": [0.196, 0.072, 0.362], "A": [0.352, 0.201, 0.52], "B": [0.342, 0.19, 0.516], "C": [0.408, 0.247, 0.573], "E": [0.358, 0.205, 0.527], "F": [0.358, 0.208, 0.522]}, "diffs": {"B−A": [-0.01, -0.055, 0.024, 0.34], "C−A": [0.056, 0.005, 0.114, 0.99], "E−A": [0.005, -0.025, 0.033, 0.7], "C−B": [0.066, 0.013, 0.126, 1.0], "F−E": [0.0, -0.022, 0.03, 0.46], "F−A": [0.006, -0.021, 0.035, 0.68], "A−коммит": [0.156, 0.067, 0.254, 1.0], "B−коммит": [0.146, 0.053, 0.25, 1.0], "C−коммит": [0.212, 0.102, 0.327, 1.0], "E−коммит": [0.162, 0.065, 0.267, 1.0], "F−коммит": [0.162, 0.065, 0.267, 1.0]}}, "cfw": {"tasks": 23, "modes": {"коммит": [0.287, 0.19, 0.39], "A": [0.419, 0.286, 0.554], "B": [0.427, 0.295, 0.559], "C": [0.418, 0.285, 0.553], "E": [0.421, 0.29, 0.553], "F": [0.437, 0.303, 0.571]}, "diffs": {"B−A": [0.007, -0.007, 0.028, 0.79], "C−A": [-0.001, -0.015, 0.01, 0.43], "E−A": [0.002, -0.019, 0.021, 0.57], "C−B": [-0.009, -0.033, 0.008, 0.2], "F−E": [0.016, -0.002, 0.044, 0.96], "F−A": [0.017, 0.0, 0.046, 0.98], "A−коммит": [0.132, 0.061, 0.213, 1.0], "B−коммит": [0.14, 0.07, 0.218, 1.0], "C−коммит": [0.131, 0.06, 0.212, 1.0], "E−коммит": [0.134, 0.066, 0.211, 1.0], "F−коммит": [0.15, 0.078, 0.23, 1.0]}}, "rest": {"tasks": 8, "modes": {"коммит": [0.491, 0.303, 0.674], "A": [0.504, 0.307, 0.686], "B": [0.532, 0.317, 0.718], "C": [0.515, 0.31, 0.7], "E": [0.512, 0.311, 0.696], "F": [0.515, 0.314, 0.703]}, "diffs": {"B−A": [0.028, -0.01, 0.075, 0.94], "C−A": [0.011, -0.023, 0.046, 0.8], "E−A": [0.008, -0.029, 0.045, 0.7], "C−B": [-0.017, -0.059, 0.017, 0.14], "F−E": [0.003, -0.036, 0.037, 0.6], "F−A": [0.011, -0.031, 0.048, 0.74], "A−коммит": [0.013, -0.037, 0.085, 0.63], "B−коммит": [0.041, -0.019, 0.121, 0.89], "C−коммит": [0.024, -0.022, 0.096, 0.77], "E−коммит": [0.021, -0.025, 0.095, 0.72], "F−коммит": [0.024, -0.002, 0.078, 0.87]}}}, "spurious": {"all": {"tasks": 46, "modes": {"коммит": [1.59, 0.87, 2.41], "A": [2.52, 1.59, 3.57], "B": [2.07, 1.37, 2.85], "C": [1.98, 1.3, 2.71], "E": [1.93, 1.22, 2.72], "F": [1.94, 1.23, 2.71]}, "diffs": {"B−A": [-0.45, -1.04, 0.06, 0.04], "C−A": [-0.54, -1.23, 0.02, 0.03], "E−A": [-0.6, -1.19, -0.1, 0.01], "C−B": [-0.09, -0.49, 0.28, 0.33], "F−E": [0.01, -0.3, 0.32, 0.52], "F−A": [-0.59, -1.19, -0.07, 0.01], "A−коммит": [0.93, 0.35, 1.57, 1.0], "B−коммит": [0.48, -0.03, 1.01, 0.97], "C−коммит": [0.39, -0.21, 0.98, 0.9], "E−коммит": [0.34, -0.22, 0.88, 0.89], "F−коммит": [0.35, -0.24, 0.93, 0.88]}}, "ad": {"tasks": 12, "modes": {"коммит": [2.17, 0.75, 3.83], "A": [3.45, 1.73, 5.25], "B": [3.17, 1.74, 4.67], "C": [3.29, 1.85, 4.79], "E": [2.83, 1.48, 4.25], "F": [2.86, 1.55, 4.18]}, "diffs": {"B−A": [-0.29, -1.39, 0.67, 0.29], "C−A": [-0.17, -1.24, 0.71, 0.39], "E−A": [-0.62, -1.71, 0.27, 0.1], "C−B": [0.12, -0.4, 0.64, 0.68], "F−E": [0.02, -0.51, 0.67, 0.5], "F−A": [-0.6, -1.68, 0.36, 0.12], "A−коммит": [1.29, 0.02, 2.68, 0.98], "B−коммит": [1.0, -0.38, 2.23, 0.93], "C−коммит": [1.12, -0.32, 2.45, 0.94], "E−коммит": [0.67, -0.61, 1.83, 0.85], "F−коммит": [0.69, -0.74, 2.05, 0.83]}}, "cfw": {"tasks": 25, "modes": {"коммит": [1.8, 0.72, 3.04], "A": [2.77, 1.38, 4.45], "B": [2.07, 1.13, 3.18], "C": [1.87, 1.04, 2.82], "E": [2.03, 1.02, 3.21], "F": [2.07, 1.07, 3.27]}, "diffs": {"B−A": [-0.7, -1.65, 0.04, 0.03], "C−A": [-0.9, -1.97, -0.03, 0.02], "E−A": [-0.74, -1.68, 0.0, 0.03], "C−B": [-0.2, -0.84, 0.38, 0.23], "F−E": [0.04, -0.44, 0.53, 0.58], "F−A": [-0.7, -1.65, 0.09, 0.04], "A−коммит": [0.97, 0.16, 1.9, 0.99], "B−коммит": [0.27, -0.42, 0.92, 0.8], "C−коммит": [0.07, -0.79, 0.89, 0.57], "E−коммит": [0.23, -0.64, 1.02, 0.72], "F−коммит": [0.27, -0.6, 1.08, 0.74]}}, "rest": {"tasks": 9, "modes": {"коммит": [0.22, 0.0, 0.67], "A": [0.59, 0.0, 1.56], "B": [0.59, 0.0, 1.62], "C": [0.54, 0.0, 1.63], "E": [0.41, 0.0, 1.1], "F": [0.33, 0.0, 1.0]}, "diffs": {"B−A": [0.0, -0.78, 0.73, 0.5], "C−A": [-0.05, -0.98, 0.7, 0.45], "E−A": [-0.17, -0.98, 0.24, 0.28], "C−B": [-0.05, -1.1, 0.67, 0.48], "F−E": [-0.08, -0.27, 0.0, 0.0], "F−A": [-0.25, -1.11, 0.17, 0.16], "A−коммит": [0.37, 0.0, 1.21, 0.93], "B−коммит": [0.37, 0.0, 1.38, 0.96], "C−коммит": [0.32, 0.0, 0.97, 0.82], "E−коммит": [0.19, 0.0, 0.46, 0.93], "F−коммит": [0.11, 0.0, 0.33, 0.66]}}}, "spurious_per_test": {"all": {"tasks": 46, "modes": {"коммит": [0.226, 0.115, 0.387], "A": [0.299, 0.178, 0.459], "B": [0.277, 0.17, 0.422], "C": [0.273, 0.168, 0.419], "E": [0.278, 0.168, 0.425], "F": [0.279, 0.167, 0.432]}, "diffs": {"B−A": [-0.023, -0.087, 0.04, 0.24], "C−A": [-0.026, -0.097, 0.043, 0.24], "E−A": [-0.021, -0.09, 0.041, 0.26], "C−B": [-0.003, -0.057, 0.049, 0.46], "F−E": [0.001, -0.042, 0.049, 0.52], "F−A": [-0.02, -0.092, 0.049, 0.29], "A−коммит": [0.073, 0.001, 0.139, 0.98], "B−коммит": [0.051, -0.024, 0.12, 0.92], "C−коммит": [0.047, -0.038, 0.125, 0.88], "E−коммит": [0.052, -0.018, 0.117, 0.93], "F−коммит": [0.053, -0.027, 0.128, 0.91]}}, "ad": {"tasks": 12, "modes": {"коммит": [0.743, 0.333, 1.194], "A": [0.665, 0.397, 0.983], "B": [0.684, 0.437, 0.996], "C": [0.704, 0.47, 1.004], "E": [0.603, 0.382, 0.86], "F": [0.678, 0.459, 0.911]}, "diffs": {"B−A": [0.019, -0.182, 0.252, 0.59], "C−A": [0.039, -0.144, 0.247, 0.68], "E−A": [-0.063, -0.256, 0.114, 0.25], "C−B": [0.02, -0.065, 0.114, 0.68], "F−E": [0.075, -0.032, 0.206, 0.9], "F−A": [0.013, -0.172, 0.182, 0.56], "A−коммит": [-0.078, -0.334, 0.166, 0.27], "B−коммит": [-0.059, -0.305, 0.186, 0.36], "C−коммит": [-0.039, -0.286, 0.218, 0.42], "E−коммит": [-0.14, -0.396, 0.106, 0.14], "F−коммит": [-0.065, -0.323, 0.21, 0.33]}}, "cfw": {"tasks": 25, "modes": {"коммит": [0.239, 0.092, 0.484], "A": [0.329, 0.164, 0.586], "B": [0.277, 0.139, 0.511], "C": [0.258, 0.134, 0.471], "E": [0.286, 0.136, 0.546], "F": [0.279, 0.136, 0.528]}, "diffs": {"B−A": [-0.053, -0.148, 0.041, 0.13], "C−A": [-0.071, -0.185, 0.035, 0.09], "E−A": [-0.043, -0.144, 0.059, 0.19], "C−B": [-0.018, -0.112, 0.062, 0.31], "F−E": [-0.007, -0.082, 0.062, 0.4], "F−A": [-0.05, -0.161, 0.056, 0.17], "A−коммит": [0.09, -0.013, 0.185, 0.96], "B−коммит": [0.037, -0.06, 0.14, 0.8], "C−коммит": [0.019, -0.106, 0.134, 0.65], "E−коммит": [0.047, -0.05, 0.155, 0.84], "F−коммит": [0.04, -0.073, 0.153, 0.78]}}, "rest": {"tasks": 9, "modes": {"коммит": [0.02, 0.0, 0.077], "A": [0.046, 0.0, 0.142], "B": [0.052, 0.0, 0.154], "C": [0.051, 0.0, 0.175], "E": [0.044, 0.0, 0.123], "F": [0.036, 0.0, 0.12]}, "diffs": {"B−A": [0.006, -0.061, 0.068, 0.6], "C−A": [0.005, -0.078, 0.08, 0.54], "E−A": [-0.002, -0.072, 0.037, 0.48], "C−B": [-0.002, -0.095, 0.072, 0.52], "F−E": [-0.008, -0.029, 0.004, 0.12], "F−A": [-0.01, -0.087, 0.033, 0.33], "A−коммит": [0.026, -0.006, 0.103, 0.88], "B−коммит": [0.032, 0.0, 0.118, 0.94], "C−коммит": [0.031, 0.0, 0.103, 0.81], "E−коммит": [0.024, 0.0, 0.055, 0.93], "F−коммит": [0.016, 0.0, 0.046, 0.66]}}}}, "speed": {"ad-backend A": [7.4, 7.1, 6.8, 6.6, 6.8], "ad-backend A2": [7.0, 6.9, 6.5, 7.1, 6.4], "ad-backend B": [6.1, 7.1, 6.9, 6.0, 6.9], "ad-backend C": [6.4, 6.2, 5.7, 6.7, 6.5], "cfw-backend A": [12.0, 11.9, 11.9, 13.0, 12.3], "cfw-backend A2": [12.4, 12.5, 11.0, 12.9, 12.3], "cfw-backend B": [12.3, 11.9, 11.9, 13.0, 12.4], "cfw-backend C": [11.7, 11.6, 12.5, 12.3, 12.3], "rest-api-backend A": [18.1, 17.3, 17.9, 19.0, 17.7], "rest-api-backend A2": [18.0, 17.2, 18.3, 18.7, 17.5], "rest-api-backend B": [17.0, 15.8, 16.7, 17.5, 16.2], "rest-api-backend C": [17.3, 16.9, 17.4, 16.9, 16.0]}, "before_etcd": {"ad-backend": [11.7, 11.6, 12.0, 13.2, 11.2], "cfw-backend": [19.6, 20.0, 19.5, 17.9, 19.0], "rest-api-backend": [53.0, 53.1, 54.6, 53.6, 54.6]}, "summary": {"улавливание и хрупкость": [["метрика", "коммит", "A", "B", "C", "E", "F"], ["mutmut ↑", "0.584", "0.699", "0.705", "0.716", "0.703", "0.712"], ["прирост mutmut ↑", "0.302", "0.418", "0.425", "0.434", "0.422", "0.431"], ["покрытие изменённых строк ↑", "0.821", "0.927", "0.930", "0.933", "0.928", "0.934"], ["покрытие изменённых ветвей ↑", "0.734", "0.968", "0.962", "0.967", "0.959", "0.960"], ["прирост покрытия строк ↑", "0.298", "0.405", "0.407", "0.430", "0.406", "0.412"], ["дефект пойман ↑", "1.00", "1.00", "1.00", "1.00", "1.00", "1.00"], ["ложн. падений тестов результата ↓", "1.59", "2.52", "2.07", "1.98", "1.93", "1.94"], ["доля сломанных тестов результата ↓", "0.388", "0.399", "0.422", "0.427", "0.370", "0.394"], ["ложн. падений всего ↓", "6.91", "8.03", "8.57", "8.46", "7.32", "7.33"]], "размер и сложность": [["метрика", "коммит", "A", "B", "C", "E", "F"], ["файлов тронуто", "1.8", "1.8", "1.9", "1.9", "1.8", "1.8"], ["тестов тронуто", "7.0", "8.4", "7.5", "7.3", "6.9", "6.9"], ["тестов добавлено", "4.4", "6.2", "5.3", "5.0", "4.6", "4.6"], ["тестов изменено", "2.6", "2.3", "2.2", "2.2", "2.3", "2.4"], ["тестов удалено", "0.3", "0.3", "0.4", "0.4", "0.1", "0.1"], ["строк дифа +", "83", "110", "108", "103", "111", "104"], ["строк дифа −", "10", "7", "7", "7", "4", "4"], ["строк/тест ↓", "16.2", "14.3", "15.1", "15.7", "15.5", "14.6"], ["глубина/тест ↓", "0.57", "0.59", "0.42", "0.44", "0.49", "0.43"], ["макс. глубина ↓", "0.9", "1.2", "0.7", "0.7", "0.8", "0.8"], ["ассертов/тест", "2.19", "2.05", "2.05", "1.71", "2.01", "1.85"], ["хелперов добавлено", "1.52", "2.01", "1.61", "1.50", "1.77", "1.57"], ["фикстур добавлено", "0.00", "0.00", "0.99", "0.94", "1.17", "1.17"]], "стоимость": [["метрика", "коммит", "A", "B", "C", "E", "F"], ["стоимость, $ ↓", "", "0.57", "0.57", "0.57", "0.62", "0.63"], ["время агента, с ↓", "", "140", "148", "145", "182", "160"], ["ходы ↓", "", "13.0", "13.3", "13.5", "14.8", "14.8"], ["вызовы инструментов ↓", "", "12.6", "13.0", "13.1", "14.2", "14.3"], ["выходные токены ↓", "", "6841", "6603", "6644", "7355", "7323"], ["красных тестов после агента ↓", "", "0.0", "0.0", "0.0", "0.0", "0.0"], ["правок вне tests/ (строк патча) ↓", "", "0.0", "0.0", "0.0", "0.0", "0.0"]]}};
+
+let lang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'ru';
+const tr = (ru, en) => lang === 'en' ? en : ru;
+// Подписи сводных таблиц: ключи — как в results/main.md
+const EN = {
+  'улавливание и хрупкость': 'catching and fragility', 'размер и сложность': 'size and complexity',
+  'стоимость': 'cost', 'коммит': 'commit',
+  'прирост mutmut ↑': 'mutmut gain ↑', 'покрытие изменённых строк ↑': 'changed lines coverage ↑',
+  'покрытие изменённых ветвей ↑': 'changed branches coverage ↑', 'прирост покрытия строк ↑': 'line coverage gain ↑',
+  'дефект пойман ↑': 'defect caught ↑', 'ложн. падений тестов результата ↓': 'false failures of agent tests ↓',
+  'доля сломанных тестов результата ↓': 'share of agent tests broken ↓', 'ложн. падений всего ↓': 'false failures total ↓',
+  'файлов тронуто': 'files touched', 'тестов тронуто': 'tests touched', 'тестов добавлено': 'tests added',
+  'тестов изменено': 'tests changed', 'тестов удалено': 'tests removed', 'строк дифа +': 'diff lines +',
+  'строк дифа −': 'diff lines −', 'строк/тест ↓': 'lines/test ↓', 'глубина/тест ↓': 'depth/test ↓',
+  'макс. глубина ↓': 'max depth ↓', 'ассертов/тест': 'asserts/test', 'хелперов добавлено': 'helpers added',
+  'фикстур добавлено': 'fixtures added', 'стоимость, $ ↓': 'cost, $ ↓', 'время агента, с ↓': 'agent time, s ↓',
+  'ходы ↓': 'turns ↓', 'вызовы инструментов ↓': 'tool calls ↓', 'выходные токены ↓': 'output tokens ↓',
+  'красных тестов после агента ↓': 'red tests after agent ↓',
+  'правок вне tests/ (строк патча) ↓': 'edits outside tests/ (patch lines) ↓',
+};
+
+const SCOPES = [['all', 'все', 'all'], ['ad', 'ad', 'ad'], ['cfw', 'cfw', 'cfw'], ['rest', 'rest', 'rest']];
+const SPUR = [['spurious', 'на задачу', 'per task'], ['spurious_per_test', 'на тест', 'per test']];
+const ROWS = [['коммит', 'коммит · люди', 'commit · humans'], ['A', 'A unittest'], ['B', 'B pytest rewrite'],
+              ['C', 'C pytest rewrite + M'], ['E', 'E pytest'], ['F', 'F pytest + M']];
+const DIFFS = ['B−A', 'C−A', 'E−A', 'F−A', 'C−B', 'F−E'];
+const state = {scope: 'all', spur: 'spurious'};
+
+function seg(id, options, key) {
+  const box = document.getElementById(id);
+  for (const [value] of options) {
+    const button = document.createElement('button');
+    button.onclick = () => { state[key] = value; render(); };
+    box.append(button);
+  }
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+function el(name, attrs, parent, text) {
+  const node = document.createElementNS(SVG, name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text !== undefined) node.textContent = text;
+  parent.append(node);
+  return node;
+}
+
+function fmt(value, share) { return share ? value.toFixed(3) : value.toFixed(2); }
+
+// Точка со штрихом интервала на строку; ось общая для строк панели
+function intervalChart(svg, rows, opts) {
+  svg.replaceChildren();
+  const width = svg.clientWidth || 460, labelW = opts.labelW, rowH = 30, top = 8, axisH = 24;
+  const height = top + rows.length * rowH + axisH;
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const values = rows.flatMap(row => row.value.slice(1, 3));
+  if (opts.zero) values.push(0);
+  let lo = Math.min(...values), hi = Math.max(...values);
+  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const x0 = labelW, x1 = width - (opts.better ? 52 : 12), sx = v => x0 + (v - lo) / (hi - lo) * (x1 - x0);
+  const ticks = niceTicks(lo, hi, 4);
+  for (const t of ticks) {
+    el('line', {x1: sx(t), x2: sx(t), y1: top, y2: top + rows.length * rowH, stroke: 'var(--grid)'}, svg);
+    el('text', {x: sx(t), y: height - 6, 'text-anchor': 'middle', class: 'tick'}, svg, opts.tick(t));
+  }
+  if (opts.zero) el('line', {x1: sx(0), x2: sx(0), y1: top, y2: top + rows.length * rowH, stroke: 'var(--axis)',
+                            'stroke-width': 1.5}, svg);
+  rows.forEach((row, i) => {
+    const y = top + i * rowH + rowH / 2, [mean, low, high] = row.value;
+    const color = row.ref ? 'var(--ref)' : 'var(--accent)';
+    el('text', {x: 0, y: y + 4, class: 'row-label'}, svg, row.label);
+    el('line', {x1: sx(low), x2: sx(high), y1: y, y2: y, stroke: color, 'stroke-width': 2, 'stroke-linecap': 'round'}, svg);
+    const filled = opts.zero ? (low > 0 || high < 0) : true;
+    el('circle', {cx: sx(mean), cy: y, r: 5, fill: filled ? color : 'var(--surface)', stroke: color,
+                  'stroke-width': 2}, svg);
+    let chance = '';
+    if (opts.better) {
+      const better = opts.better(row.value[3]);
+      chance = ` · ${row.label[0]} ${tr('лучше с вероятностью', 'is better with probability')} ${Math.round(better * 100)}%`;
+      el('text', {x: width - 4, y: y + 4, 'text-anchor': 'end', class: 'tick'}, svg, `${Math.round(better * 100)}%`);
+    }
+    const hit = el('rect', {x: 0, y: y - rowH / 2, width, height: rowH, fill: 'transparent'}, svg);
+    hit.onmousemove = event => tip(event, `<b>${row.label}</b><br>${opts.tip(mean)} · 95% [${opts.tip(low)}, ${opts.tip(high)}]${chance}`);
+    hit.onmouseleave = () => tip();
+  });
+}
+
+// Среднее по режиму полосой от нуля с числом на конце
+function barChart(svg, rows, opts) {
+  svg.replaceChildren();
+  const width = svg.clientWidth || 460, labelW = opts.labelW, rowH = 30, top = 4, valueW = 52;
+  const height = top + rows.length * rowH;
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const hi = Math.max(...rows.map(row => row.value[0]));
+  const sx = v => labelW + v / hi * (width - labelW - valueW);
+  el('line', {x1: labelW, x2: labelW, y1: top, y2: height, stroke: 'var(--axis)'}, svg);
+  rows.forEach((row, i) => {
+    const y = top + i * rowH, [mean, low, high] = row.value;
+    el('text', {x: 0, y: y + rowH / 2 + 4, class: 'row-label'}, svg, row.label);
+    el('rect', {x: labelW, y: y + 7, width: Math.max(sx(mean) - labelW, 1), height: rowH - 14, rx: 4,
+                fill: row.ref ? 'var(--ref)' : 'var(--accent)'}, svg);
+    el('text', {x: sx(mean) + 6, y: y + rowH / 2 + 4, class: 'row-label'}, svg, opts.fmt(mean));
+    const hit = el('rect', {x: 0, y, width, height: rowH, fill: 'transparent'}, svg);
+    hit.onmousemove = event => tip(event, `<b>${row.label}</b><br>${opts.fmt(mean)} · 95% [${opts.fmt(low)}, ${opts.fmt(high)}]`);
+    hit.onmouseleave = () => tip();
+  });
+}
+
+// Время прогона корпусов: группы по бэкендам, столбик — медиана, штрих — от минимума до максимума
+function speedChart(svg) {
+  svg.replaceChildren();
+  const groups = [['ad-backend', 'ad'], ['cfw-backend', 'cfw'], ['rest-api-backend', 'rest']];
+  const stats = values => {
+    const sorted = [...values].sort((x, y) => x - y);
+    return {median: sorted[Math.floor(sorted.length / 2)], low: sorted[0], high: sorted[sorted.length - 1]};
+  };
+  const bars = groups.map(([backend, short]) => ({short, bars: [
+    {label: 'A*', ref: true, ...stats(DATA.before_etcd[backend])},
+    ...[['A', 'A'], ['A2', 'A′'], ['B', 'B'], ['C', 'C']].map(([mode, label]) =>
+      ({label, ...stats(DATA.speed[`${backend} ${mode}`])})),
+  ]}));
+  const width = svg.clientWidth || 900, top = 22, plotH = 220, axisW = 34, bottom = 44;
+  const height = top + plotH + bottom;
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const hi = Math.max(...bars.flatMap(group => group.bars.map(bar => bar.high)));
+  const sy = v => top + plotH - v / hi * plotH;
+  for (const tick of niceTicks(0, hi, 5)) {
+    el('line', {x1: axisW, x2: width, y1: sy(tick), y2: sy(tick), stroke: 'var(--grid)'}, svg);
+    el('text', {x: axisW - 6, y: sy(tick) + 4, 'text-anchor': 'end', class: 'tick'}, svg, `${tick} ${tr('с', 's')}`);
+  }
+  const count = bars[0].bars.length;
+  const groupW = (width - axisW) / groups.length, barW = Math.min(36, groupW / (count + 2)), gap = barW / 3;
+  const sec = v => v.toFixed(1).replace('.', tr(',', '.'));
+  bars.forEach((group, g) => {
+    const start = axisW + g * groupW + (groupW - count * barW - (count - 1) * gap) / 2;
+    group.bars.forEach((bar, i) => {
+      const x = start + i * (barW + gap), cx = x + barW / 2;
+      el('rect', {x, y: sy(bar.median), width: barW, height: top + plotH - sy(bar.median), rx: 3,
+                  fill: bar.ref ? 'var(--ref)' : 'var(--accent)'}, svg);
+      el('line', {x1: cx, x2: cx, y1: sy(bar.high), y2: sy(bar.low), stroke: 'var(--ink)', 'stroke-width': 1.5}, svg);
+      el('text', {x: cx, y: sy(bar.high) - 5, 'text-anchor': 'middle', class: 'tick'}, svg,
+         barW < 24 ? Math.round(bar.median) : sec(bar.median));
+      el('text', {x: cx, y: top + plotH + 16, 'text-anchor': 'middle', class: 'row-label'}, svg, bar.label);
+      const hit = el('rect', {x, y: top, width: barW, height: plotH, fill: 'transparent'}, svg);
+      const name = bar.label;
+      hit.onmousemove = event => tip(event, `<b>${group.short} · ${name}</b><br>` + tr(
+        `медиана ${sec(bar.median)} с · от ${sec(bar.low)} до ${sec(bar.high)} с`,
+        `median ${sec(bar.median)} s · from ${sec(bar.low)} to ${sec(bar.high)} s`));
+      hit.onmouseleave = () => tip();
+    });
+    el('text', {x: start + (count * barW + (count - 1) * gap) / 2, y: top + plotH + 36, 'text-anchor': 'middle', class: 'row-label',
+                'font-weight': 600}, svg, group.short);
+  });
+}
+
+function niceTicks(lo, hi, count) {
+  const step0 = (hi - lo) / count, mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0);
+  const ticks = [];
+  for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-9; t += step) ticks.push(+t.toFixed(10));
+  return ticks;
+}
+
+function tip(event, html) {
+  const box = document.getElementById('tip');
+  if (!html) { box.style.display = 'none'; return; }
+  box.innerHTML = html;
+  box.style.display = 'block';
+  box.style.left = Math.min(event.clientX + 14, innerWidth - box.offsetWidth - 8) + 'px';
+  box.style.top = (event.clientY + 14) + 'px';
+}
+
+function render() {
+  for (const [id, key] of [['scope', 'scope'], ['spur', 'spur']]) {
+    const options = id === 'scope' ? SCOPES : SPUR;
+    [...document.getElementById(id).children].forEach((button, i) => {
+      button.textContent = tr(options[i][1], options[i][2]);
+      button.setAttribute('aria-pressed', options[i][0] === state[key]);
+    });
+  }
+  const share = state.spur === 'spurious_per_test';
+  const gain = DATA.main.gain[state.scope], spur = DATA.main[state.spur][state.scope];
+  const pct = v => (v * 100).toFixed(1) + '%';
+  const pp = tr(' п.п.', ' pp');
+  const spurFmt = share ? pct : (v => v.toFixed(2));
+  document.getElementById('spur-title').textContent = tr('Ложные падения ↓', 'False failures ↓');
+  document.getElementById('spur-sub').textContent = share
+    ? tr('ложно упавших после рефакторинга на тест, который агент написал или изменил',
+         'failed falsely after a refactoring, per test the agent wrote or changed')
+    : tr('тестов агента, ложно упавших после рефакторинга, в среднем на задачу',
+         "agent's tests that failed falsely after a refactoring, mean per task");
+  document.getElementById('spur-d-title').textContent = share
+    ? tr('Ложные падения на тест', 'False failures per test')
+    : tr('Ложные падения на задачу', 'False failures per task');
+  document.getElementById('tasks-note').textContent = tr(
+    `Среднее по задачам. Задач: mutmut ${gain.tasks}, ложные падения ${spur.tasks}.`,
+    `Mean over tasks. Tasks: mutmut ${gain.tasks}, false failures ${spur.tasks}.`);
+  const rows = source => ROWS.map(([key, ru, en = ru]) => ({label: tr(ru, en), value: source.modes[key], ref: key === 'коммит'}));
+  const diffRows = source => DIFFS.map(key => ({label: key, value: source.diffs[key]}));
+  const labelW = 150;
+  const signed = f => v => (v > 0 ? '+' : '') + f(v);
+  barChart(document.getElementById('gain'), rows(gain), {labelW, fmt: pct});
+  barChart(document.getElementById('spurious'), rows(spur), {labelW, fmt: spurFmt});
+  intervalChart(document.getElementById('gain-d'), diffRows(gain), {labelW: 56, zero: true, better: p => p,
+    tick: signed(v => (v * 100).toFixed(0) + pp), tip: signed(v => (v * 100).toFixed(1) + pp)});
+  intervalChart(document.getElementById('spurious-d'), diffRows(spur), {labelW: 56, zero: true, better: p => 1 - p,
+    tick: signed(share ? v => (v * 100).toFixed(0) + pp : v => v.toFixed(1)),
+    tip: signed(share ? v => (v * 100).toFixed(1) + pp : v => v.toFixed(2))});
+}
+
+const CODE = {
+a: `@patch_permissions_check
+class FirewallRulesTestCase(
+        EtcdServerPermanentMixin,
+        AioHTTPTestCase):
+    async def test_create_rule(self):
+        await self.client.post(URL, json=RULE)
+
+        async with self.client.get(URL) as resp:
+            self.assertEqual(200, resp.status)
+            rules = await resp.json()
+
+        self.assertEqual(1, len(rules))
+        self.assertIn('id', rules[0])
+        self.assertEqual(
+            'drop', rules[0]['action'])
+        source, = rules[0]['sources']
+        self.assertCountEqual(
+            ['10.0.0.0/24', '10.1.0.0/24'],
+            source['addresses'])
+        self.assertIs(
+            False, source['addresses_negate'])`,
+b: `async def test_create_rule(
+        client, etcd_permanent, admin_session):
+    await client.post(URL, json=RULE)
+
+    async with client.get(URL) as resp:
+        assert resp.status == 200
+        rules = await resp.json()
+
+    assert len(rules) == 1
+    assert 'id' in rules[0]
+    assert rules[0]['action'] == 'drop'
+    source, = rules[0]['sources']
+    assert sorted(source['addresses']) == [
+        '10.0.0.0/24', '10.1.0.0/24']
+    assert source['addresses_negate'] is False`,
+c: `async def test_create_rule(
+        client, etcd_permanent, admin_session):
+    await client.post(URL, json=RULE)
+
+    async with client.get(URL) as resp:
+        assert resp.status == 200
+        rules = await resp.json()
+
+    assert rules == [M.dict(
+        id=M.any,
+        action='drop',
+        sources=[{
+            'addresses': M.unordered([
+                '10.0.0.0/24', '10.1.0.0/24']),
+            'addresses_negate': False,
+        }],
+    )]`,
+};
+const MARK = {a: /EtcdServer\w+Mixin|AioHTTPTestCase|self\.assert\w+/g, b: /client, etcd_permanent, admin_session/g, c: /M\.\w+/g};
+
+// Выделение ставится до подсветки служебными символами, чтобы не резать её теги
+function highlight(code, mark) {
+  const esc = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(mark, token => `\u0001${token}\u0002`);
+  return esc.replace(/('[^'\n]*'|\b(?:async|await|def|class|with|as|assert|return)\b|@[\w.]+)/g, token =>
+      token.startsWith("'") ? `<span class="str">${token}</span>` : `<span class="kw">${token}</span>`)
+    .replace(/\u0001/g, '<mark>').replace(/\u0002/g, '</mark>');
+}
+
+// Сводные таблицы results/main.md как есть
+// Строки метрик, которые показаны на графиках выше
+const SHOWN = ['прирост mutmut', 'ложн. падений тестов результата'];
+function tables() {
+  const render = (id, title) => {
+    const [head, ...rows] = DATA.summary[title];
+    const label = cell => tr(cell, EN[cell] ?? cell);
+    const headLabel = cell => label(cell === 'метрика' ? title : cell);
+    document.getElementById(id).innerHTML = '<tr>' + head.map(cell => `<th>${headLabel(cell)}</th>`).join('') + '</tr>'
+      + rows.map(row => `<tr${SHOWN.some(name => row[0].startsWith(name)) ? ' class="shown"' : ''}>`
+        + row.map(cell => `<td>${label(cell)}</td>`).join('') + '</tr>').join('');
+  };
+  render('t-catch', 'улавливание и хрупкость');
+  render('t-size', 'размер и сложность');
+  render('t-cost', 'стоимость');
+}
+
+function setLang(next) {
+  lang = next;
+  document.documentElement.lang = lang;
+  document.title = tr('Стиль тестов и агенты', 'Test style and agents');
+  for (const node of document.querySelectorAll('[data-en]')) {
+    node.dataset.ru ??= node.innerHTML;
+    node.innerHTML = tr(node.dataset.ru, node.dataset.en);
+  }
+  for (const button of document.querySelectorAll('#lang button'))
+    button.setAttribute('aria-pressed', button.dataset.lang === lang);
+  tables();
+  render();
+  speedChart(document.getElementById('speed'));
+}
+
+for (const button of document.querySelectorAll('#lang button')) {
+  button.onclick = () => {
+    setLang(button.dataset.lang);
+    const url = new URL(location);
+    url.searchParams.set('lang', lang);
+    history.replaceState(null, '', url);
+  };
+}
+seg('scope', SCOPES, 'scope');
+seg('spur', SPUR, 'spur');
+for (const pre of document.querySelectorAll('pre[data-code]')) {
+  const key = pre.dataset.code;
+  pre.innerHTML = highlight(CODE[key], MARK[key]);
+}
+setLang(lang);
+addEventListener('resize', () => { render(); speedChart(document.getElementById('speed')); });
+</script>
+</body>
+</html>

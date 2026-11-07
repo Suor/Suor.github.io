@@ -1,487 +1,117 @@
-
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Abstracting Control Flow - Hackflow</title>
-  <meta name="author" content="Alexander Schepanovski">
-
-  
-  <meta name="description" content="Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations ( &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://suor.github.io/blog/2013/10/08/abstracting-control-flow">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-    
-        <meta property="twitter:card" content="summary">
-    
-    <meta property="twitter:site" content="hackflow">
-    <meta property="twitter:url" content="http://suor.github.io/blog/2013/10/08/abstracting-control-flow">
-    <meta property="twitter:title" content="Abstracting Control Flow">
-    <meta property="twitter:description" content="Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and &hellip;">
-
-
-  
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-37289902-3', 'auto');
-  ga('send', 'pageview');
-</script>
-
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Hackflow</a></h1>
-  
-    <h2>Sharing my mindset</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:suor.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
-    
-      <h1 class="entry-title">Abstracting Control Flow</h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-08T12:13:00+08:00" pubdate data-updated="true">Oct 8<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p>
-
-<p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &hellip;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p>
-
-<p> <!--more--></p>
-
-<p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p>
-
-<h2>Abstractions</h2>
-
-<p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p>
-
-<ol>
-<li>Select a piece of functionality or behavior.</li>
-<li>Name it.</li>
-<li>Implement it.</li>
-<li>Hide our implementation behind chosen name.</li>
-</ol>
-
-
-<p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p>
-
-<p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p>
-
-<h2>Back to real-life</h2>
-
-<p>This is a piece of common python code, taken from real-life project with minimal changes:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">urls</span> <span class="o">=</span> <span class="o">...</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>            <span class="n">photos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">download_image</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
-</span><span class='line'>            <span class="k">break</span>
-</span><span class='line'>        <span class="k">except</span> <span class="n">ImageTooSmall</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">pass</span> <span class="c"># skip small images</span>
-</span><span class='line'>        <span class="k">except</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">),</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">DOWNLOAD_TRIES</span><span class="p">:</span>
-</span><span class='line'>                <span class="k">raise</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p>
-
-<p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">download_image</span><span class="p">,</span> <span class="n">urls</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Let&rsquo;s try fishing out other aspects, starting with skipping small images. That could be done like:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@contextmanager</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">ignore</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">yield</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">error</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">pass</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span class='line'><span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">with</span> <span class="n">ignore</span><span class="p">(</span><span class="n">ImageTooSmall</span><span class="p">):</span>
-</span><span class='line'>        <span class="n">photos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">download_image</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it the same way we handled <code>ignore</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">with</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">)):</span>
-</span><span class='line'>    <span class="c"># ... do stuff</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run its block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept &ndash; decorators:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">tries</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="ne">Exception</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tries</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
-</span><span class='line'>        <span class="k">except</span> <span class="n">errors</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">if</span> <span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">tries</span><span class="p">:</span>
-</span><span class='line'>                <span class="k">raise</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">))</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">http_retry</span><span class="p">(</span><span class="n">download_image</span><span class="p">),</span> <span class="n">urls</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>As we can see, it even works with <code>map</code> naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="nd">@decorator</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">ignore</span><span class="p">(</span><span class="n">call</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="ne">Exception</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">return</span> <span class="n">call</span><span class="p">()</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">errors</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">return</span> <span class="bp">None</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">ignore_small</span> <span class="o">=</span> <span class="n">ignore</span><span class="p">(</span><span class="n">ImageTooSmall</span><span class="p">)</span>
-</span><span class='line'><span class="n">http_retry</span> <span class="o">=</span> <span class="n">retry</span><span class="p">(</span><span class="n">DOWNLOAD_TRIES</span><span class="p">,</span> <span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="n">httplib</span><span class="o">.</span><span class="n">BadStatusLine</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">))</span>
-</span><span class='line'><span class="n">download</span> <span class="o">=</span> <span class="n">http_retry</span><span class="p">(</span><span class="n">ignore_small</span><span class="p">(</span><span class="n">download_image</span><span class="p">))</span>
-</span><span class='line'><span class="n">photos</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">download</span><span class="p">,</span> <span class="n">urls</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>How is this better?</h2>
-
-<p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p>
-
-<ul>
-<li>every single aspect is visible,</li>
-<li>it&rsquo;s named,</li>
-<li>it can be taken out and brought back easily,</li>
-<li>it can be reused.</li>
-</ul>
-
-
-<p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective. Still I hope this post will help somebody to write better code.</p>
-
-<p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href="https://github.com/Suor/funcy">one practical library</a>.</p>
-
-<p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href="http://underscorejs.org/#functions">function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href="https://github.com/Suor/patterns">pattern matching</a>, <a href="https://github.com/Suor/overload">function overload</a>, caching decorators and much more.</p>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
-  
-
-<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-08T12:13:00+08:00" pubdate data-updated="true">Oct 8<span>th</span>, 2013</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/fp/'>FP</a>, <a class='category' href='/blog/categories/python/'>Python</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/" data-via="hackflow" data-counturl="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-  <div style="clear: both; margin-bottom: 0.6em"></div>
-</div>
-<style type="text/css">
-  .sharing * {float: left !important;}
-</style>
-
-    
-    <p class="meta">
-      
-      
-        <a class="basic-alignment right" href="/blog/2013/10/13/functional-python-made-easy/" title="Next Post: Functional Python Made Easy">Functional Python Made Easy &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments<small style="font-size: 0.65em">, also at
-         <a href="https://news.ycombinator.com/item?id=6527441">Hacker News</a>
-        and
-        <a href="http://www.reddit.com/r/programming/comments/1pvaqy/abstracting_control_flow/">Reddit</a>
-    </small>
-    </h1>
-
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>About Me</h1>
-  <p>
-    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
-    I write in python, js and occasionally english.
-    I also borrow ideas from a variety of languages.
-    You might want to <a href="https://twitter.com/hackflow" target="_blank">follow me</a>
-    or look up <a href="http://github.com/Suor">my Github profile</a>.
-  </p>
-</section>
-<section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-  </ul>
-</section>
-
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating...</li>
-  </ul>
-  
-  <a href="https://github.com/Suor">@Suor</a> on GitHub
-  
-  <script type="text/javascript">
-    $(document).ready(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'Suor',
-            count: 5,
-            skip_forks: true,
-            skip: 'Suor.github.io,sublime-text-2-User',
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
-
-
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2023 - Alexander Schepanovski -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'hackflow';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://suor.github.io/blog/2013/10/08/abstracting-control-flow/';
-        var disqus_url = 'http://suor.github.io/blog/2013/10/08/abstracting-control-flow/';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = '//platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+<!doctype html><html lang=en dir=auto data-theme=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Abstracting Control Flow | Hackflow</title><meta name=keywords content><meta name=description content="Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.
+Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &mldr;&rdquo;, which commonly look like repetitive if ... else or try ... catch code. How about abstracting all that control flow?"><meta name=author content="Alexander Schepanovski"><link rel=canonical href=https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/><link crossorigin=anonymous href=/assets/css/stylesheet.a77d46620730939f590009cf3757c4b7866cc2835e02d31b4208f0bfae38574f.css integrity="sha256-p31GYgcwk59ZAAnPN1fEt4ZswoNeAtMbQgjwv644V08=" rel="preload stylesheet" as=style><link rel=icon href=https://blog.hackflow.ru/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://blog.hackflow.ru/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://blog.hackflow.ru/favicon-32x32.png><link rel=apple-touch-icon href=https://blog.hackflow.ru/apple-touch-icon.png><link rel=mask-icon href=https://blog.hackflow.ru/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/><link rel=alternate hreflang=ru href=https://blog.hackflow.ru/ru/blog/2012/11/03/abstracting-control-flow/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-JWZ867HSYF"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-JWZ867HSYF")}</script><meta property="og:url" content="https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/"><meta property="og:site_name" content="Hackflow"><meta property="og:title" content="Abstracting Control Flow"><meta property="og:description" content="Any programmer, even if she doesn’t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.
+Those recurring patterns usually involve rules like “close everything you open”, “free resources then pass error farther”, “if that succeeded go on else …”, which commonly look like repetitive if ... else or try ... catch code. How about abstracting all that control flow?"><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2013-10-08T12:13:00+00:00"><meta property="article:modified_time" content="2013-10-08T12:13:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Abstracting Control Flow"><meta name=twitter:description content="Any programmer, even if she doesn’t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.
+Those recurring patterns usually involve rules like “close everything you open”, “free resources then pass error farther”, “if that succeeded go on else …”, which commonly look like repetitive if ... else or try ... catch code. How about abstracting all that control flow?"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://blog.hackflow.ru/posts/"},{"@type":"ListItem","position":2,"name":"Abstracting Control Flow","item":"https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Abstracting Control Flow","name":"Abstracting Control Flow","description":"Any programmer, even if she doesn\u0026rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.\nThose recurring patterns usually involve rules like \u0026ldquo;close everything you open\u0026rdquo;, \u0026ldquo;free resources then pass error farther\u0026rdquo;, \u0026ldquo;if that succeeded go on else \u0026hellip;\u0026rdquo;, which commonly look like repetitive if ... else or try ... catch code. How about abstracting all that control flow?\n","keywords":[],"articleBody":"Any programmer, even if she doesn’t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.\nThose recurring patterns usually involve rules like “close everything you open”, “free resources then pass error farther”, “if that succeeded go on else …”, which commonly look like repetitive if ... else or try ... catch code. How about abstracting all that control flow?\nIn conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don’t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.\nAbstractions Let’s start from the beginning. What do we do to build a new abstraction?\nSelect a piece of functionality or behavior. Name it. Implement it. Hide our implementation behind chosen name. Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.\nIn case your language can’t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.\nBack to real-life This is a piece of common python code, taken from real-life project with minimal changes:\n1 2 3 4 5 6 7 8 9 10 11 12 13 urls = ... photos = [] for url in urls: for attempt in range(DOWNLOAD_TRIES): try: photos.append(download_image(url)) break except ImageTooSmall: pass # skip small images except (urllib2.URLError, httplib.BadStatusLine, socket.error), e: if attempt + 1 == DOWNLOAD_TRIES: raise There are many aspects to this code: iterating over urls, downloading images, collecting images into photos, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.\nAnd some of them already exist separately. For example, iteration plus result gathering make map:\n1 photos = map(download_image, urls) Let’s try fishing out other aspects, starting with skipping small images. That could be done like:\n1 2 3 4 5 6 7 8 9 10 11 @contextmanager def ignore(error): try: yield except error: pass photos = [] for url in urls: with ignore(ImageTooSmall): photos.append(download_image(url)) Looks good. However this can’t be composed with map easily. But let’s put it off for now and deal with network errors. We can try abstracting it the same way we handled ignore:\n1 2 3 with retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)): # ... do stuff Only that can’t be implemented. Python with statement can’t run its block more than once. We just ran against language constraint. It’s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:\n1 2 3 4 5 6 7 8 9 10 11 12 @decorator def retry(call, tries, errors=Exception): for attempt in range(tries): try: return call() except errors: if attempt + 1 == tries: raise http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)) photos = map(http_retry(download_image), urls) As we can see, it even works with map naturally. And more than that, we got a pair of potentially reusable tools: retry and http_retry. Unfortunately our ignore context manager can’t be easily added here. It’s not composable. Let’s just rewrite it as decorator:\n1 2 3 4 5 6 7 8 9 10 11 12 @decorator def ignore(call, errors=Exception): try: return call() except errors: return None ignore_small = ignore(ImageTooSmall) http_retry = retry(DOWNLOAD_TRIES, (urllib2.URLError, httplib.BadStatusLine, socket.error)) download = http_retry(ignore_small(download_image)) photos = filter(None, map(download, urls)) How is this better? Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:\nevery single aspect is visible, it’s named, it can be taken out and brought back easily, it can be reused. The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that’s subjective. Still I hope this post will help somebody to write better code.\nP.S. I packed @decorator, ignore and retry into one practical library.\nP.P.S. Other examples of control flow abstractions include: function manipulations in underscore.js, list comprehensions and generator expressions, pattern matching, function overload, caching decorators and much more.\n","wordCount":"794","inLanguage":"en","datePublished":"2013-10-08T12:13:00Z","dateModified":"2013-10-08T12:13:00Z","author":{"@type":"Person","name":"Alexander Schepanovski"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/"},"publisher":{"@type":"Organization","name":"Hackflow","logo":{"@type":"ImageObject","url":"https://blog.hackflow.ru/favicon.ico"}}}</script></head><body id=top><header class=header><nav class=header-nav><div class=logo><a href=https://blog.hackflow.ru/ accesskey=h title="Hackflow (Alt + H)">Hackflow</a><div class=logo-switches><button id=theme-toggle class=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button><span>|</span><ul class=lang-menu><li><a href=https://blog.hackflow.ru/ru/blog/2012/11/03/abstracting-control-flow/ title=Русский aria-label=Русский>Ru</a></li></ul></div></div><ul id=menu class=menu><li><a href=https://blog.hackflow.ru/archives/ title=Archive><span>Archive</span></a></li><li><a href=https://blog.hackflow.ru/tags/ title=Tags><span>Tags</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">Abstracting Control Flow</h1><div class=post-meta><span title='2013-10-08 12:13:00 +0000 UTC'>October 8, 2013</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>Alexander Schepanovski</span>&nbsp;|&nbsp;<span>Translations:</span><ul class=i18n_list><li><a href=https://blog.hackflow.ru/ru/blog/2012/11/03/abstracting-control-flow/>Ru</a></li></ul></div></header><div class="post-content md-content"><p>Any programmer, even if she doesn&rsquo;t see it this way, constantly creates abstractions. The most common things we abstract are calculations (caught into functions) or behavior (procedures and classes), but there are other recurring patterns in our work, especially in error handling, resource management and optimizations.</p><p>Those recurring patterns usually involve rules like &ldquo;close everything you open&rdquo;, &ldquo;free resources then pass error farther&rdquo;, &ldquo;if that succeeded go on else &mldr;&rdquo;, which commonly look like repetitive <code>if ... else</code> or <code>try ... catch</code> code. How about abstracting all that control flow?</p><p>In conventional code, where nobody plays too smart, control structures do control flow. Sometimes they don&rsquo;t do that well and then we throw in our own. That is simple in Lisp, Ruby or Perl, but is also possible in a way in any language featuring higher order functions.</p><h2 id=abstractions>Abstractions<a hidden class=anchor aria-hidden=true href=#abstractions>#</a></h2><p>Let&rsquo;s start from the beginning. What do we do to build a new abstraction?</p><ol><li>Select a piece of functionality or behavior.</li><li>Name it.</li><li>Implement it.</li><li>Hide our implementation behind chosen name.</li></ol><p>Points 3-4 are not always possible. It depends very much on flexibility of your language and the piece you are trying to abstract.</p><p>In case your language can&rsquo;t handle it, skip implementation and just describe your technique, make it popular, giving birth to a new design pattern. This way you can continue writing repetitive code without feeling bad about it.</p><h2 id=back-to-real-life>Back to real-life<a hidden class=anchor aria-hidden=true href=#back-to-real-life>#</a></h2><p>This is a piece of common python code, taken from real-life project with minimal changes:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>urls</span> <span class=o>=</span> <span class=o>...</span>
+</span></span><span class=line><span class=cl><span class=n>photos</span> <span class=o>=</span> <span class=p>[]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>url</span> <span class=ow>in</span> <span class=n>urls</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>attempt</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>DOWNLOAD_TRIES</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>photos</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>download_image</span><span class=p>(</span><span class=n>url</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>            <span class=k>break</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=n>ImageTooSmall</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>pass</span> <span class=c1># skip small images</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=p>(</span><span class=n>urllib2</span><span class=o>.</span><span class=n>URLError</span><span class=p>,</span> <span class=n>httplib</span><span class=o>.</span><span class=n>BadStatusLine</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>error</span><span class=p>),</span> <span class=n>e</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=n>attempt</span> <span class=o>+</span> <span class=mi>1</span> <span class=o>==</span> <span class=n>DOWNLOAD_TRIES</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=k>raise</span>
+</span></span></code></pre></td></tr></table></div></div><p>There are many aspects to this code: iterating over <code>urls</code>, downloading images, collecting images into <code>photos</code>, skipping small images and retries in case of download errors. All of them are entangled in this single piece of code, despite that they can be useful outside of this code snippet.</p><p>And some of them already exist separately. For example, iteration plus result gathering make <code>map</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>photos</span> <span class=o>=</span> <span class=nb>map</span><span class=p>(</span><span class=n>download_image</span><span class=p>,</span> <span class=n>urls</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Let&rsquo;s try fishing out other aspects, starting with skipping small images. That could be done like:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=nd>@contextmanager</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>ignore</span><span class=p>(</span><span class=n>error</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>yield</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=n>error</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>pass</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>photos</span> <span class=o>=</span> <span class=p>[]</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>url</span> <span class=ow>in</span> <span class=n>urls</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>with</span> <span class=n>ignore</span><span class=p>(</span><span class=n>ImageTooSmall</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>photos</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>download_image</span><span class=p>(</span><span class=n>url</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>Looks good. However this can&rsquo;t be composed with <code>map</code> easily. But let&rsquo;s put it off for now and deal with network errors. We can try abstracting it the same way we handled <code>ignore</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>with</span> <span class=n>retry</span><span class=p>(</span><span class=n>DOWNLOAD_TRIES</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>           <span class=p>(</span><span class=n>urllib2</span><span class=o>.</span><span class=n>URLError</span><span class=p>,</span> <span class=n>httplib</span><span class=o>.</span><span class=n>BadStatusLine</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>error</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>    <span class=c1># ... do stuff</span>
+</span></span></code></pre></td></tr></table></div></div><p>Only that can&rsquo;t be implemented. Python <code>with</code> statement can&rsquo;t run its block more than once. We just ran against language constraint. It&rsquo;s important to notice such cases if you want to understand languages differences beyond syntax. In Ruby and to lesser extend in Perl we could continue manipulating blocks, in Lisp we could even manipulate code (that would probably be an overkill), but not all is lost for Python, we should just switch to higher order functions and their convenience concept - decorators:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=nd>@decorator</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>retry</span><span class=p>(</span><span class=n>call</span><span class=p>,</span> <span class=n>tries</span><span class=p>,</span> <span class=n>errors</span><span class=o>=</span><span class=ne>Exception</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>attempt</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>tries</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>call</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=n>errors</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=n>attempt</span> <span class=o>+</span> <span class=mi>1</span> <span class=o>==</span> <span class=n>tries</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=k>raise</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>http_retry</span> <span class=o>=</span> <span class=n>retry</span><span class=p>(</span><span class=n>DOWNLOAD_TRIES</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                   <span class=p>(</span><span class=n>urllib2</span><span class=o>.</span><span class=n>URLError</span><span class=p>,</span> <span class=n>httplib</span><span class=o>.</span><span class=n>BadStatusLine</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>error</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>photos</span> <span class=o>=</span> <span class=nb>map</span><span class=p>(</span><span class=n>http_retry</span><span class=p>(</span><span class=n>download_image</span><span class=p>),</span> <span class=n>urls</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>As we can see, it even works with <code>map</code> naturally. And more than that, we got a pair of potentially reusable tools: <code>retry</code> and <code>http_retry</code>. Unfortunately our <code>ignore</code> context manager can&rsquo;t be easily added here. It&rsquo;s not composable. Let&rsquo;s just rewrite it as decorator:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=nd>@decorator</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>ignore</span><span class=p>(</span><span class=n>call</span><span class=p>,</span> <span class=n>errors</span><span class=o>=</span><span class=ne>Exception</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>call</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=n>errors</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>None</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>ignore_small</span> <span class=o>=</span> <span class=n>ignore</span><span class=p>(</span><span class=n>ImageTooSmall</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>http_retry</span> <span class=o>=</span> <span class=n>retry</span><span class=p>(</span><span class=n>DOWNLOAD_TRIES</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                   <span class=p>(</span><span class=n>urllib2</span><span class=o>.</span><span class=n>URLError</span><span class=p>,</span> <span class=n>httplib</span><span class=o>.</span><span class=n>BadStatusLine</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>error</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>download</span> <span class=o>=</span> <span class=n>http_retry</span><span class=p>(</span><span class=n>ignore_small</span><span class=p>(</span><span class=n>download_image</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>photos</span> <span class=o>=</span> <span class=nb>filter</span><span class=p>(</span><span class=kc>None</span><span class=p>,</span> <span class=nb>map</span><span class=p>(</span><span class=n>download</span><span class=p>,</span> <span class=n>urls</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=how-is-this-better>How is this better?<a hidden class=anchor aria-hidden=true href=#how-is-this-better>#</a></h2><p>Seems like we have more code now and it still involves all the same aspects. The difference is that they are not entangled anymore they are composed. Which means several things:</p><ul><li>every single aspect is visible,</li><li>it&rsquo;s named,</li><li>it can be taken out and brought back easily,</li><li>it can be reused.</li></ul><p>The essential code takes only 4 last lines and after getting used to functional control flow can probably become more readable. Or not, that&rsquo;s subjective. Still I hope this post will help somebody to write better code.</p><p><strong>P.S.</strong> I packed <code>@decorator</code>, <code>ignore</code> and <code>retry</code> into <a href=https://github.com/Suor/funcy>one practical library</a>.</p><p><strong>P.P.S.</strong> Other examples of control flow abstractions include: <a href=http://underscorejs.org/#functions>function manipulations in underscore.js</a>, list comprehensions and generator expressions, <a href=https://github.com/Suor/patterns>pattern matching</a>, <a href=https://github.com/Suor/overload>function overload</a>, caching decorators and much more.</p></div><footer class=post-footer><ul class=post-tags></ul><nav class=paginav><a class=prev href=https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/><span class=title>« Prev</span>
+<span>Functional Python Made Easy</span></a></nav></footer><section class=comments-section><h2>Comments
+<span class=comments-also-at>also at <a href="https://news.ycombinator.com/item?id=6527441" target=_blank rel=noopener>Hacker News</a> and <a href=http://www.reddit.com/r/programming/comments/1pvaqy/abstracting_control_flow/ target=_blank rel=noopener>Reddit</a></span></h2><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/",this.page.identifier="http://suor.github.io/blog/2013/10/08/abstracting-control-flow/"};(function(){var e=document,t=e.createElement("script");t.src="https://hackflow.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script></section></article></main><footer class=footer><span>&copy; 2026 <a href=https://blog.hackflow.ru/>Hackflow</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top id=top-link class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey=g><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var toplink=document.getElementById("top-link");window.onscroll=function(){const e=window.innerHeight;document.body.scrollTop>e||document.documentElement.scrollTop>e?toplink.classList.remove("hidden"):toplink.classList.add("hidden")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

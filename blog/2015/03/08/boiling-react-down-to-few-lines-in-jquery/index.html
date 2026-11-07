@@ -1,865 +1,413 @@
-
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Boiling React Down to a Few Lines in jQuery - Hackflow</title>
-  <meta name="author" content="Alexander Schepanovski">
-
-  
-  <meta name="description" content="You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-    
-        <meta property="twitter:card" content="summary">
-    
-    <meta property="twitter:site" content="hackflow">
-    <meta property="twitter:url" content="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery">
-    <meta property="twitter:title" content="Boiling React Down to a Few Lines in jQuery">
-    <meta property="twitter:description" content="You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like &hellip;">
-
-
-  
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-37289902-3', 'auto');
-  ga('send', 'pageview');
-</script>
-
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Hackflow</a></h1>
-  
-    <h2>Sharing my mindset</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:suor.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
-    
-      <h1 class="entry-title">Boiling React Down to a Few Lines in jQuery</h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-03-08T20:08:00+07:00" pubdate data-updated="true">Mar 8<span>th</span>, 2015</time>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p>
-
-<!--more-->
-
-
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;colored-counter&quot;</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span>
-</span><span class='line'><span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;color&quot;</span><span class="nt">&gt;&lt;/input&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;inc&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;script&gt;</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#color&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;keyup&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#inc&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">oldValue</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">();</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">newValue</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">Number</span><span class="p">(</span><span class="nx">oldValue</span><span class="p">);</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">newValue</span><span class="p">);</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'><span class="nt">&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Could be written as:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;colored-counter&quot;</span><span class="nt">&gt;</span>0<span class="nt">&lt;/span&gt;</span>
-</span><span class='line'><span class="nt">&lt;input</span> <span class="na">id=</span><span class="s">&quot;color&quot;</span><span class="nt">&gt;&lt;/input&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;inc&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;script&gt;</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">state</span> <span class="o">=</span> <span class="p">{</span><span class="nx">color</span><span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="nx">state</span><span class="p">.</span><span class="nx">color</span><span class="p">);</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#colored-counter&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#color&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;keyup&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#inc&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="o">++</span><span class="p">;</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'><span class="nt">&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
-Let me draw you a picture. This is how first variant works:</p>
-
-<p><img src="/images/boiling-react-down/jquery-small.svg" style="width: 100%" /></p>
-
-<p>And this is how second one does:</p>
-
-<p><img src="/images/boiling-react-down/react-small.svg" style="width: 100%" /></p>
-
-<p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p>
-
-<p><img src="/images/boiling-react-down/jquery-big.svg" style="width: 100%" /></p>
-
-<p>And even with our bastardized React-like code we get:</p>
-
-<p><img src="/images/boiling-react-down/react-big.svg" style="width: 100%" /></p>
-
-<p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
+<!doctype html><html lang=en dir=auto data-theme=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Boiling React Down to a Few Lines in jQuery | Hackflow</title><meta name=keywords content><meta name=description content="You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery."><meta name=author content="Alexander Schepanovski"><link rel=canonical href=https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/><link crossorigin=anonymous href=/assets/css/stylesheet.a77d46620730939f590009cf3757c4b7866cc2835e02d31b4208f0bfae38574f.css integrity="sha256-p31GYgcwk59ZAAnPN1fEt4ZswoNeAtMbQgjwv644V08=" rel="preload stylesheet" as=style><link rel=icon href=https://blog.hackflow.ru/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://blog.hackflow.ru/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://blog.hackflow.ru/favicon-32x32.png><link rel=apple-touch-icon href=https://blog.hackflow.ru/apple-touch-icon.png><link rel=mask-icon href=https://blog.hackflow.ru/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-JWZ867HSYF"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-JWZ867HSYF")}</script><meta property="og:url" content="https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"><meta property="og:site_name" content="Hackflow"><meta property="og:title" content="Boiling React Down to a Few Lines in jQuery"><meta property="og:description" content="You probably heard something like how React is awesome ‘cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I’ll show that in a few lines in jQuery."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2015-03-08T20:08:00+00:00"><meta property="article:modified_time" content="2015-03-08T20:08:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Boiling React Down to a Few Lines in jQuery"><meta name=twitter:description content="You probably heard something like how React is awesome ‘cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I’ll show that in a few lines in jQuery."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://blog.hackflow.ru/posts/"},{"@type":"ListItem","position":2,"name":"Boiling React Down to a Few Lines in jQuery","item":"https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Boiling React Down to a Few Lines in jQuery","name":"Boiling React Down to a Few Lines in jQuery","description":"You probably heard something like how React is awesome \u0026lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I\u0026rsquo;ll show that in a few lines in jQuery.\n","keywords":[],"articleBody":"You probably heard something like how React is awesome ‘cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I’ll show that in a few lines in jQuery.\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 \u003cspan id=\"colored-counter\"\u003e0\u003c/span\u003e \u003cinput id=\"color\"\u003e\u003c/input\u003e \u003cbutton id=\"inc\"\u003e\u003c/button\u003e \u003cscript\u003e $('#color').on('keyup', function () { $('#colored-counter').css('color', this.value); }) $('#inc').on('click', function () { var oldValue = $('#colored-counter').html(); var newValue = 1 + Number(oldValue); $('#colored-counter').html(newValue); }) \u003c/script\u003e Could be written as:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 \u003cspan id=\"colored-counter\"\u003e0\u003c/span\u003e \u003cinput id=\"color\"\u003e\u003c/input\u003e \u003cbutton id=\"inc\"\u003e\u003c/button\u003e \u003cscript\u003e var state = {color: '', value: 0}; function updateUI() { $('#colored-counter').css('color', state.color); $('#colored-counter').html(state.value); } $('#color').on('keyup', function () { state.color = this.value; updateUI(); }) $('#inc').on('click', function () { state.value++; updateUI(); }) \u003c/script\u003e This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better? Let me draw you a picture. This is how first variant works:\nAnd this is how second one does:\nDoesn’t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:\nAnd even with our bastardized React-like code we get:\nIn first picture we have N events, M elements and up to O(N*M) links. In second one we have just N event links and M element links. Overall we got from potential O(N*M) complexity down to O(N+M), not bad for a simple trick.\nNow it looks like we got something. But what about all those magical powers? Ah, we almost got them too.\nMagical Powers Basically all magical powers mentioned come from an ability to write:\n1 2 3 4 5 6 // save var cannedState = deepcopy(state); // load state = cannedState; updateUI(); This is facilitated by 2 facts:\nwe have a single explicit state, we can update UI to comply to arbitrary state. That’s it. We can write serialized canned state to local storage, send it to server, manage a history of canned states. And this will give us page reload protection, persistence and undo/time-travel respectively.\nConfused? Let’s write some code. That’s how we protect from accidental page reload:\n1 2 3 4 5 6 7 8 9 10 11 function updateUI() { // Save latest state to local storage LocalStorage.set('state', JSON.stringify(state)); // ... continue as usual } // Load saved state from local storage on page load $(function () { state = JSON.parse(LocalStorage.get('state')); updateUI(); }); And that’s how we get time-travel debugging:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 \u003cspan id=\"time-pos\"\u003e\u003c/span\u003e \u003cbutton id=\"back\"\u003eBack\u003c/button\u003e \u003cbutton id=\"next\"\u003eNext\u003c/button\u003e \u003cscript\u003e var time = {history: [], pos: 0}; function updateTimeUI() { $('#time-pos').html('Position ' + time.pos + ' of ' + time.history.length); } function saveState() { time.history.push(deepcopy(state)); time.pos++; updateTimeUI(); } $('#back').on('click', function () { // Move history pointer time.pos--; updateTimeUI(); // Load historic state state = deepcopy(time.history[time.pos]); updateUI(); }) $('#next').on('click', function () { time.pos++; // ... same }) // ... function updateUI() { // Save state to history on every change saveState(); // ... continue as usual } \u003c/script\u003e On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it. I created a working clickable demo to illustrate it even more.\nNote also how we use the same pattern here? time is the state of time-travel sub-application and updateTimeUI() is its update function.\nNow we can build from that. Undo is just time-travel for user not developer, by saving history to local storage we can preserve it on page reload, by catching errors and sending them along with serialized history to our bug tracker we can automatically reproduce errors our users face.\nI should note that React doesn’t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.\nPure Function Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let’s us follow the way that led to them.\nFirst we need a slightly more intricate example:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 \u003cspan id=\"count\"\u003e2\u003c/span\u003e \u003cul\u003e \u003cli\u003ehi\u003c/li\u003e \u003cli\u003ethere\u003c/li\u003e \u003c/ul\u003e \u003cbutton id=\"add\"\u003e\u003c/button\u003e \u003cscript\u003e var state = {items: ['hi', 'there']} function updateUI() { $('#count').html(state.items.length); // Compare ul.childNodes to state.items and make updates // ... } $('ul').on('click', 'li', function () { state.items.splice($(this).index(), 1); updateUI(); }) $('#add').on('click', function () { state.items.push(getNextString()); updateUI(); }) \u003c/script\u003e Several things to see here:\nthere is a duplication between prerendered html and initial state, update became complex ‘cause we need to compare data structure to DOM. There is a simpler way to do this:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 \u003cdiv id=\"ui\"\u003e\u003c/div\u003e ... \u003cscript\u003e ... function render(state) { var span = '' + state.items.length + ''; var lis = state.items.map(function (item) { return '' + item + ''; }); return span + '' + lis.join('') + '' } function updateUI() { $('#ui').html(render(state)); } ... \u003c/script\u003e Here render() is just pure function from app state to html. And we want it to be pure so that state will be the single thing defining UI.\nIn a way UI was a function of state even in our bastardized code, it just wasn’t clearly obvious ‘cause we updated UI, not calculated and rebuilt it from scratch each time. There also was a possibility to screw up and write updateUI() so that UI state is defined both by its own previous state and application state, thus using render is not really an optimization, but a simplification and a guard.\nBut anyway that’s it on pure functions.\nVirtual DOM Now look at those render() / $().html() pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization — virtual DOM:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 var root = document.getElementById('ui'); var prevState = state, prevTree = []; function render(state) { // Virtual DOM is really just a tree of JavaScript objects or arrays return [ ['span', {id: 'count'}, state.items.length], ['ul', {}, state.items.map(function (item) { return ['li', {}, item] })] ] } function updateUI() { var vTree = render(state); var diff = vDiff(prevTree, vTree); // Just a diff on data structures, haha :) vApply(root, diff) // Apply series of patches to real DOM prevState = deepcopy(state); prevTree = vTree; } If any of this diffing/patching sounds complicated to you then you shouldn’t worry React or standalone virtual DOM implementation got you covered. But that’s really not that complicated. If you know how to write diffing algorithm then you can surely implement this yourself.\nNote that what we just did is a premature optimization. Current simple example will do just fine with naive render-to-string implementation above. Surprisingly, most of SPAs out there will do just fine as well, browsers are hell fast these days. I want to stress this once more - for an average app you can skip React or other virtual DOM at start and only go for it once it gets too slow (or never).\nAnother stone in Reacts direction: it’s virtual DOM is one of the slowest ones across the block.\nImmutability Noticed all that deepcopy() calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.\nMaybe it is still not clear enough, so I’ll show you. That’s how we make immutable objects in JS:\n1 2 3 4 5 6 7 8 9 10 var object = { a: {x: 1, y: 2}, b: {text: 'hi'} } // Now instead of object.a.y = 3 we do var object2 = { a: {x: object.a.x, y: 3}, b: object.b } Look how we reuse object.a.x and object.b. This not only saves us from copying, but effectively makes diffs way faster: before diffing object.b and object2.b we just check if they are the same object, which is referential equality, and done — diff is empty, no need to go all the way down.\nOne thing to add is this naive approach to immutable collections is not only cumbersome, but also ineffective. Suppose you have an object with lots of keys and a value of one of them changes, you now need to create a new object with all the same keys (you can still reuse values). You probably don’t use such objects, but what about array? Let’s see how that looks like:\n1 2 var prev = ['a', 'b', 'c', ..., 'z']; var next = prev.slice(0, n-1).concat([newValue]).concat(prev.slice(n)); So we need to copy the whole thing. Here is a better way to implement immutable sequences:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 var prev = { '0-3': { '0-1': {0: 'a', 1: 'b'}, '2-3': {...}, }, '4-7': {...} } var next = { '0-3': { '0-1': prev['0-3']['0-1'], '2-3': { 2: 'hey', 3: prev['0-3']['2-3'][3] } }, '4-7': prev['4-7'] } We can see that we only create log N new objects here and the rest is reused, so even less copying and faster diffs. You also don’t need to really deal with all this trees. There are great ready to use implementations out there. E.g. this is how our first example looks with a help of Immutable.js:\n1 2 3 4 5 6 var object = Immutable.fromJS({ a: {x: 1, y: 2}, b: {text: 'hi'} }) var object2 = object.setIn(['a', 'y'], 3); // object remains intact It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at mori — a set of immutable collections extracted from ClojureScript.\nNote that React actually uses naive immutable by convention collections.\nWrap-up It may look from my notes that React is not a good tool, but it is actually very useful one. It may not have magical powers and top speed, but it got components and is still pretty fast. It also offers ecosystem and community.\nAnd there is one more way to look at it. React made a significant push to front-end development in an interesting direction, including all those virtual DOMs and immutable collection libraries.\nAnyway, now that you know all this, you can judge better on what to use and how to structure your code.\n","wordCount":"1910","inLanguage":"en","datePublished":"2015-03-08T20:08:00Z","dateModified":"2015-03-08T20:08:00Z","author":{"@type":"Person","name":"Alexander Schepanovski"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"},"publisher":{"@type":"Organization","name":"Hackflow","logo":{"@type":"ImageObject","url":"https://blog.hackflow.ru/favicon.ico"}}}</script></head><body id=top><header class=header><nav class=header-nav><div class=logo><a href=https://blog.hackflow.ru/ accesskey=h title="Hackflow (Alt + H)">Hackflow</a><div class=logo-switches><button id=theme-toggle class=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button><span>|</span><ul class=lang-menu><li><a href=https://blog.hackflow.ru/ru/ title=Русский aria-label=Русский>Ru</a></li></ul></div></div><ul id=menu class=menu><li><a href=https://blog.hackflow.ru/archives/ title=Archive><span>Archive</span></a></li><li><a href=https://blog.hackflow.ru/tags/ title=Tags><span>Tags</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">Boiling React Down to a Few Lines in jQuery</h1><div class=post-meta><span title='2015-03-08 20:08:00 +0000 UTC'>March 8, 2015</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>Alexander Schepanovski</span></div></header><div class="post-content md-content"><p>You probably heard something like how React is awesome &lsquo;cause it makes UI a pure function of application state? But even before you started to get that it was complemented with something like how that works on top of immutability and virtual DOM? And then you get free save, load, undo and something insane called time-travel debugging on top of that. Guess what? None of these are necessary to use core React idea and reap its benefits. And I&rsquo;ll show that in a few lines in jQuery.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>span</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;colored-counter&#34;</span><span class=p>&gt;</span>0<span class=p>&lt;/</span><span class=nt>span</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>input</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;color&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>input</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>button</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;inc&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>button</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#color&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;keyup&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#colored-counter&#39;</span><span class=p>).</span><span class=nx>css</span><span class=p>(</span><span class=s1>&#39;color&#39;</span><span class=p>,</span> <span class=k>this</span><span class=p>.</span><span class=nx>value</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#inc&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>oldValue</span> <span class=o>=</span> <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#colored-counter&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>newValue</span> <span class=o>=</span> <span class=mi>1</span> <span class=o>+</span> <span class=nb>Number</span><span class=p>(</span><span class=nx>oldValue</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#colored-counter&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>(</span><span class=nx>newValue</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>Could be written as:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>span</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;colored-counter&#34;</span><span class=p>&gt;</span>0<span class=p>&lt;/</span><span class=nt>span</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>input</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;color&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>input</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>button</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;inc&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>button</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>state</span> <span class=o>=</span> <span class=p>{</span><span class=nx>color</span><span class=o>:</span> <span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=nx>value</span><span class=o>:</span> <span class=mi>0</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#colored-counter&#39;</span><span class=p>).</span><span class=nx>css</span><span class=p>(</span><span class=s1>&#39;color&#39;</span><span class=p>,</span> <span class=nx>state</span><span class=p>.</span><span class=nx>color</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#colored-counter&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>(</span><span class=nx>state</span><span class=p>.</span><span class=nx>value</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#color&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;keyup&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>state</span><span class=p>.</span><span class=nx>color</span> <span class=o>=</span> <span class=k>this</span><span class=p>.</span><span class=nx>value</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#inc&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>state</span><span class=p>.</span><span class=nx>value</span><span class=o>++</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>This demonstrates React idea in its simplest (and a bit bastardized way). We get to this later, now we should answer a reasonable question: how is this better?
+Let me draw you a picture. This is how first variant works:</p><img src=/images/boiling-react-down/jquery-small.svg style=width:100%><p>And this is how second one does:</p><img src=/images/boiling-react-down/react-small.svg style=width:100%><p>Doesn&rsquo;t look that much better, but let us think scale. Over time our UI will get more events and elements, some events will update more than one element, some elements will be updated by more than one event. So we will get this:</p><img src=/images/boiling-react-down/jquery-big.svg style=width:100%><p>And even with our bastardized React-like code we get:</p><img src=/images/boiling-react-down/react-big.svg style=width:100%><p>In first picture we have <code>N</code> events, <code>M</code> elements and up to <code>O(N*M)</code> links.
 In second one we have just <code>N</code> event links and <code>M</code> element links.
-Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M)</code>, not bad for a simple trick.</p>
-
-<p>Now it looks like we got something. But what about all those magical powers?
-Ah, we almost got them too.</p>
-
-<h2>Magical Powers</h2>
-
-<p>Basically all magical powers mentioned come from an ability to write:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// save</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">cannedState</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// load</span>
-</span><span class='line'><span class="nx">state</span> <span class="o">=</span> <span class="nx">cannedState</span><span class="p">;</span>
-</span><span class='line'><span class="nx">updateUI</span><span class="p">();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is facilitated by 2 facts:</p>
-
-<ul>
-<li>we have a single explicit state,</li>
-<li>we can update UI to comply to arbitrary state.</li>
-</ul>
-
-
-<p>That&rsquo;s it. We can write serialized canned state to local storage, send it to server, manage a history of canned states. And this will give us page reload protection, persistence and undo/time-travel respectively.</p>
-
-<p>Confused? Let&rsquo;s write some code. That&rsquo;s how we protect from accidental page reload:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">// Save latest state to local storage</span>
-</span><span class='line'>    <span class="nx">LocalStorage</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
-</span><span class='line'>    <span class="c1">// ... continue as usual</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Load saved state from local storage on page load</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">LocalStorage</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">));</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And that&rsquo;s how we get time-travel debugging:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;time-pos&quot;</span><span class="nt">&gt;&lt;/span&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;back&quot;</span><span class="nt">&gt;</span>Back<span class="nt">&lt;/button&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;next&quot;</span><span class="nt">&gt;</span>Next<span class="nt">&lt;/button&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;script&gt;</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">time</span> <span class="o">=</span> <span class="p">{</span><span class="nx">history</span><span class="o">:</span> <span class="p">[],</span> <span class="nx">pos</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateTimeUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#time-pos&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s1">&#39;Position &#39;</span> <span class="o">+</span> <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span> <span class="o">+</span> <span class="s1">&#39; of &#39;</span> <span class="o">+</span> <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">saveState</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
-</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">++</span><span class="p">;</span>
-</span><span class='line'>    <span class="nx">updateTimeUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#back&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">// Move history pointer</span>
-</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">--</span><span class="p">;</span>
-</span><span class='line'>    <span class="nx">updateTimeUI</span><span class="p">();</span>
-</span><span class='line'>    <span class="c1">// Load historic state</span>
-</span><span class='line'>    <span class="nx">state</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">history</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="p">]);</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#next&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">time</span><span class="p">.</span><span class="nx">pos</span><span class="o">++</span><span class="p">;</span>
-</span><span class='line'>    <span class="c1">// ... same</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// ...</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">// Save state to history on every change</span>
-</span><span class='line'>    <span class="nx">saveState</span><span class="p">();</span>
-</span><span class='line'>    <span class="c1">// ... continue as usual</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="nt">&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.
-I created <a href="http://jsbin.com/fejija/1/edit?js,output">a working clickable demo</a> to illustrate it even more.</p>
-
-<p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
-and <code>updateTimeUI()</code> is its update function.</p>
-
-<p>Now we can build from that. Undo is just time-travel for user not developer, by saving history to local storage we can preserve it on page reload, by catching errors and sending them along with serialized history to our bug tracker we can automatically reproduce errors our users face.</p>
-
-<p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p>
-
-<h2>Pure Function</h2>
-
-<p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p>
-
-<p>First we need a slightly more intricate example:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;count&quot;</span><span class="nt">&gt;</span>2<span class="nt">&lt;/span&gt;</span>
-</span><span class='line'><span class="nt">&lt;ul&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;li&gt;</span>hi<span class="nt">&lt;/li&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;li&gt;</span>there<span class="nt">&lt;/li&gt;</span>
-</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">id=</span><span class="s">&quot;add&quot;</span><span class="nt">&gt;&lt;/button&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;script&gt;</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">state</span> <span class="o">=</span> <span class="p">{</span><span class="nx">items</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;hi&#39;</span><span class="p">,</span> <span class="s1">&#39;there&#39;</span><span class="p">]}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#count&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-</span><span class='line'>    <span class="c1">// Compare ul.childNodes to state.items and make updates</span>
-</span><span class='line'>    <span class="c1">// ...</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;ul&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="s1">&#39;li&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">index</span><span class="p">(),</span> <span class="mi">1</span><span class="p">);</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#add&#39;</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">getNextString</span><span class="p">());</span>
-</span><span class='line'>    <span class="nx">updateUI</span><span class="p">();</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'><span class="nt">&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Several things to see here:</p>
-
-<ul>
-<li>there is a duplication between prerendered html and initial state,</li>
-<li>update became complex &lsquo;cause we need to compare data structure to DOM.</li>
-</ul>
-
-
-<p>There is a simpler way to do this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;ui&quot;</span><span class="nt">&gt;&lt;/div&gt;</span>
-</span><span class='line'>...
-</span><span class='line'>
-</span><span class='line'><span class="nt">&lt;script&gt;</span>
-</span><span class='line'><span class="p">...</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">span</span> <span class="o">=</span> <span class="s1">&#39;&lt;span id=&quot;count&quot;&gt;&#39;</span> <span class="o">+</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span> <span class="s1">&#39;&lt;/span&gt;&#39;</span><span class="p">;</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">lis</span> <span class="o">=</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="k">return</span> <span class="s1">&#39;&lt;li&gt;&#39;</span> <span class="o">+</span> <span class="nx">item</span> <span class="o">+</span> <span class="s1">&#39;&lt;/li&gt;&#39;</span><span class="p">;</span>
-</span><span class='line'>    <span class="p">});</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">span</span> <span class="o">+</span> <span class="s1">&#39;&lt;ul&gt;&#39;</span> <span class="o">+</span> <span class="nx">lis</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&lt;/ul&gt;&#39;</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#ui&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">));</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="p">...</span>
-</span><span class='line'><span class="nt">&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here <code>render()</code> is just pure function from app state to html. And we want it to be pure so that
-state will be the single thing defining UI.</p>
-
-<p>In a way UI was a function of state even in our bastardized code, it just wasn&rsquo;t clearly obvious
-&lsquo;cause we updated UI, not calculated and rebuilt it from scratch each time. There also was a possibility to screw up and write <code>updateUI()</code> so that UI state is defined both by its own previous state and application state, thus using render is not really an optimization, but a simplification and a guard.</p>
-
-<p>But anyway that&rsquo;s it on pure functions.</p>
-
-<h2>Virtual DOM</h2>
-
-<p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization &mdash; virtual DOM:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">root</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;ui&#39;</span><span class="p">);</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">prevState</span> <span class="o">=</span> <span class="nx">state</span><span class="p">,</span> <span class="nx">prevTree</span> <span class="o">=</span> <span class="p">[];</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">// Virtual DOM is really just a tree of JavaScript objects or arrays</span>
-</span><span class='line'>    <span class="k">return</span> <span class="p">[</span>
-</span><span class='line'>        <span class="p">[</span><span class="s1">&#39;span&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">id</span><span class="o">:</span> <span class="s1">&#39;count&#39;</span><span class="p">},</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">],</span>
-</span><span class='line'>        <span class="p">[</span><span class="s1">&#39;ul&#39;</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>            <span class="k">return</span>  <span class="p">[</span><span class="s1">&#39;li&#39;</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">item</span><span class="p">]</span>
-</span><span class='line'>        <span class="p">})]</span>
-</span><span class='line'>    <span class="p">]</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">function</span> <span class="nx">updateUI</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">vTree</span> <span class="o">=</span> <span class="nx">render</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">diff</span> <span class="o">=</span> <span class="nx">vDiff</span><span class="p">(</span><span class="nx">prevTree</span><span class="p">,</span> <span class="nx">vTree</span><span class="p">);</span> <span class="c1">// Just a diff on data structures, haha :)</span>
-</span><span class='line'>    <span class="nx">vApply</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span> <span class="nx">diff</span><span class="p">)</span>                 <span class="c1">// Apply series of patches to real DOM</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nx">prevState</span> <span class="o">=</span> <span class="nx">deepcopy</span><span class="p">(</span><span class="nx">state</span><span class="p">);</span>
-</span><span class='line'>    <span class="nx">prevTree</span> <span class="o">=</span> <span class="nx">vTree</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If any of this diffing/patching sounds complicated to you then you shouldn&rsquo;t worry React or <a href="https://github.com/Matt-Esch/virtual-dom">standalone virtual DOM implementation</a> got you covered. But that&rsquo;s really not that complicated. If you know how to write diffing algorithm then you can surely implement this yourself.</p>
-
-<p>Note that what we just did is a premature optimization. Current simple example will do just fine
+Overall we got from potential <code>O(N*M)</code> complexity down to <code>O(N+M)</code>, not bad for a simple trick.</p><p>Now it looks like we got something. But what about all those magical powers?
+Ah, we almost got them too.</p><h2 id=magical-powers>Magical Powers<a hidden class=anchor aria-hidden=true href=#magical-powers>#</a></h2><p>Basically all magical powers mentioned come from an ability to write:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=c1>// save
+</span></span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>cannedState</span> <span class=o>=</span> <span class=nx>deepcopy</span><span class=p>(</span><span class=nx>state</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// load
+</span></span></span><span class=line><span class=cl><span class=nx>state</span> <span class=o>=</span> <span class=nx>cannedState</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=nx>updateUI</span><span class=p>();</span>
+</span></span></code></pre></td></tr></table></div></div><p>This is facilitated by 2 facts:</p><ul><li>we have a single explicit state,</li><li>we can update UI to comply to arbitrary state.</li></ul><p>That&rsquo;s it. We can write serialized canned state to local storage, send it to server, manage a history of canned states. And this will give us page reload protection, persistence and undo/time-travel respectively.</p><p>Confused? Let&rsquo;s write some code. That&rsquo;s how we protect from accidental page reload:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Save latest state to local storage
+</span></span></span><span class=line><span class=cl>    <span class=nx>LocalStorage</span><span class=p>.</span><span class=nx>set</span><span class=p>(</span><span class=s1>&#39;state&#39;</span><span class=p>,</span> <span class=nx>JSON</span><span class=p>.</span><span class=nx>stringify</span><span class=p>(</span><span class=nx>state</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ... continue as usual
+</span></span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// Load saved state from local storage on page load
+</span></span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>state</span> <span class=o>=</span> <span class=nx>JSON</span><span class=p>.</span><span class=nx>parse</span><span class=p>(</span><span class=nx>LocalStorage</span><span class=p>.</span><span class=nx>get</span><span class=p>(</span><span class=s1>&#39;state&#39;</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>});</span>
+</span></span></code></pre></td></tr></table></div></div><p>And that&rsquo;s how we get time-travel debugging:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>span</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;time-pos&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>span</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>button</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;back&#34;</span><span class=p>&gt;</span>Back<span class=p>&lt;/</span><span class=nt>button</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>button</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;next&#34;</span><span class=p>&gt;</span>Next<span class=p>&lt;/</span><span class=nt>button</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>time</span> <span class=o>=</span> <span class=p>{</span><span class=nx>history</span><span class=o>:</span> <span class=p>[],</span> <span class=nx>pos</span><span class=o>:</span> <span class=mi>0</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateTimeUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#time-pos&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>(</span><span class=s1>&#39;Position &#39;</span> <span class=o>+</span> <span class=nx>time</span><span class=p>.</span><span class=nx>pos</span> <span class=o>+</span> <span class=s1>&#39; of &#39;</span> <span class=o>+</span> <span class=nx>time</span><span class=p>.</span><span class=nx>history</span><span class=p>.</span><span class=nx>length</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>saveState</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>time</span><span class=p>.</span><span class=nx>history</span><span class=p>.</span><span class=nx>push</span><span class=p>(</span><span class=nx>deepcopy</span><span class=p>(</span><span class=nx>state</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=nx>time</span><span class=p>.</span><span class=nx>pos</span><span class=o>++</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateTimeUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#back&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Move history pointer
+</span></span></span><span class=line><span class=cl>    <span class=nx>time</span><span class=p>.</span><span class=nx>pos</span><span class=o>--</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateTimeUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Load historic state
+</span></span></span><span class=line><span class=cl>    <span class=nx>state</span> <span class=o>=</span> <span class=nx>deepcopy</span><span class=p>(</span><span class=nx>time</span><span class=p>.</span><span class=nx>history</span><span class=p>[</span><span class=nx>time</span><span class=p>.</span><span class=nx>pos</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#next&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>time</span><span class=p>.</span><span class=nx>pos</span><span class=o>++</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ... same
+</span></span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// ...
+</span></span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Save state to history on every change
+</span></span></span><span class=line><span class=cl>    <span class=nx>saveState</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// ... continue as usual
+</span></span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>On each change of state we push its deep copy to history list and later we can restore that state by simply copying it from history and updating UI to fit it.
+I created <a href=http://jsbin.com/fejija/1/edit?js,output>a working clickable demo</a> to illustrate it even more.</p><p>Note also how we use the same pattern here? <code>time</code> is the state of time-travel sub-application
+and <code>updateTimeUI()</code> is its update function.</p><p>Now we can build from that. Undo is just time-travel for user not developer, by saving history to local storage we can preserve it on page reload, by catching errors and sending them along with serialized history to our bug tracker we can automatically reproduce errors our users face.</p><p>I should note that React doesn&rsquo;t have all these magical powers, at least out of the box, since it separates app state into pieces and hide it in components.</p><h2 id=pure-function>Pure Function<a hidden class=anchor aria-hidden=true href=#pure-function>#</a></h2><p>Why do we need pure functions, immutable data and virtual DOM? These are optimizations and to some extent simplifications, not core to idea. Still let&rsquo;s us follow the way that led to them.</p><p>First we need a slightly more intricate example:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>span</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;count&#34;</span><span class=p>&gt;</span>2<span class=p>&lt;/</span><span class=nt>span</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>ul</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>li</span><span class=p>&gt;</span>hi<span class=p>&lt;/</span><span class=nt>li</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>li</span><span class=p>&gt;</span>there<span class=p>&lt;/</span><span class=nt>li</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>ul</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>button</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;add&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>button</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>state</span> <span class=o>=</span> <span class=p>{</span><span class=nx>items</span><span class=o>:</span> <span class=p>[</span><span class=s1>&#39;hi&#39;</span><span class=p>,</span> <span class=s1>&#39;there&#39;</span><span class=p>]}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#count&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>(</span><span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>length</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Compare ul.childNodes to state.items and make updates
+</span></span></span><span class=line><span class=cl>    <span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;ul&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=s1>&#39;li&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>splice</span><span class=p>(</span><span class=nx>$</span><span class=p>(</span><span class=k>this</span><span class=p>).</span><span class=nx>index</span><span class=p>(),</span> <span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#add&#39;</span><span class=p>).</span><span class=nx>on</span><span class=p>(</span><span class=s1>&#39;click&#39;</span><span class=p>,</span> <span class=kd>function</span> <span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>push</span><span class=p>(</span><span class=nx>getNextString</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>    <span class=nx>updateUI</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>Several things to see here:</p><ul><li>there is a duplication between prerendered html and initial state,</li><li>update became complex &lsquo;cause we need to compare data structure to DOM.</li></ul><p>There is a simpler way to do this:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>div</span> <span class=na>id</span><span class=o>=</span><span class=s>&#34;ui&#34;</span><span class=p>&gt;&lt;/</span><span class=nt>div</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>...
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>...</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>render</span><span class=p>(</span><span class=nx>state</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>span</span> <span class=o>=</span> <span class=s1>&#39;&lt;span id=&#34;count&#34;&gt;&#39;</span> <span class=o>+</span> <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>length</span> <span class=o>+</span> <span class=s1>&#39;&lt;/span&gt;&#39;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>lis</span> <span class=o>=</span> <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>map</span><span class=p>(</span><span class=kd>function</span> <span class=p>(</span><span class=nx>item</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=s1>&#39;&lt;li&gt;&#39;</span> <span class=o>+</span> <span class=nx>item</span> <span class=o>+</span> <span class=s1>&#39;&lt;/li&gt;&#39;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>});</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nx>span</span> <span class=o>+</span> <span class=s1>&#39;&lt;ul&gt;&#39;</span> <span class=o>+</span> <span class=nx>lis</span><span class=p>.</span><span class=nx>join</span><span class=p>(</span><span class=s1>&#39;&#39;</span><span class=p>)</span> <span class=o>+</span> <span class=s1>&#39;&lt;/ul&gt;&#39;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>$</span><span class=p>(</span><span class=s1>&#39;#ui&#39;</span><span class=p>).</span><span class=nx>html</span><span class=p>(</span><span class=nx>render</span><span class=p>(</span><span class=nx>state</span><span class=p>));</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>...</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>script</span><span class=p>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>Here <code>render()</code> is just pure function from app state to html. And we want it to be pure so that
+state will be the single thing defining UI.</p><p>In a way UI was a function of state even in our bastardized code, it just wasn&rsquo;t clearly obvious
+&lsquo;cause we updated UI, not calculated and rebuilt it from scratch each time. There also was a possibility to screw up and write <code>updateUI()</code> so that UI state is defined both by its own previous state and application state, thus using render is not really an optimization, but a simplification and a guard.</p><p>But anyway that&rsquo;s it on pure functions.</p><h2 id=virtual-dom>Virtual DOM<a hidden class=anchor aria-hidden=true href=#virtual-dom>#</a></h2><p>Now look at those <code>render()</code> / <code>$().html()</code> pair, they build entire representation from scratch on each event, probably on every key press. This sounds slow, so we use another optimization — virtual DOM:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>var</span> <span class=nx>root</span> <span class=o>=</span> <span class=nb>document</span><span class=p>.</span><span class=nx>getElementById</span><span class=p>(</span><span class=s1>&#39;ui&#39;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>prevState</span> <span class=o>=</span> <span class=nx>state</span><span class=p>,</span> <span class=nx>prevTree</span> <span class=o>=</span> <span class=p>[];</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>render</span><span class=p>(</span><span class=nx>state</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// Virtual DOM is really just a tree of JavaScript objects or arrays
+</span></span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>[</span>
+</span></span><span class=line><span class=cl>        <span class=p>[</span><span class=s1>&#39;span&#39;</span><span class=p>,</span> <span class=p>{</span><span class=nx>id</span><span class=o>:</span> <span class=s1>&#39;count&#39;</span><span class=p>},</span> <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>length</span><span class=p>],</span>
+</span></span><span class=line><span class=cl>        <span class=p>[</span><span class=s1>&#39;ul&#39;</span><span class=p>,</span> <span class=p>{},</span> <span class=nx>state</span><span class=p>.</span><span class=nx>items</span><span class=p>.</span><span class=nx>map</span><span class=p>(</span><span class=kd>function</span> <span class=p>(</span><span class=nx>item</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span>  <span class=p>[</span><span class=s1>&#39;li&#39;</span><span class=p>,</span> <span class=p>{},</span> <span class=nx>item</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=p>})]</span>
+</span></span><span class=line><span class=cl>    <span class=p>]</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>function</span> <span class=nx>updateUI</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>vTree</span> <span class=o>=</span> <span class=nx>render</span><span class=p>(</span><span class=nx>state</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>diff</span> <span class=o>=</span> <span class=nx>vDiff</span><span class=p>(</span><span class=nx>prevTree</span><span class=p>,</span> <span class=nx>vTree</span><span class=p>);</span> <span class=c1>// Just a diff on data structures, haha :)
+</span></span></span><span class=line><span class=cl>    <span class=nx>vApply</span><span class=p>(</span><span class=nx>root</span><span class=p>,</span> <span class=nx>diff</span><span class=p>)</span>                 <span class=c1>// Apply series of patches to real DOM
+</span></span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nx>prevState</span> <span class=o>=</span> <span class=nx>deepcopy</span><span class=p>(</span><span class=nx>state</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nx>prevTree</span> <span class=o>=</span> <span class=nx>vTree</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>If any of this diffing/patching sounds complicated to you then you shouldn&rsquo;t worry React or <a href=https://github.com/Matt-Esch/virtual-dom>standalone virtual DOM implementation</a> got you covered. But that&rsquo;s really not that complicated. If you know how to write diffing algorithm then you can surely implement this yourself.</p><p>Note that what we just did is a premature optimization. Current simple example will do just fine
 with naive render-to-string implementation above. Surprisingly, most of SPAs out there will do just
-fine as well, browsers are hell fast these days. I want to stress this once more &ndash; for an average app you can skip React or other virtual DOM at start and only go for it once it gets too slow (or never).</p>
-
-<p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href="http://vdom-benchmark.github.io/vdom-benchmark/">one of the slowest ones</a> across the block.</p>
-
-<h2>Immutability</h2>
-
-<p>Noticed all that <code>deepcopy()</code> calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.</p>
-
-<p>Maybe it is still not clear enough, so I&rsquo;ll show you. That&rsquo;s how we make immutable objects in JS:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">object</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
-</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;hi&#39;</span><span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Now instead of object.a.y = 3 we do</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">object2</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="nx">object</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">3</span><span class="p">},</span>
-</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="nx">object</span><span class="p">.</span><span class="nx">b</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Look how we reuse <code>object.a.x</code> and <code>object.b</code>. This not only saves us from copying, but effectively makes diffs way faster: before diffing <code>object.b</code> and <code>object2.b</code> we just check if they are the same object, which is referential equality, and done &mdash; diff is empty, no need to go all the way down.</p>
-
-<p>One thing to add is this naive approach to immutable collections is not only cumbersome, but also ineffective. Suppose you have an object with lots of keys and a value of one of them changes,
-you now need to create a new object with all the same keys (you can still reuse values). You probably don&rsquo;t use such objects, but what about array? Let&rsquo;s see how that looks like:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">prev</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="p">...,</span> <span class="s1">&#39;z&#39;</span><span class="p">];</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">next</span> <span class="o">=</span> <span class="nx">prev</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">n</span><span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="nx">concat</span><span class="p">([</span><span class="nx">newValue</span><span class="p">]).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">prev</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">n</span><span class="p">));</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So we need to copy the whole thing. Here is a better way to implement immutable sequences:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">prev</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>    <span class="s1">&#39;0-3&#39;</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>        <span class="s1">&#39;0-1&#39;</span><span class="o">:</span> <span class="p">{</span><span class="mi">0</span><span class="o">:</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="o">:</span> <span class="s1">&#39;b&#39;</span><span class="p">},</span>
-</span><span class='line'>        <span class="s1">&#39;2-3&#39;</span><span class="o">:</span> <span class="p">{...},</span>
-</span><span class='line'>    <span class="p">},</span>
-</span><span class='line'>    <span class="s1">&#39;4-7&#39;</span><span class="o">:</span> <span class="p">{...}</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">next</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>    <span class="s1">&#39;0-3&#39;</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>        <span class="s1">&#39;0-1&#39;</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;0-3&#39;</span><span class="p">][</span><span class="s1">&#39;0-1&#39;</span><span class="p">],</span>
-</span><span class='line'>        <span class="s1">&#39;2-3&#39;</span><span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>            <span class="mi">2</span><span class="o">:</span> <span class="s1">&#39;hey&#39;</span><span class="p">,</span>
-</span><span class='line'>            <span class="mi">3</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;0-3&#39;</span><span class="p">][</span><span class="s1">&#39;2-3&#39;</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>    <span class="p">},</span>
-</span><span class='line'>    <span class="s1">&#39;4-7&#39;</span><span class="o">:</span> <span class="nx">prev</span><span class="p">[</span><span class="s1">&#39;4-7&#39;</span><span class="p">]</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We can see that we only create <code>log N</code> new objects here and the rest is reused, so even less copying and faster diffs. You also don&rsquo;t need to really deal with all this trees. There are great ready to use implementations out there. E.g. this is how our first example looks with a help of
-<a href="https://github.com/facebook/immutable-js">Immutable.js</a>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">var</span> <span class="nx">object</span> <span class="o">=</span> <span class="nx">Immutable</span><span class="p">.</span><span class="nx">fromJS</span><span class="p">({</span>
-</span><span class='line'>    <span class="nx">a</span><span class="o">:</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
-</span><span class='line'>    <span class="nx">b</span><span class="o">:</span> <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;hi&#39;</span><span class="p">}</span>
-</span><span class='line'><span class="p">})</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">var</span> <span class="nx">object2</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">setIn</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// object remains intact</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at <a href="https://github.com/swannodette/mori">mori</a> &mdash; a set of immutable collections extracted from ClojureScript.</p>
-
-<p>Note that React actually uses naive immutable by convention collections.</p>
-
-<h2>Wrap-up</h2>
-
-<p>It may look from my notes that React is not a good tool, but it is actually very useful one.
-It may not have magical powers and top speed, but it got components and is still pretty fast. It also offers ecosystem and community.</p>
-
-<p>And there is one more way to look at it. React made a significant push to front-end development in an interesting direction, including all those virtual DOMs and immutable collection libraries.</p>
-
-<p>Anyway, now that you know all this, you can judge better on what to use and how to structure your code.</p>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
-  
-
-<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-03-08T20:08:00+07:00" pubdate data-updated="true">Mar 8<span>th</span>, 2015</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/fp/'>FP</a>, <a class='category' href='/blog/categories/ui/'>UI</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/" data-via="hackflow" data-counturl="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-  <div style="clear: both; margin-bottom: 0.6em"></div>
-</div>
-<style type="text/css">
-  .sharing * {float: left !important;}
-</style>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2014/09/07/growing-over-backward-incompatibility/" title="Previous Post: Growing Over Backward Incompatibility">&laquo; Growing Over Backward Incompatibility</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2015/03/29/metaprogramming-beyond-decency/" title="Next Post: Metaprogramming Beyond Decency: Part 1">Metaprogramming Beyond Decency: Part 1 &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments<small style="font-size: 0.65em">, also at
-         <a href="https://news.ycombinator.com/item?id=9165462">Hacker News</a>
-        and
-        <a href="http://www.reddit.com/r/programming/comments/2yc1cs/boiling_react_down_to_few_lines_in_jquery/">Reddit</a>
-    </small>
-    </h1>
-
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>About Me</h1>
-  <p>
-    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
-    I write in python, js and occasionally english.
-    I also borrow ideas from a variety of languages.
-    You might want to <a href="https://twitter.com/hackflow" target="_blank">follow me</a>
-    or look up <a href="http://github.com/Suor">my Github profile</a>.
-  </p>
-</section>
-<section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-  </ul>
-</section>
-
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating...</li>
-  </ul>
-  
-  <a href="https://github.com/Suor">@Suor</a> on GitHub
-  
-  <script type="text/javascript">
-    $(document).ready(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'Suor',
-            count: 5,
-            skip_forks: true,
-            skip: 'Suor.github.io,sublime-text-2-User',
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
-
-
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2023 - Alexander Schepanovski -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'hackflow';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/';
-        var disqus_url = 'http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = '//platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+fine as well, browsers are hell fast these days. I want to stress this once more - for an average app you can skip React or other virtual DOM at start and only go for it once it gets too slow (or never).</p><p>Another stone in Reacts direction: it&rsquo;s virtual DOM is <a href=http://vdom-benchmark.github.io/vdom-benchmark/>one of the slowest ones</a> across the block.</p><h2 id=immutability>Immutability<a hidden class=anchor aria-hidden=true href=#immutability>#</a></h2><p>Noticed all that <code>deepcopy()</code> calls lying around? This looks like a waste (it really is cheap, but bear with me). The idea behind immutable data structures is to build new state based on previous one instead of copying and then mutating it.</p><p>Maybe it is still not clear enough, so I&rsquo;ll show you. That&rsquo;s how we make immutable objects in JS:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>var</span> <span class=nx>object</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>a</span><span class=o>:</span> <span class=p>{</span><span class=nx>x</span><span class=o>:</span> <span class=mi>1</span><span class=p>,</span> <span class=nx>y</span><span class=o>:</span> <span class=mi>2</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=nx>b</span><span class=o>:</span> <span class=p>{</span><span class=nx>text</span><span class=o>:</span> <span class=s1>&#39;hi&#39;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// Now instead of object.a.y = 3 we do
+</span></span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>object2</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>a</span><span class=o>:</span> <span class=p>{</span><span class=nx>x</span><span class=o>:</span> <span class=nx>object</span><span class=p>.</span><span class=nx>a</span><span class=p>.</span><span class=nx>x</span><span class=p>,</span> <span class=nx>y</span><span class=o>:</span> <span class=mi>3</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=nx>b</span><span class=o>:</span> <span class=nx>object</span><span class=p>.</span><span class=nx>b</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Look how we reuse <code>object.a.x</code> and <code>object.b</code>. This not only saves us from copying, but effectively makes diffs way faster: before diffing <code>object.b</code> and <code>object2.b</code> we just check if they are the same object, which is referential equality, and done — diff is empty, no need to go all the way down.</p><p>One thing to add is this naive approach to immutable collections is not only cumbersome, but also ineffective. Suppose you have an object with lots of keys and a value of one of them changes,
+you now need to create a new object with all the same keys (you can still reuse values). You probably don&rsquo;t use such objects, but what about array? Let&rsquo;s see how that looks like:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>var</span> <span class=nx>prev</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;a&#39;</span><span class=p>,</span> <span class=s1>&#39;b&#39;</span><span class=p>,</span> <span class=s1>&#39;c&#39;</span><span class=p>,</span> <span class=p>...,</span> <span class=s1>&#39;z&#39;</span><span class=p>];</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>next</span> <span class=o>=</span> <span class=nx>prev</span><span class=p>.</span><span class=nx>slice</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=nx>n</span><span class=o>-</span><span class=mi>1</span><span class=p>).</span><span class=nx>concat</span><span class=p>([</span><span class=nx>newValue</span><span class=p>]).</span><span class=nx>concat</span><span class=p>(</span><span class=nx>prev</span><span class=p>.</span><span class=nx>slice</span><span class=p>(</span><span class=nx>n</span><span class=p>));</span>
+</span></span></code></pre></td></tr></table></div></div><p>So we need to copy the whole thing. Here is a better way to implement immutable sequences:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>var</span> <span class=nx>prev</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=s1>&#39;0-3&#39;</span><span class=o>:</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s1>&#39;0-1&#39;</span><span class=o>:</span> <span class=p>{</span><span class=mi>0</span><span class=o>:</span> <span class=s1>&#39;a&#39;</span><span class=p>,</span> <span class=mi>1</span><span class=o>:</span> <span class=s1>&#39;b&#39;</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>        <span class=s1>&#39;2-3&#39;</span><span class=o>:</span> <span class=p>{...},</span>
+</span></span><span class=line><span class=cl>    <span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=s1>&#39;4-7&#39;</span><span class=o>:</span> <span class=p>{...}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>next</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=s1>&#39;0-3&#39;</span><span class=o>:</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s1>&#39;0-1&#39;</span><span class=o>:</span> <span class=nx>prev</span><span class=p>[</span><span class=s1>&#39;0-3&#39;</span><span class=p>][</span><span class=s1>&#39;0-1&#39;</span><span class=p>],</span>
+</span></span><span class=line><span class=cl>        <span class=s1>&#39;2-3&#39;</span><span class=o>:</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=mi>2</span><span class=o>:</span> <span class=s1>&#39;hey&#39;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>            <span class=mi>3</span><span class=o>:</span> <span class=nx>prev</span><span class=p>[</span><span class=s1>&#39;0-3&#39;</span><span class=p>][</span><span class=s1>&#39;2-3&#39;</span><span class=p>][</span><span class=mi>3</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=s1>&#39;4-7&#39;</span><span class=o>:</span> <span class=nx>prev</span><span class=p>[</span><span class=s1>&#39;4-7&#39;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>We can see that we only create <code>log N</code> new objects here and the rest is reused, so even less copying and faster diffs. You also don&rsquo;t need to really deal with all this trees. There are great ready to use implementations out there. E.g. this is how our first example looks with a help of
+<a href=https://github.com/facebook/immutable-js>Immutable.js</a>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>var</span> <span class=nx>object</span> <span class=o>=</span> <span class=nx>Immutable</span><span class=p>.</span><span class=nx>fromJS</span><span class=p>({</span>
+</span></span><span class=line><span class=cl>    <span class=nx>a</span><span class=o>:</span> <span class=p>{</span><span class=nx>x</span><span class=o>:</span> <span class=mi>1</span><span class=p>,</span> <span class=nx>y</span><span class=o>:</span> <span class=mi>2</span><span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=nx>b</span><span class=o>:</span> <span class=p>{</span><span class=nx>text</span><span class=o>:</span> <span class=s1>&#39;hi&#39;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>})</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>var</span> <span class=nx>object2</span> <span class=o>=</span> <span class=nx>object</span><span class=p>.</span><span class=nx>setIn</span><span class=p>([</span><span class=s1>&#39;a&#39;</span><span class=p>,</span> <span class=s1>&#39;y&#39;</span><span class=p>],</span> <span class=mi>3</span><span class=p>);</span> <span class=c1>// object remains intact
+</span></span></span></code></pre></td></tr></table></div></div><p>It gives you nice API, efficiency and protection against accidentally writing to supposed to be immutable collection. Also take a look at <a href=https://github.com/swannodette/mori>mori</a> — a set of immutable collections extracted from ClojureScript.</p><p>Note that React actually uses naive immutable by convention collections.</p><h2 id=wrap-up>Wrap-up<a hidden class=anchor aria-hidden=true href=#wrap-up>#</a></h2><p>It may look from my notes that React is not a good tool, but it is actually very useful one.
+It may not have magical powers and top speed, but it got components and is still pretty fast. It also offers ecosystem and community.</p><p>And there is one more way to look at it. React made a significant push to front-end development in an interesting direction, including all those virtual DOMs and immutable collection libraries.</p><p>Anyway, now that you know all this, you can judge better on what to use and how to structure your code.</p></div><footer class=post-footer><ul class=post-tags></ul><nav class=paginav><a class=prev href=https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/><span class=title>« Prev</span>
+<span>Metaprogramming Beyond Decency: Part 1</span>
+</a><a class=next href=https://blog.hackflow.ru/blog/2014/09/07/growing-over-backward-incompatibility/><span class=title>Next »</span>
+<span>Growing Over Backward Incompatibility</span></a></nav></footer><section class=comments-section><h2>Comments
+<span class=comments-also-at>also at <a href="https://news.ycombinator.com/item?id=9165462" target=_blank rel=noopener>Hacker News</a> and <a href=http://www.reddit.com/r/programming/comments/2yc1cs/boiling_react_down_to_few_lines_in_jquery/ target=_blank rel=noopener>Reddit</a></span></h2><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/",this.page.identifier="http://suor.github.io/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/"};(function(){var e=document,t=e.createElement("script");t.src="https://hackflow.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script></section></article></main><footer class=footer><span>&copy; 2026 <a href=https://blog.hackflow.ru/>Hackflow</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top id=top-link class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey=g><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var toplink=document.getElementById("top-link");window.onscroll=function(){const e=window.innerHeight;document.body.scrollTop>e||document.documentElement.scrollTop>e?toplink.classList.remove("hidden"):toplink.classList.add("hidden")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

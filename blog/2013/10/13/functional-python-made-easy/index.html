@@ -1,642 +1,208 @@
-
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Functional Python Made Easy - Hackflow</title>
-  <meta name="author" content="Alexander Schepanovski">
-
-  
-  <meta name="description" content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://suor.github.io/blog/2013/10/13/functional-python-made-easy">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-    
-        <meta property="twitter:card" content="summary">
-    
-    <meta property="twitter:site" content="hackflow">
-    <meta property="twitter:url" content="http://suor.github.io/blog/2013/10/13/functional-python-made-easy">
-    <meta property="twitter:title" content="Functional Python Made Easy">
-    <meta property="twitter:description" content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm &hellip;">
-
-
-  
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-37289902-3', 'auto');
-  ga('send', 'pageview');
-</script>
-
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Hackflow</a></h1>
-  
-    <h2>Sharing my mindset</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:suor.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
-    
-      <h1 class="entry-title">Functional Python Made Easy</h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-13T19:22:00+08:00" pubdate data-updated="true">Oct 13<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p>
-
-<p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href="https://github.com/Suor/funcy">funcy</a>.</p>
-
-<!--more-->
-
-
-<p>Funcy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they&rsquo;ll just save your time, still good.</p>
-
-<p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p>
-
-<h2>Everyday data manipulation</h2>
-
-<p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">concat</span>
-</span><span class='line'><span class="nb">reduce</span><span class="p">(</span><span class="n">concat</span><span class="p">,</span> <span class="n">list_of_lists</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># or that:</span>
-</span><span class='line'><span class="nb">sum</span><span class="p">(</span><span class="n">list_of_lists</span><span class="p">,</span> <span class="p">[])</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># or that:</span>
-</span><span class='line'><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-</span><span class='line'><span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">list_of_lists</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">cat</span>
-</span><span class='line'><span class="n">cat</span><span class="p">(</span><span class="n">list_of_lists</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>cat</code> joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to <code>cat</code> results of <code>map</code> call. For example, this</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">mapcat</span>
-</span><span class='line'><span class="n">mapcat</span><span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">splitlines</span><span class="p">,</span> <span class="n">bunch_of_texts</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>will result in flat list of all lines of all the texts. There are lazy versions of both functions: <code>icat</code> and <code>imapcat</code>.</p>
-
-<p><em>2. Merge some dicts. There are several clumsy ways in python:</em></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d1</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>  <span class="c"># Changes d1</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="o">**</span><span class="n">d2</span><span class="p">)</span> <span class="c"># Really awkward for more than 2 dicts</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-</span><span class='line'><span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I always wondered why one can&rsquo;t just add them up, but that&rsquo;s what we have. Anyway, this is also easy in funcy:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">merge</span><span class="p">,</span> <span class="n">join</span>
-</span><span class='line'><span class="n">merge</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
-</span><span class='line'><span class="n">merge</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="n">d3</span><span class="p">)</span>
-</span><span class='line'><span class="n">join</span><span class="p">(</span><span class="n">sequence_of_dicts</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.</p>
-
-<p><em>3. Capturing something with regular expression. A usual way:</em></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">some_re</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-</span><span class='line'><span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">actual_match</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="c"># or m.group(i) or m.groups()</span>
-</span><span class='line'>    <span class="o">...</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Much more straightforward with funcy:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">re_find</span>
-</span><span class='line'><span class="n">actual_match</span> <span class="o">=</span> <span class="n">re_find</span><span class="p">(</span><span class="n">some_re</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Still not impressed? Then look here:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="n">re_finder</span><span class="p">,</span> <span class="n">re_all</span><span class="p">,</span> <span class="n">partial</span><span class="p">,</span> <span class="n">mapcat</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Get a number out of every word</span>
-</span><span class='line'><span class="nb">map</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">words</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Parse simple ini file into dict</span>
-</span><span class='line'><span class="c"># (re_finder returns tuples when there is more that one capture in regexp)</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">imap</span><span class="p">(</span><span class="n">re_finder</span><span class="p">(</span><span class="s">r&#39;(\w+)=(\w+)&#39;</span><span class="p">),</span> <span class="n">ini</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Find all numbers in all the strings and return as flat list</span>
-</span><span class='line'><span class="n">mapcat</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">re_all</span><span class="p">,</span> <span class="s">r&#39;\d+&#39;</span><span class="p">),</span> <span class="n">bunch_of_strings</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>About imports and practicality</h2>
-
-<p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p>
-
-<p>This also enables you to write:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">funcy</span> <span class="kn">import</span> <span class="o">*</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p>
-
-<h2>A bit more functional things</h2>
-
-<p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Choose all private attributes of an object</span>
-</span><span class='line'><span class="n">is_private</span> <span class="o">=</span> <span class="n">re_tester</span><span class="p">(</span><span class="s">&#39;^_&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nb">filter</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="nb">dir</span><span class="p">(</span><span class="n">some_obj</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We can create a bunch of predicates and filter with them:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">is_special</span> <span class="o">=</span> <span class="n">re_tester</span><span class="p">(</span><span class="s">&#39;^__.+__$&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="n">is_const</span> <span class="o">=</span> <span class="n">re_tester</span><span class="p">(</span><span class="s">&#39;^[A-Z_]+$&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nb">filter</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But what if we want to apply several of them at once or use some predicate logic. That&rsquo;s easy:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">is_public</span> <span class="o">=</span> <span class="n">complement</span><span class="p">(</span><span class="n">is_private</span><span class="p">)</span>
-</span><span class='line'><span class="n">is_private_const</span> <span class="o">=</span> <span class="n">all_fn</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="n">is_const</span><span class="p">)</span>
-</span><span class='line'><span class="n">either_const_or_public</span> <span class="o">=</span> <span class="n">any_fn</span><span class="p">(</span><span class="n">is_const</span><span class="p">,</span> <span class="n">is_public</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Or you can use convenience function complementary to <code>filter</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">remove</span><span class="p">(</span><span class="n">is_private</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="c"># same as filter(is_public)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p>
-
-<h2>Collections</h2>
-
-<p>Aside from <a href="http://funcy.readthedocs.org/en/latest/seqs.html">sequence utilities</a>, funcy provides lots of ones to work with collections.
-And the two fundamental are <code>walk</code> and <code>select</code>, a versions of <code>map</code> and <code>filter</code> preserving collection type:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">})</span> <span class="c"># -&gt; {2, 3, 4}</span>
-</span><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="c"># -&gt; (2, 3, 4)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Mapping function receives pairs when walking dicts</span>
-</span><span class='line'><span class="n">swap</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-</span><span class='line'><span class="n">walk</span><span class="p">(</span><span class="n">swap</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span>
-</span><span class='line'><span class="c"># -&gt; {10: 1, 20: 2}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">select</span><span class="p">(</span><span class="n">even</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">})</span>
-</span><span class='line'><span class="c"># -&gt; {2, 10, 20}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">select</span><span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="n">k</span> <span class="o">==</span> <span class="n">v</span><span class="p">,</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
-</span><span class='line'><span class="c"># -&gt; {1: 1}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This pair of functions is backed up with a set of ones to work with dicts: <code>walk_keys</code>, <code>walk_values</code>, <code>select_keys</code>, <code>select_values</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Get a dict of public attributes of an instance</span>
-</span><span class='line'><span class="n">select_keys</span><span class="p">(</span><span class="n">is_public</span><span class="p">,</span> <span class="n">instance</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Clean dict of falsy values</span>
-</span><span class='line'><span class="n">select_values</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">some_dict</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The last example in this section will include several new functions at once: <code>silent</code> &ndash; catches all exceptions in passed function, returning <code>None</code>; <code>compact</code> &ndash; removes falsy values from collection; <code>walk_values</code> &ndash; maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">compact</span><span class="p">(</span><span class="n">walk_values</span><span class="p">(</span><span class="n">silent</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">request_dict</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Back to data manipulation</h2>
-
-<p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># split absolute and relative urls</span>
-</span><span class='line'><span class="n">absolute</span><span class="p">,</span> <span class="n">relative</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">re_tester</span><span class="p">(</span><span class="s">r&#39;^http://&#39;</span><span class="p">),</span> <span class="n">urls</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># group posts by category</span>
-</span><span class='line'><span class="n">group_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">post</span><span class="p">:</span> <span class="n">post</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">posts</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Partition and chunk:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># make a dict from flat list of pairs</span>
-</span><span class='line'><span class="nb">dict</span><span class="p">(</span><span class="n">partition</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">flat_list_of_pairs</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># make a structures from flat list</span>
-</span><span class='line'><span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">password</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">users</span><span class="p">)}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># check versions are consecutive</span>
-</span><span class='line'><span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">prev</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">next</span> <span class="k">for</span> <span class="n">prev</span><span class="p">,</span> <span class="nb">next</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">versions</span><span class="p">)):</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># process data by chunks</span>
-</span><span class='line'><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">(</span><span class="n">CHUNK_SIZE</span><span class="p">,</span> <span class="n">lots_of_data</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">process</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And a couple more, just for fun:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># add new line indents at the beginning of each paragraph</span>
-</span><span class='line'><span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">prev</span> <span class="ow">in</span> <span class="n">with_prev</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()):</span>
-</span><span class='line'>    <span class="k">if</span> <span class="ow">not</span> <span class="n">prev</span><span class="p">:</span>
-</span><span class='line'>        <span class="k">print</span> <span class="s">&#39;    &#39;</span><span class="p">,</span>
-</span><span class='line'>    <span class="k">print</span> <span class="n">line</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># select Shakespeare&#39;s play written in 1611</span>
-</span><span class='line'><span class="n">where</span><span class="p">(</span><span class="n">plays</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="s">&quot;Shakespeare&quot;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">1611</span><span class="p">)</span>
-</span><span class='line'><span class="c"># =&gt; [{&quot;title&quot;: &quot;Cymbeline&quot;, &quot;author&quot;: &quot;Shakespeare&quot;, &quot;year&quot;: 1611},</span>
-</span><span class='line'><span class="c">#     {&quot;title&quot;: &quot;The Tempest&quot;, &quot;author&quot;: &quot;Shakespeare&quot;, &quot;year&quot;: 1611}]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>More than just a library</h2>
-
-<p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p>
-
-<p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p>
-
-<p>So, how about <a href="https://github.com/Suor/funcy">extending your vocabulary</a>?</p>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
-  
-
-<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-13T19:22:00+08:00" pubdate data-updated="true">Oct 13<span>th</span>, 2013</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/fp/'>FP</a>, <a class='category' href='/blog/categories/python/'>Python</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://suor.github.io/blog/2013/10/13/functional-python-made-easy/" data-via="hackflow" data-counturl="http://suor.github.io/blog/2013/10/13/functional-python-made-easy/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-  <div style="clear: both; margin-bottom: 0.6em"></div>
-</div>
-<style type="text/css">
-  .sharing * {float: left !important;}
-</style>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2013/10/08/abstracting-control-flow/" title="Previous Post: Abstracting Control Flow">&laquo; Abstracting Control Flow</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2013/11/03/painless-decorators/" title="Next Post: Painless Decorators">Painless Decorators &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments<small style="font-size: 0.65em">, also at
-         <a href="https://news.ycombinator.com/item?id=6542224">Hacker News</a>
-        and
-        <a href="http://www.reddit.com/r/Python/comments/1oej74/functional_python_made_easy_with_a_new_library/">Reddit</a>
-    </small>
-    </h1>
-
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>About Me</h1>
-  <p>
-    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
-    I write in python, js and occasionally english.
-    I also borrow ideas from a variety of languages.
-    You might want to <a href="https://twitter.com/hackflow" target="_blank">follow me</a>
-    or look up <a href="http://github.com/Suor">my Github profile</a>.
-  </p>
-</section>
-<section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-  </ul>
-</section>
-
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating...</li>
-  </ul>
-  
-  <a href="https://github.com/Suor">@Suor</a> on GitHub
-  
-  <script type="text/javascript">
-    $(document).ready(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'Suor',
-            count: 5,
-            skip_forks: true,
-            skip: 'Suor.github.io,sublime-text-2-User',
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
-
-
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2023 - Alexander Schepanovski -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'hackflow';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://suor.github.io/blog/2013/10/13/functional-python-made-easy/';
-        var disqus_url = 'http://suor.github.io/blog/2013/10/13/functional-python-made-easy/';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = '//platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+<!doctype html><html lang=en dir=auto data-theme=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Functional Python Made Easy | Hackflow</title><meta name=keywords content><meta name=description content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.
+I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of funcy."><meta name=author content="Alexander Schepanovski"><link rel=canonical href=https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/><link crossorigin=anonymous href=/assets/css/stylesheet.a77d46620730939f590009cf3757c4b7866cc2835e02d31b4208f0bfae38574f.css integrity="sha256-p31GYgcwk59ZAAnPN1fEt4ZswoNeAtMbQgjwv644V08=" rel="preload stylesheet" as=style><link rel=icon href=https://blog.hackflow.ru/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://blog.hackflow.ru/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://blog.hackflow.ru/favicon-32x32.png><link rel=apple-touch-icon href=https://blog.hackflow.ru/apple-touch-icon.png><link rel=mask-icon href=https://blog.hackflow.ru/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/><link rel=alternate hreflang=ru href=https://blog.hackflow.ru/ru/blog/2013/03/28/functional-python-made-easy/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-JWZ867HSYF"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-JWZ867HSYF")}</script><meta property="og:url" content="https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/"><meta property="og:site_name" content="Hackflow"><meta property="og:title" content="Functional Python Made Easy"><meta property="og:description" content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.
+I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it’s not about FP, it’s about utility. And that’s what I will focus on below trying to show you real-life value of funcy."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2013-10-13T19:22:00+00:00"><meta property="article:modified_time" content="2013-10-13T19:22:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Functional Python Made Easy"><meta name=twitter:description content="There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.
+I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it’s not about FP, it’s about utility. And that’s what I will focus on below trying to show you real-life value of funcy."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://blog.hackflow.ru/posts/"},{"@type":"ListItem","position":2,"name":"Functional Python Made Easy","item":"https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Functional Python Made Easy","name":"Functional Python Made Easy","description":"There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.\nI was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it\u0026rsquo;s not about FP, it\u0026rsquo;s about utility. And that\u0026rsquo;s what I will focus on below trying to show you real-life value of funcy.\n","keywords":[],"articleBody":"There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.\nI was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it’s not about FP, it’s about utility. And that’s what I will focus on below trying to show you real-life value of funcy.\nFuncy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they’ll just save your time, still good.\nI’ll go through the typical tasks any python programmer face during her day.\nEveryday data manipulation 1. Flatten list of lists. That’s how you usually do it:\n1 2 3 4 5 6 7 8 9 from operator import concat reduce(concat, list_of_lists) # or that: sum(list_of_lists, []) # or that: from itertools import chain list(chain.from_iterable(list_of_lists)) They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:\n1 2 from funcy import cat cat(list_of_lists) cat joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to cat results of map call. For example, this\n1 2 from funcy import mapcat mapcat(str.splitlines, bunch_of_texts) will result in flat list of all lines of all the texts. There are lazy versions of both functions: icat and imapcat.\n2. Merge some dicts. There are several clumsy ways in python:\n1 2 3 4 5 d1.update(d2) # Changes d1 dict(d1, **d2) # Really awkward for more than 2 dicts d = d1.copy() d.update(d2) I always wondered why one can’t just add them up, but that’s what we have. Anyway, this is also easy in funcy:\n1 2 3 4 from funcy import merge, join merge(d1, d2) merge(d1, d2, d3) join(sequence_of_dicts) The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.\n3. Capturing something with regular expression. A usual way:\n1 2 3 4 m = re.search(some_re, s) if m: actual_match = m.group() # or m.group(i) or m.groups() ... Much more straightforward with funcy:\n1 2 from funcy import re_find actual_match = re_find(some_re, s) Still not impressed? Then look here:\n1 2 3 4 5 6 7 8 9 10 11 from funcy import re_finder, re_all, partial, mapcat # Get a number out of every word map(re_finder(r'\\d+'), words) # Parse simple ini file into dict # (re_finder returns tuples when there is more that one capture in regexp) dict(imap(re_finder(r'(\\w+)=(\\w+)'), ini.splitlines())) # Find all numbers in all the strings and return as flat list mapcat(partial(re_all, r'\\d+'), bunch_of_strings) About imports and practicality As you can see I import everything directly from funcy, not using any sub-packages. The reason it’s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.\nThis also enables you to write:\n1 from funcy import * And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won’t repeat imports in every new example.\nA bit more functional things We’ve seen a pair of examples of higher order functions earlier, particularly re_finder and partial. One thing to note is that re_finder itself is a partial application of re_find meant to be used with map and friends. Naturally, there is a similar utility to be used with filter:\n1 2 3 # Choose all private attributes of an object is_private = re_tester('^_') filter(is_private, dir(some_obj)) We can create a bunch of predicates and filter with them:\n1 2 3 is_special = re_tester('^__.+__$') is_const = re_tester('^[A-Z_]+$') filter(...) But what if we want to apply several of them at once or use some predicate logic. That’s easy:\n1 2 3 is_public = complement(is_private) is_private_const = all_fn(is_private, is_const) either_const_or_public = any_fn(is_const, is_public) Or you can use convenience function complementary to filter:\n1 remove(is_private, ...) # same as filter(is_public) I hope everyone have their functional appetite satisfied so we can switch to something less abstract.\nCollections Aside from sequence utilities, funcy provides lots of ones to work with collections. And the two fundamental are walk and select, a versions of map and filter preserving collection type:\n1 2 3 4 5 6 7 8 9 10 11 12 13 walk(inc, {1, 2, 3}) # -\u003e {2, 3, 4} walk(inc, (1, 2, 3)) # -\u003e (2, 3, 4) # Mapping function receives pairs when walking dicts swap = lambda (k, v): (v, k) walk(swap, {1: 10, 2: 20}) # -\u003e {10: 1, 20: 2} select(even, {1, 2, 3, 10, 20}) # -\u003e {2, 10, 20} select(lambda (k, v): k == v, {1: 1, 2: 3}) # -\u003e {1: 1} This pair of functions is backed up with a set of ones to work with dicts: walk_keys, walk_values, select_keys, select_values:\n1 2 3 4 5 # Get a dict of public attributes of an instance select_keys(is_public, instance.__dict__) # Clean dict of falsy values select_values(bool, some_dict) The last example in this section will include several new functions at once: silent - catches all exceptions in passed function, returning None; compact - removes falsy values from collection; walk_values - maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:\n1 compact(walk_values(silent(int), request_dict)) Back to data manipulation Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let’s split and group:\n1 2 3 4 5 # split absolute and relative urls absolute, relative = split(re_tester(r'^http://'), urls) # group posts by category group_by(lambda post: post.category, posts) Partition and chunk:\n1 2 3 4 5 6 7 8 9 10 11 12 # make a dict from flat list of pairs dict(partition(2, flat_list_of_pairs)) # make a structures from flat list {id: (name, password) for id, name, password in partition(3, users)} # check versions are consecutive assert all(prev + 1 == next for prev, next in partition(2, 1, versions)): # process data by chunks for chunk in chunks(CHUNK_SIZE, lots_of_data): process(chunk) And a couple more, just for fun:\n1 2 3 4 5 6 7 8 9 10 # add new line indents at the beginning of each paragraph for line, prev in with_prev(text.splitlines()): if not prev: print ' ', print line # select Shakespeare's play written in 1611 where(plays, author=\"Shakespeare\", year=1611) # =\u003e [{\"title\": \"Cymbeline\", \"author\": \"Shakespeare\", \"year\": 1611}, # {\"title\": \"The Tempest\", \"author\": \"Shakespeare\", \"year\": 1611}] More than just a library Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.\nAnd one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it’s standard library.\nSo, how about extending your vocabulary?\n","wordCount":"1303","inLanguage":"en","datePublished":"2013-10-13T19:22:00Z","dateModified":"2013-10-13T19:22:00Z","author":{"@type":"Person","name":"Alexander Schepanovski"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/"},"publisher":{"@type":"Organization","name":"Hackflow","logo":{"@type":"ImageObject","url":"https://blog.hackflow.ru/favicon.ico"}}}</script></head><body id=top><header class=header><nav class=header-nav><div class=logo><a href=https://blog.hackflow.ru/ accesskey=h title="Hackflow (Alt + H)">Hackflow</a><div class=logo-switches><button id=theme-toggle class=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button><span>|</span><ul class=lang-menu><li><a href=https://blog.hackflow.ru/ru/blog/2013/03/28/functional-python-made-easy/ title=Русский aria-label=Русский>Ru</a></li></ul></div></div><ul id=menu class=menu><li><a href=https://blog.hackflow.ru/archives/ title=Archive><span>Archive</span></a></li><li><a href=https://blog.hackflow.ru/tags/ title=Tags><span>Tags</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">Functional Python Made Easy</h1><div class=post-meta><span title='2013-10-13 19:22:00 +0000 UTC'>October 13, 2013</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>Alexander Schepanovski</span>&nbsp;|&nbsp;<span>Translations:</span><ul class=i18n_list><li><a href=https://blog.hackflow.ru/ru/blog/2013/03/28/functional-python-made-easy/>Ru</a></li></ul></div></header><div class="post-content md-content"><p>There are a lot of buzz about Haskell, Lisp, Erlang and other languages few people code in. But while they play their role as banners, functional programming sneaks into our code in multi-paradigm languages.</p><p>I was going to continue this way and later introduce my library of a variety of functional tricks, but suddenly realized it&rsquo;s not about FP, it&rsquo;s about utility. And that&rsquo;s what I will focus on below trying to show you real-life value of <a href=https://github.com/Suor/funcy>funcy</a>.</p><p>Funcy started from a try to bunch up a couple of data manipulation utils. Therefore most of my examples will be about that. Some of them may seem trivial to you, but there are many gains these tiny tools can offer you both in terms of code brevity and expressiveness. Or they&rsquo;ll just save your time, still good.</p><p>I&rsquo;ll go through the typical tasks any python programmer face during her day.</p><h2 id=everyday-data-manipulation>Everyday data manipulation<a hidden class=anchor aria-hidden=true href=#everyday-data-manipulation>#</a></h2><p><em>1. Flatten list of lists. That&rsquo;s how you usually do it:</em></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>operator</span> <span class=kn>import</span> <span class=n>concat</span>
+</span></span><span class=line><span class=cl><span class=n>reduce</span><span class=p>(</span><span class=n>concat</span><span class=p>,</span> <span class=n>list_of_lists</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># or that:</span>
+</span></span><span class=line><span class=cl><span class=nb>sum</span><span class=p>(</span><span class=n>list_of_lists</span><span class=p>,</span> <span class=p>[])</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># or that:</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>itertools</span> <span class=kn>import</span> <span class=n>chain</span>
+</span></span><span class=line><span class=cl><span class=nb>list</span><span class=p>(</span><span class=n>chain</span><span class=o>.</span><span class=n>from_iterable</span><span class=p>(</span><span class=n>list_of_lists</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>They all work and all have their flaws: require imports, additional calls or restrict what you can pass into. But the main flaw is that they are all patterns not obvious calls. There should be a simple function to do such a simple and common thing and there is one in funcy:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=n>cat</span>
+</span></span><span class=line><span class=cl><span class=n>cat</span><span class=p>(</span><span class=n>list_of_lists</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>cat</code> joins list of lists, tuples, iterators and generally any iterables into single list. And it comes with extra shortcut if you want to <code>cat</code> results of <code>map</code> call. For example, this</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=n>mapcat</span>
+</span></span><span class=line><span class=cl><span class=n>mapcat</span><span class=p>(</span><span class=nb>str</span><span class=o>.</span><span class=n>splitlines</span><span class=p>,</span> <span class=n>bunch_of_texts</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>will result in flat list of all lines of all the texts. There are lazy versions of both functions: <code>icat</code> and <code>imapcat</code>.</p><p><em>2. Merge some dicts. There are several clumsy ways in python:</em></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>d1</span><span class=o>.</span><span class=n>update</span><span class=p>(</span><span class=n>d2</span><span class=p>)</span>  <span class=c1># Changes d1</span>
+</span></span><span class=line><span class=cl><span class=nb>dict</span><span class=p>(</span><span class=n>d1</span><span class=p>,</span> <span class=o>**</span><span class=n>d2</span><span class=p>)</span> <span class=c1># Really awkward for more than 2 dicts</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>d</span> <span class=o>=</span> <span class=n>d1</span><span class=o>.</span><span class=n>copy</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=n>d</span><span class=o>.</span><span class=n>update</span><span class=p>(</span><span class=n>d2</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>I always wondered why one can&rsquo;t just add them up, but that&rsquo;s what we have. Anyway, this is also easy in funcy:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=n>merge</span><span class=p>,</span> <span class=n>join</span>
+</span></span><span class=line><span class=cl><span class=n>merge</span><span class=p>(</span><span class=n>d1</span><span class=p>,</span> <span class=n>d2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>merge</span><span class=p>(</span><span class=n>d1</span><span class=p>,</span> <span class=n>d2</span><span class=p>,</span> <span class=n>d3</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>join</span><span class=p>(</span><span class=n>sequence_of_dicts</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>The best part here is these are omnivorous. They work with anything: sets, dicts, ordered dicts, lists, tuples, iterators, even strings, carefully preserving collection type.</p><p><em>3. Capturing something with regular expression. A usual way:</em></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>m</span> <span class=o>=</span> <span class=n>re</span><span class=o>.</span><span class=n>search</span><span class=p>(</span><span class=n>some_re</span><span class=p>,</span> <span class=n>s</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=n>m</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>actual_match</span> <span class=o>=</span> <span class=n>m</span><span class=o>.</span><span class=n>group</span><span class=p>()</span> <span class=c1># or m.group(i) or m.groups()</span>
+</span></span><span class=line><span class=cl>    <span class=o>...</span>
+</span></span></code></pre></td></tr></table></div></div><p>Much more straightforward with funcy:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=n>re_find</span>
+</span></span><span class=line><span class=cl><span class=n>actual_match</span> <span class=o>=</span> <span class=n>re_find</span><span class=p>(</span><span class=n>some_re</span><span class=p>,</span> <span class=n>s</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Still not impressed? Then look here:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=n>re_finder</span><span class=p>,</span> <span class=n>re_all</span><span class=p>,</span> <span class=n>partial</span><span class=p>,</span> <span class=n>mapcat</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Get a number out of every word</span>
+</span></span><span class=line><span class=cl><span class=nb>map</span><span class=p>(</span><span class=n>re_finder</span><span class=p>(</span><span class=sa>r</span><span class=s1>&#39;\d+&#39;</span><span class=p>),</span> <span class=n>words</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Parse simple ini file into dict</span>
+</span></span><span class=line><span class=cl><span class=c1># (re_finder returns tuples when there is more that one capture in regexp)</span>
+</span></span><span class=line><span class=cl><span class=nb>dict</span><span class=p>(</span><span class=n>imap</span><span class=p>(</span><span class=n>re_finder</span><span class=p>(</span><span class=sa>r</span><span class=s1>&#39;(\w+)=(\w+)&#39;</span><span class=p>),</span> <span class=n>ini</span><span class=o>.</span><span class=n>splitlines</span><span class=p>()))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Find all numbers in all the strings and return as flat list</span>
+</span></span><span class=line><span class=cl><span class=n>mapcat</span><span class=p>(</span><span class=n>partial</span><span class=p>(</span><span class=n>re_all</span><span class=p>,</span> <span class=sa>r</span><span class=s1>&#39;\d+&#39;</span><span class=p>),</span> <span class=n>bunch_of_strings</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=about-imports-and-practicality>About imports and practicality<a hidden class=anchor aria-hidden=true href=#about-imports-and-practicality>#</a></h2><p>As you can see I import everything directly from funcy, not using any sub-packages. The reason it&rsquo;s designed this way is practicality. That would be too annoying to remember where each one tiny thing comes from. There are enough libraries to clutter your file heads anyway.</p><p>This also enables you to write:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>funcy</span> <span class=kn>import</span> <span class=o>*</span>
+</span></span></code></pre></td></tr></table></div></div><p>And start enjoying all functional python niceness right away. Ok, now when you know where all the stuff is kept I won&rsquo;t repeat imports in every new example.</p><h2 id=a-bit-more-functional-things>A bit more functional things<a hidden class=anchor aria-hidden=true href=#a-bit-more-functional-things>#</a></h2><p>We&rsquo;ve seen a pair of examples of higher order functions earlier, particularly <code>re_finder</code> and <code>partial</code>. One thing to note is that <code>re_finder</code> itself is a partial application of <code>re_find</code> meant to be used with <code>map</code> and friends. Naturally, there is a similar utility to be used with <code>filter</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># Choose all private attributes of an object</span>
+</span></span><span class=line><span class=cl><span class=n>is_private</span> <span class=o>=</span> <span class=n>re_tester</span><span class=p>(</span><span class=s1>&#39;^_&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nb>filter</span><span class=p>(</span><span class=n>is_private</span><span class=p>,</span> <span class=nb>dir</span><span class=p>(</span><span class=n>some_obj</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>We can create a bunch of predicates and filter with them:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>is_special</span> <span class=o>=</span> <span class=n>re_tester</span><span class=p>(</span><span class=s1>&#39;^__.+__$&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>is_const</span> <span class=o>=</span> <span class=n>re_tester</span><span class=p>(</span><span class=s1>&#39;^[A-Z_]+$&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nb>filter</span><span class=p>(</span><span class=o>...</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>But what if we want to apply several of them at once or use some predicate logic. That&rsquo;s easy:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>is_public</span> <span class=o>=</span> <span class=n>complement</span><span class=p>(</span><span class=n>is_private</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>is_private_const</span> <span class=o>=</span> <span class=n>all_fn</span><span class=p>(</span><span class=n>is_private</span><span class=p>,</span> <span class=n>is_const</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>either_const_or_public</span> <span class=o>=</span> <span class=n>any_fn</span><span class=p>(</span><span class=n>is_const</span><span class=p>,</span> <span class=n>is_public</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Or you can use convenience function complementary to <code>filter</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>remove</span><span class=p>(</span><span class=n>is_private</span><span class=p>,</span> <span class=o>...</span><span class=p>)</span> <span class=c1># same as filter(is_public)</span>
+</span></span></code></pre></td></tr></table></div></div><p>I hope everyone have their functional appetite satisfied so we can switch to something less abstract.</p><h2 id=collections>Collections<a hidden class=anchor aria-hidden=true href=#collections>#</a></h2><p>Aside from <a href=http://funcy.readthedocs.org/en/latest/seqs.html>sequence utilities</a>, funcy provides lots of ones to work with collections.
+And the two fundamental are <code>walk</code> and <code>select</code>, a versions of <code>map</code> and <code>filter</code> preserving collection type:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>walk</span><span class=p>(</span><span class=n>inc</span><span class=p>,</span> <span class=p>{</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>})</span> <span class=c1># -&gt; {2, 3, 4}</span>
+</span></span><span class=line><span class=cl><span class=n>walk</span><span class=p>(</span><span class=n>inc</span><span class=p>,</span> <span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>))</span> <span class=c1># -&gt; (2, 3, 4)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Mapping function receives pairs when walking dicts</span>
+</span></span><span class=line><span class=cl><span class=n>swap</span> <span class=o>=</span> <span class=k>lambda</span> <span class=p>(</span><span class=n>k</span><span class=p>,</span> <span class=n>v</span><span class=p>):</span> <span class=p>(</span><span class=n>v</span><span class=p>,</span> <span class=n>k</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>walk</span><span class=p>(</span><span class=n>swap</span><span class=p>,</span> <span class=p>{</span><span class=mi>1</span><span class=p>:</span> <span class=mi>10</span><span class=p>,</span> <span class=mi>2</span><span class=p>:</span> <span class=mi>20</span><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=c1># -&gt; {10: 1, 20: 2}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>select</span><span class=p>(</span><span class=n>even</span><span class=p>,</span> <span class=p>{</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>10</span><span class=p>,</span> <span class=mi>20</span><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=c1># -&gt; {2, 10, 20}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>select</span><span class=p>(</span><span class=k>lambda</span> <span class=p>(</span><span class=n>k</span><span class=p>,</span> <span class=n>v</span><span class=p>):</span> <span class=n>k</span> <span class=o>==</span> <span class=n>v</span><span class=p>,</span> <span class=p>{</span><span class=mi>1</span><span class=p>:</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>:</span> <span class=mi>3</span><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=c1># -&gt; {1: 1}</span>
+</span></span></code></pre></td></tr></table></div></div><p>This pair of functions is backed up with a set of ones to work with dicts: <code>walk_keys</code>, <code>walk_values</code>, <code>select_keys</code>, <code>select_values</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># Get a dict of public attributes of an instance</span>
+</span></span><span class=line><span class=cl><span class=n>select_keys</span><span class=p>(</span><span class=n>is_public</span><span class=p>,</span> <span class=n>instance</span><span class=o>.</span><span class=vm>__dict__</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Clean dict of falsy values</span>
+</span></span><span class=line><span class=cl><span class=n>select_values</span><span class=p>(</span><span class=nb>bool</span><span class=p>,</span> <span class=n>some_dict</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>The last example in this section will include several new functions at once: <code>silent</code> - catches all exceptions in passed function, returning <code>None</code>; <code>compact</code> - removes falsy values from collection; <code>walk_values</code> - maps dict values with given function. Anyhow, this line constructs a dict of integer params from typical stringy request dict you get:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>compact</span><span class=p>(</span><span class=n>walk_values</span><span class=p>(</span><span class=n>silent</span><span class=p>(</span><span class=nb>int</span><span class=p>),</span> <span class=n>request_dict</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=back-to-data-manipulation>Back to data manipulation<a hidden class=anchor aria-hidden=true href=#back-to-data-manipulation>#</a></h2><p>Finally, the interesting part. I included some examples here just because they seem cool. Although, I did this earlier to be honest. Anyway, let&rsquo;s split and group:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># split absolute and relative urls</span>
+</span></span><span class=line><span class=cl><span class=n>absolute</span><span class=p>,</span> <span class=n>relative</span> <span class=o>=</span> <span class=n>split</span><span class=p>(</span><span class=n>re_tester</span><span class=p>(</span><span class=sa>r</span><span class=s1>&#39;^http://&#39;</span><span class=p>),</span> <span class=n>urls</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># group posts by category</span>
+</span></span><span class=line><span class=cl><span class=n>group_by</span><span class=p>(</span><span class=k>lambda</span> <span class=n>post</span><span class=p>:</span> <span class=n>post</span><span class=o>.</span><span class=n>category</span><span class=p>,</span> <span class=n>posts</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Partition and chunk:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># make a dict from flat list of pairs</span>
+</span></span><span class=line><span class=cl><span class=nb>dict</span><span class=p>(</span><span class=n>partition</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span> <span class=n>flat_list_of_pairs</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># make a structures from flat list</span>
+</span></span><span class=line><span class=cl><span class=p>{</span><span class=nb>id</span><span class=p>:</span> <span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>password</span><span class=p>)</span> <span class=k>for</span> <span class=nb>id</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>password</span> <span class=ow>in</span> <span class=n>partition</span><span class=p>(</span><span class=mi>3</span><span class=p>,</span> <span class=n>users</span><span class=p>)}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># check versions are consecutive</span>
+</span></span><span class=line><span class=cl><span class=k>assert</span> <span class=nb>all</span><span class=p>(</span><span class=n>prev</span> <span class=o>+</span> <span class=mi>1</span> <span class=o>==</span> <span class=nb>next</span> <span class=k>for</span> <span class=n>prev</span><span class=p>,</span> <span class=nb>next</span> <span class=ow>in</span> <span class=n>partition</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=n>versions</span><span class=p>)):</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># process data by chunks</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>chunk</span> <span class=ow>in</span> <span class=n>chunks</span><span class=p>(</span><span class=n>CHUNK_SIZE</span><span class=p>,</span> <span class=n>lots_of_data</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>process</span><span class=p>(</span><span class=n>chunk</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>And a couple more, just for fun:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># add new line indents at the beginning of each paragraph</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>line</span><span class=p>,</span> <span class=n>prev</span> <span class=ow>in</span> <span class=n>with_prev</span><span class=p>(</span><span class=n>text</span><span class=o>.</span><span class=n>splitlines</span><span class=p>()):</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=n>prev</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s1>&#39;    &#39;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span> <span class=n>line</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># select Shakespeare&#39;s play written in 1611</span>
+</span></span><span class=line><span class=cl><span class=n>where</span><span class=p>(</span><span class=n>plays</span><span class=p>,</span> <span class=n>author</span><span class=o>=</span><span class=s2>&#34;Shakespeare&#34;</span><span class=p>,</span> <span class=n>year</span><span class=o>=</span><span class=mi>1611</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=c1># =&gt; [{&#34;title&#34;: &#34;Cymbeline&#34;, &#34;author&#34;: &#34;Shakespeare&#34;, &#34;year&#34;: 1611},</span>
+</span></span><span class=line><span class=cl><span class=c1>#     {&#34;title&#34;: &#34;The Tempest&#34;, &#34;author&#34;: &#34;Shakespeare&#34;, &#34;year&#34;: 1611}]</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=more-than-just-a-library>More than just a library<a hidden class=anchor aria-hidden=true href=#more-than-just-a-library>#</a></h2><p>Maybe some of you recognized some functions from Clojure or Underscore.js (Shakespear example was shamelessly ripped of the docs of the latter, for example). That should not surprise you, in many respects I drew inspiration from these two sources. Nonetheless I followed python spirit and stayed practical as far as I could.</p><p>And one more thought. We used to call programming languages languages, still rarely think of keywords and functions as words. We define our own words by writing new functions, but they are usually too specific to make it into our everyday use. Funcy utilities are designed the other way around, to be broadly used as a layer over python and it&rsquo;s standard library.</p><p>So, how about <a href=https://github.com/Suor/funcy>extending your vocabulary</a>?</p></div><footer class=post-footer><ul class=post-tags></ul><nav class=paginav><a class=prev href=https://blog.hackflow.ru/blog/2013/11/03/painless-decorators/><span class=title>« Prev</span>
+<span>Painless Decorators</span>
+</a><a class=next href=https://blog.hackflow.ru/blog/2013/10/08/abstracting-control-flow/><span class=title>Next »</span>
+<span>Abstracting Control Flow</span></a></nav></footer><section class=comments-section><h2>Comments
+<span class=comments-also-at>also at <a href="https://news.ycombinator.com/item?id=6542224" target=_blank rel=noopener>Hacker News</a> and <a href=http://www.reddit.com/r/Python/comments/1oej74/functional_python_made_easy_with_a_new_library/ target=_blank rel=noopener>Reddit</a></span></h2><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://blog.hackflow.ru/blog/2013/10/13/functional-python-made-easy/",this.page.identifier="http://suor.github.io/blog/2013/10/13/functional-python-made-easy/"};(function(){var e=document,t=e.createElement("script");t.src="https://hackflow.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script></section></article></main><footer class=footer><span>&copy; 2026 <a href=https://blog.hackflow.ru/>Hackflow</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top id=top-link class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey=g><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var toplink=document.getElementById("top-link");window.onscroll=function(){const e=window.innerHeight;document.body.scrollTop>e||document.documentElement.scrollTop>e?toplink.classList.remove("hidden"):toplink.classList.add("hidden")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

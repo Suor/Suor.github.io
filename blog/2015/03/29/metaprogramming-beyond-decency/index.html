@@ -1,738 +1,239 @@
-
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Metaprogramming Beyond Decency: Part 1 - Hackflow</title>
-  <meta name="author" content="Alexander Schepanovski">
-
-  
-  <meta name="description" content="(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian) Python gives us deep introspecting and metaprogramming &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="Hackflow" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-    
-        <meta property="twitter:card" content="summary">
-    
-    <meta property="twitter:site" content="hackflow">
-    <meta property="twitter:url" content="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency">
-    <meta property="twitter:title" content="Metaprogramming Beyond Decency: Part 1">
-    <meta property="twitter:description" content="(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian) Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in &hellip;">
-
-
-  
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-37289902-3', 'auto');
-  ga('send', 'pageview');
-</script>
-
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Hackflow</a></h1>
-  
-    <h2>Sharing my mindset</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:suor.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
-    
-      <h1 class="entry-title">Metaprogramming Beyond Decency: Part 1</h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-03-29T20:08:00+07:00" pubdate data-updated="true">Mar 29<span>th</span>, 2015</time>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><p><em>(This an adaptation of a talk I gave at PiterPy. <a href="http://suor.github.io/slides/metaprogramming/">Slides</a> and <a href="http://www.youtube.com/watch?v=Q8qxeFGNT9A">video</a> are available in russian)</em></p>
-
-<p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
-fun and profit.</p>
-
-<!--more-->
-
-
-<h2>Warming up</h2>
-
-<p>Look at this code:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="nb">map</span><span class="p">(</span><span class="n">_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-</span><span class='line'><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It maps a list through <code>_ + 1</code> and gets a new list with each element incremented.
-This makes sense mnemonically, but can this code actually work in python?</p>
-
-<p>And sure it can. In fact this is rather simple trick with operator overloading:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Whatever</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">_</span> <span class="o">=</span> <span class="n">Whatever</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here we create a class that produces lambda upon addition and then creates its instance named <code>_</code>.
-Just using common interface in an unusual way. We can even go all loose and make something like this to work:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Sort guys by height descending</span>
-</span><span class='line'><span class="n">sort</span><span class="p">(</span><span class="n">guys</span><span class="p">,</span> <span class="n">key</span><span class="o">=-</span><span class="n">_</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Reduce my multiplication</span>
-</span><span class='line'><span class="n">factorial</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">_</span> <span class="o">*</span> <span class="n">_</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Returning lambda, obviously, won&rsquo;t work anymore. However, we can return a callable object,
+<!doctype html><html lang=en dir=auto data-theme=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Metaprogramming Beyond Decency: Part 1 | Hackflow</title><meta name=keywords content><meta name=description content="(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian)
+Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
+fun and profit."><meta name=author content="Alexander Schepanovski"><link rel=canonical href=https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/><link crossorigin=anonymous href=/assets/css/stylesheet.a77d46620730939f590009cf3757c4b7866cc2835e02d31b4208f0bfae38574f.css integrity="sha256-p31GYgcwk59ZAAnPN1fEt4ZswoNeAtMbQgjwv644V08=" rel="preload stylesheet" as=style><link rel=icon href=https://blog.hackflow.ru/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://blog.hackflow.ru/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://blog.hackflow.ru/favicon-32x32.png><link rel=apple-touch-icon href=https://blog.hackflow.ru/apple-touch-icon.png><link rel=mask-icon href=https://blog.hackflow.ru/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-JWZ867HSYF"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-JWZ867HSYF")}</script><meta property="og:url" content="https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/"><meta property="og:site_name" content="Hackflow"><meta property="og:title" content="Metaprogramming Beyond Decency: Part 1"><meta property="og:description" content="(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian)
+Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for fun and profit."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2015-03-29T20:08:00+00:00"><meta property="article:modified_time" content="2015-03-29T20:08:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Metaprogramming Beyond Decency: Part 1"><meta name=twitter:description content="(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian)
+Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for fun and profit."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://blog.hackflow.ru/posts/"},{"@type":"ListItem","position":2,"name":"Metaprogramming Beyond Decency: Part 1","item":"https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Metaprogramming Beyond Decency: Part 1","name":"Metaprogramming Beyond Decency: Part 1","description":"(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian)\nPython gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for fun and profit.\n","keywords":[],"articleBody":"(This an adaptation of a talk I gave at PiterPy. Slides and video are available in russian)\nPython gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for fun and profit.\nWarming up Look at this code:\n1 2 \u003e\u003e\u003e map(_ + 1, [1, 2, 3]) [2, 3, 4] It maps a list through _ + 1 and gets a new list with each element incremented. This makes sense mnemonically, but can this code actually work in python?\nAnd sure it can. In fact this is rather simple trick with operator overloading:\n1 2 3 4 5 class Whatever(object): def __add__(self, y): return lambda x: x + y _ = Whatever() Here we create a class that produces lambda upon addition and then creates its instance named _. Just using common interface in an unusual way. We can even go all loose and make something like this to work:\n1 2 3 4 5 # Sort guys by height descending sort(guys, key=-_.height) # Reduce my multiplication factorial = lambda n: reduce(_ * _, range(2, n+1)) Returning lambda, obviously, won’t work anymore. However, we can return a callable object, which also returns callables as operations results. We are also intercepting attribute access here, shouldn’t surprise you after everything you’ve seen.\nHonestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications. But suppose you are writing tests for functional support library, then you’ll need to create lots of small functions to pass them to your ones. A library like this would be useful in that setting.\nAnyway, if you still think this idea is too weird then you should know that there are at least 3 libraries implementing it:\nwhatever placeholder fn.py But let’s move to something more interesting.\nPattern Matching Now look at this and think if it is also feasible in python. This is supposed to recursively calculate a product of all the list elements:\n1 2 3 def product(): if []: 1 if [x] + xs: x * product(xs) If you familiar with pattern matching then the code makes sense:\nproduct is 1 for empty list, product is (first element) times (product of the rest of the list) otherwise. On the other hand, python doesn’t work this way. x and xs are never defined and product() has no arguments. And yes, this really doesn’t work. This, however, does:\n1 2 3 4 5 6 from patterns import patterns @patterns def product(): if []: 1 if [x] + xs: x * product(xs) @patterns here rewrites function into something we meant. It can’t obviously be implemented as ordinary decorator, since calling original function will crash. So @patterns reads function code instead, parses it into abstract syntax tree, transforms that to a meaningful one and then compiles back:\nCode → AST → New AST → New Code\nAnd after transformation we get something like:\n1 2 3 4 5 6 def product(value): if value == []: return 1 if isinstance(value, list) and len(value) \u003e= 1: x, xs = value[0], value[1:] return x * product(xs) Which looks like normal python code, it is also much more verbose. That’s why we got into this whole pattern matching thing in the first place.\nAnd again it was too awkward to use all this magic in production code, but I used code inspired by that:\n1 2 3 4 5 6 7 8 9 # Use simple pattern matching to construct form field widget TYPE_TO_WIDGET = ( [lambda f: f.choices, lambda f: Select(choices=f.choices)], [lambda f: f.type == 'int', lambda f: TextInput(coerce=int)], [lambda f: f.type == 'string', lambda f: TextInput()], [lambda f: f.type == 'text', lambda f: Textarea()], [lambda f: f.type == 'boolean', lambda f: Checkbox(f.label)], ) return first(do(field) for cond, do in TYPE_TO_WIDGET if cond(field)) This actually could be useful for many things: recursive functions, chatbots, binary protocol implementations and other occasions when you resolve to long if-elses or switch-cases. The general idea, however, comes beyond pattern matching.\nAST Applications This technique – abstract syntax tree transformation – is much more broadly useful. And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.\nAnyway, these are some things they facilitate:\nLanguage extensions. With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, … It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.\nOptimizations. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.\nCode analysis. It’s much easier to analyze tree than just code string ‘cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST. Generally you won’t need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.\nTranslation. To JavaScript to run things in browser, to SQL to automatically generate queries or stored procedures, to Python 3 after all.\nThese are various ways it flows:\nCode → AST → New AST → New Code\nCode → AST → JavaScript\nBytecode → AST → SQL\nLooks like we need to dig a bit more into AST.\nAST First we need a way to get a tree. The easiest way is to first get source and then parse it. Two standard modules will help us with that:\n1 2 3 4 import inspect, ast source = inspect.getsource(func) tree = ast.parse(source) Sometimes you can’t get function source, most common example – inspect.getsource() doesn’t work with lambdas. Then you can still get to AST by decompiling bytecode:\n1 2 3 from meta.decompiler import decompile_func tree = decompile_func(lambda x: x + 1) We are using third party module meta here, and despite saying that we decompile function it really does inspect and decompile its bytecode. Anyway, we’ve got our AST, let’s look at it:\nThis is quite a hairy tree for something as simple as lambda x: x + 1. But if we look at it a bit more closer we can recognize all the corresponding parts. Left branch is arguments, which have single argument named x, but no kwarg, vararg or defaults. Right branch is a return node returning a result of binary operation with an op of addition and operands of a name x and a number 1.\nThat makes sense, this is not however what we see as a result in python REPL:\n1 2 \u003e\u003e\u003e tree \u003c_ast.Lambda at 0x7f7e2359e490\u003e Yeah, it’s just a Lambda object. We can look up its attributes to get other nodes:\n1 2 \u003e\u003e\u003e tree.body \u003c_ast.Return at 0x7f3e75f869d0\u003e And this is what python AST actually is: a collection of objects stored in the attributes of each other. In addition I need to say that this objects don’t really have behaviour, they are just data. You can find full list of available nodes and their attributes in ast module documentation.\nInspecting AST this way could be too tiresome, we need some way to get a bigger picture. The simplest thing we have is ast.dump() utility:\n1 2 3 4 \u003e\u003e\u003e print ast.dump(tree) Lambda(args=arguments(args=[Name(id='x', ctx=Param())], vararg=None, kwarg=None, defaults=[]), body=Return(value=BinOp(left=Name(id='x', ctx=Load()), op=Add(), right=Num(n=1)))) This is the same thing we saw in the picture, it is also useless for any non-trivial case. One more third-party library, astor, could help us out:\n1 2 3 4 \u003e\u003e\u003e print astor.dump(tree) Lambda( args=arguments(args=[Name(id='x')], vararg=None, kwarg=None, defaults=[]), body=Return(value=BinOp(left=Name(id='x'), op=Add, right=Num(n=1)))) The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:\n1 2 \u003e\u003e\u003e print astor.to_source(tree) (lambda x: (x + 1)) Parentheses are added everywhere to avoid dealing with operator precedence, but otherwise it’s the same code we parsed.\nAnd the last thing we usually do to AST – compile it back and execute:\n1 2 3 code = compile(tree, '', 'exec') context = {} exec(code, globals(), context) Functions used here, compile() and exec(), are built-ins. And code is the same object type you can find introspecting func.__code__. By executing in a context we set all the names defined into that dict:\n1 2 \u003e\u003e\u003e context {'func': \u003cfunction __main__.func\u003e} So if all these were happening in a decorator we can get that function out of the context and substitute original one. Only the meat is left – walking the tree.\nAST Traversal Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:\n1 2 3 4 5 6 7 8 9 10 11 12 # Iterate fields with values \u003e\u003e\u003e ast.iter_fields(tree) [('args', \u003c_ast.arguments at ...\u003e), ('body', \u003c_ast.Return at ...\u003e)] # Iterate child nodes \u003e\u003e\u003e ast.iter_child_nodes(tree) [\u003c_ast.arguments ...\u003e, \u003c_ast.Return ...\u003e] # Just list available fields \u003e\u003e\u003e tree._fields ('args', 'body') First of higher level ones is NodeVisitor – a base class implementing visitor pattern, the idea is to subclass it and define methods like visit_():\n1 2 3 4 5 6 class NumberFinder(ast.NodeVisitor): def visit_Num(self, node): print \"Found number literal\", node.n def find_numbers(tree): NumberFinder().visit(tree) This simple example finds all the number literals in given code. Just an example, but it could be grown into some magic number finding tool and wrapped into linter or code editor plugin.\nThe second base class ast provides is NodeTransformer. It works almost the same, but you can change a tree by returning new nodes from visit methods:\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 class ExprOptimizer(ast.NodeTransformer): def visit_BinOp(self, node): # Call .generic_visit() to transform sub-nodes node = self.generic_visit(node) # If both operands are just numbers then precalculate if type(node.left) is Num and type(node.right) is Num: op = AST_TO_OP[node.op.__class__] return Num(n=op(node.left.n, node.right.n)) else: return node AST_TO_OP = { Add: operator.add, ... } This one precalculates any expressions on number literals, quite neat for just a bunch of lines.\nAnd last but not least we can use old and good recursive tree walking. This snippet makes python function return last expression in a way Ruby, CoffeScript and Clojure do:\n1 2 3 4 5 6 7 def return_last(tree): if not hasattr(tree, 'body'): return elif isinstance(tree.body[-1], Expr): tree.body[-1] = Return(value=tree.body[-1]) else: return_last(tree.body[-1]) Note this code is simplified and hence broken, e.g. it will insert return into the end of while loop if there is an expression there.\nGoing Forward This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.\nP.S. Second part is available here.\n","wordCount":"1871","inLanguage":"en","datePublished":"2015-03-29T20:08:00Z","dateModified":"2015-03-29T20:08:00Z","author":{"@type":"Person","name":"Alexander Schepanovski"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/"},"publisher":{"@type":"Organization","name":"Hackflow","logo":{"@type":"ImageObject","url":"https://blog.hackflow.ru/favicon.ico"}}}</script></head><body id=top><header class=header><nav class=header-nav><div class=logo><a href=https://blog.hackflow.ru/ accesskey=h title="Hackflow (Alt + H)">Hackflow</a><div class=logo-switches><button id=theme-toggle class=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button><span>|</span><ul class=lang-menu><li><a href=https://blog.hackflow.ru/ru/ title=Русский aria-label=Русский>Ru</a></li></ul></div></div><ul id=menu class=menu><li><a href=https://blog.hackflow.ru/archives/ title=Archive><span>Archive</span></a></li><li><a href=https://blog.hackflow.ru/tags/ title=Tags><span>Tags</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">Metaprogramming Beyond Decency: Part 1</h1><div class=post-meta><span title='2015-03-29 20:08:00 +0000 UTC'>March 29, 2015</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>Alexander Schepanovski</span></div></header><div class="post-content md-content"><p><em>(This an adaptation of a talk I gave at PiterPy. <a href=/slides/metaprogramming/>Slides</a> and <a href="http://www.youtube.com/watch?v=Q8qxeFGNT9A">video</a> are available in russian)</em></p><p>Python gives us deep introspecting and metaprogramming capabilities including bytecode and AST support in the standard library. This facilitates unobvious ways to write code that writes code or otherwise alters its behavior. I will show several different examples of how it could be used for
+fun and profit.</p><h2 id=warming-up>Warming up<a hidden class=anchor aria-hidden=true href=#warming-up>#</a></h2><p>Look at this code:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=nb>map</span><span class=p>(</span><span class=n>_</span> <span class=o>+</span> <span class=mi>1</span><span class=p>,</span> <span class=p>[</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>])</span>
+</span></span><span class=line><span class=cl><span class=p>[</span><span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>]</span>
+</span></span></code></pre></td></tr></table></div></div><p>It maps a list through <code>_ + 1</code> and gets a new list with each element incremented.
+This makes sense mnemonically, but can this code actually work in python?</p><p>And sure it can. In fact this is rather simple trick with operator overloading:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>Whatever</span><span class=p>(</span><span class=nb>object</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__add__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>y</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=k>lambda</span> <span class=n>x</span><span class=p>:</span> <span class=n>x</span> <span class=o>+</span> <span class=n>y</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>_</span> <span class=o>=</span> <span class=n>Whatever</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>Here we create a class that produces lambda upon addition and then creates its instance named <code>_</code>.
+Just using common interface in an unusual way. We can even go all loose and make something like this to work:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># Sort guys by height descending</span>
+</span></span><span class=line><span class=cl><span class=n>sort</span><span class=p>(</span><span class=n>guys</span><span class=p>,</span> <span class=n>key</span><span class=o>=-</span><span class=n>_</span><span class=o>.</span><span class=n>height</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Reduce my multiplication</span>
+</span></span><span class=line><span class=cl><span class=n>factorial</span> <span class=o>=</span> <span class=k>lambda</span> <span class=n>n</span><span class=p>:</span> <span class=n>reduce</span><span class=p>(</span><span class=n>_</span> <span class=o>*</span> <span class=n>_</span><span class=p>,</span> <span class=nb>range</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span> <span class=n>n</span><span class=o>+</span><span class=mi>1</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>Returning lambda, obviously, won&rsquo;t work anymore. However, we can return a callable object,
 which also returns callables as operations results. We are also intercepting attribute access here,
-shouldn&rsquo;t surprise you after everything you&rsquo;ve seen.</p>
-
-<p>Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications.
-But suppose you are writing <a href="https://github.com/Suor/funcy/blob/master/tests/test_funcs.py">tests for functional support library</a>,
+shouldn&rsquo;t surprise you after everything you&rsquo;ve seen.</p><p>Honestly, I was too shy to use this in production. And you usually need only one or two lambdas in a file anyway, too few to bring an import, a dependency and all the complications.
+But suppose you are writing <a href=https://github.com/Suor/funcy/blob/master/tests/test_funcs.py>tests for functional support library</a>,
 then you&rsquo;ll need to create lots of small functions to pass them to your ones.
-A library like this would be useful in that setting.</p>
-
-<p>Anyway, if you still think this idea is too weird then you should know that there are at least 3 libraries implementing it:</p>
-
-<ul>
-<li><a href="https://github.com/Suor/whatever">whatever</a></li>
-<li><a href="https://pypi.python.org/pypi/placeholder">placeholder</a></li>
-<li><a href="https://github.com/kachayev/fn.py">fn.py</a></li>
-</ul>
-
-
-<p>But let&rsquo;s move to something more interesting.</p>
-
-<h2>Pattern Matching</h2>
-
-<p>Now look at this and think if it is also feasible in python.
-This is supposed to recursively calculate a product of all the list elements:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">product</span><span class="p">():</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">[]:</span> <span class="mi">1</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">xs</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">product</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you familiar with pattern matching then the code makes sense:</p>
-
-<ul>
-<li>product is 1 for empty list,</li>
-<li>product is (first element) times (product of the rest of the list) otherwise.</li>
-</ul>
-
-
-<p>On the other hand, python doesn&rsquo;t work this way. <code>x</code> and <code>xs</code> are never defined and <code>product()</code> has no arguments. And yes, this really doesn&rsquo;t work. This, however, does:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">patterns</span> <span class="kn">import</span> <span class="n">patterns</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@patterns</span>
-</span><span class='line'><span class="k">def</span> <span class="nf">product</span><span class="p">():</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">[]:</span> <span class="mi">1</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">+</span> <span class="n">xs</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">product</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>@patterns</code> here rewrites function into something we meant. It can&rsquo;t obviously be implemented as ordinary decorator, since calling original function will crash. So <code>@patterns</code> reads function code instead, parses it into abstract syntax tree, transforms that to a meaningful one and then compiles back:</p>
-
-<blockquote><p>Code  →  AST  →  New AST  →  New Code</p></blockquote>
-
-
-<!-- TODO: make it pretty -->
-
-
-<p>And after transformation we get something like:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">product</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="p">[]:</span>
-</span><span class='line'>        <span class="k">return</span> <span class="mi">1</span>
-</span><span class='line'>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span class='line'>        <span class="n">x</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-</span><span class='line'>        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">product</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Which looks like normal python code, it is also much more verbose.
-That&rsquo;s why we got into this whole pattern matching thing in the first place.</p>
-
-<p>And again it was too awkward to use all this magic in production code,
-but I used code inspired by that:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Use simple pattern matching to construct form field widget</span>
-</span><span class='line'><span class="n">TYPE_TO_WIDGET</span> <span class="o">=</span> <span class="p">(</span>
-</span><span class='line'>    <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>           <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Select</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">choices</span><span class="p">)],</span>
-</span><span class='line'>    <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;int&#39;</span><span class="p">,</span>     <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">TextInput</span><span class="p">(</span><span class="nb">coerce</span><span class="o">=</span><span class="nb">int</span><span class="p">)],</span>
-</span><span class='line'>    <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;string&#39;</span><span class="p">,</span>  <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">TextInput</span><span class="p">()],</span>
-</span><span class='line'>    <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;text&#39;</span><span class="p">,</span>    <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Textarea</span><span class="p">()],</span>
-</span><span class='line'>    <span class="p">[</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;boolean&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Checkbox</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">label</span><span class="p">)],</span>
-</span><span class='line'><span class="p">)</span>
-</span><span class='line'><span class="k">return</span> <span class="n">first</span><span class="p">(</span><span class="n">do</span><span class="p">(</span><span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">cond</span><span class="p">,</span> <span class="n">do</span> <span class="ow">in</span> <span class="n">TYPE_TO_WIDGET</span> <span class="k">if</span> <span class="n">cond</span><span class="p">(</span><span class="n">field</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This actually could be useful for many things: recursive functions, chatbots, binary protocol implementations and other occasions when you resolve to long if-elses or switch-cases.
-The general idea, however, comes beyond pattern matching.</p>
-
-<h2>AST Applications</h2>
-
-<p>This technique &mdash; abstract syntax tree transformation &mdash; is much more broadly useful.
-And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.</p>
-
-<p>Anyway, these are some things they facilitate:</p>
-
-<p><strong>Language extensions.</strong> With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, &hellip; It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.</p>
-
-<p><strong>Optimizations</strong>. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.</p>
-
-<p><strong>Code analysis</strong>. It&rsquo;s much easier to analyze tree than just code string &lsquo;cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST.
-Generally you won&rsquo;t need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.</p>
-
-<p><strong>Translation</strong>. To JavaScript to run things in browser, to SQL to automatically generate queries
-or stored procedures, to Python 3 after all.</p>
-
-<p>These are various ways it flows:</p>
-
-<blockquote><p>Code  →  AST  →  New AST  →  New Code<br/>Code  →  AST  →  JavaScript<br/>Bytecode  →  AST  →  SQL</p></blockquote>
-
-
-<!-- TODO: make a flowchart? -->
-
-
-<p>Looks like we need to dig a bit more into AST.</p>
-
-<h2>AST</h2>
-
-<p>First we need a way to get a tree. The easiest way is to first get source and then parse it. Two standard modules will help us with that:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">import</span> <span class="nn">inspect</span><span class="o">,</span> <span class="nn">ast</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">source</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-</span><span class='line'><span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Sometimes you can&rsquo;t get function source, most common example &mdash; <code>inspect.getsource()</code> doesn&rsquo;t work with lambdas. Then you can still get to AST by decompiling bytecode:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">meta.decompiler</span> <span class="kn">import</span> <span class="n">decompile_func</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">tree</span> <span class="o">=</span> <span class="n">decompile_func</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We are using third party module <a href="https://github.com/srossross/Meta">meta</a> here, and despite saying that we decompile function it really does inspect and decompile its bytecode. Anyway, we&rsquo;ve got our AST, let&rsquo;s look at it:</p>
-
-<p><img src="/slides/metaprogramming/ast-example.dot.svg" style="width: 100%"></p>
-
-<p>This is quite a hairy tree for something as simple as <code>lambda x: x + 1</code>. But if we look at it a bit
-more closer we can recognize all the corresponding parts. Left branch is arguments, which have single argument named <code>x</code>, but no kwarg, vararg or defaults. Right branch is a return node returning a result of binary operation with an op of addition and operands of a name <code>x</code> and a number <code>1</code>.</p>
-
-<p>That makes sense, this is not however what we see as a result in python REPL:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Lambda</span> <span class="n">at</span> <span class="mh">0x7f7e2359e490</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Yeah, it&rsquo;s just a <code>Lambda</code> object. We can look up its attributes to get other nodes:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">body</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Return</span> <span class="n">at</span> <span class="mh">0x7f3e75f869d0</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And this is what python AST actually is: a collection of objects stored in the attributes of each other. In addition I need to say that this objects don&rsquo;t really have behaviour, they are just data.
-You can find full list of available nodes and their attributes in <a href="https://docs.python.org/2/library/ast.html">ast module</a> documentation.</p>
-
-<p>Inspecting AST this way could be too tiresome, we need some way to get a bigger picture.
-The simplest thing we have is <code>ast.dump()</code> utility:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span><span class='line'><span class="n">Lambda</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">arguments</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">Name</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">Param</span><span class="p">())],</span> <span class="n">vararg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwarg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-</span><span class='line'><span class="n">defaults</span><span class="o">=</span><span class="p">[]),</span> <span class="n">body</span><span class="o">=</span><span class="n">Return</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">Name</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">Load</span><span class="p">()),</span> <span class="n">op</span><span class="o">=</span><span class="n">Add</span><span class="p">(),</span>
-</span><span class='line'><span class="n">right</span><span class="o">=</span><span class="n">Num</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is the same thing we saw in the picture, it is also useless for any non-trivial case. One more
-third-party library, <a href="https://github.com/berkerpeksag/astor">astor</a>, could help us out:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">astor</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span><span class='line'><span class="n">Lambda</span><span class="p">(</span>
-</span><span class='line'>    <span class="n">args</span><span class="o">=</span><span class="n">arguments</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">Name</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">)],</span> <span class="n">vararg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwarg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="p">[]),</span>
-</span><span class='line'>    <span class="n">body</span><span class="o">=</span><span class="n">Return</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">Name</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">),</span> <span class="n">op</span><span class="o">=</span><span class="n">Add</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">Num</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">astor</span><span class="o">.</span><span class="n">to_source</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span><span class='line'><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Parentheses are added everywhere to avoid dealing with operator precedence, but otherwise it&rsquo;s the same code we parsed.</p>
-
-<p>And the last thing we usually do to AST &mdash; compile it back and execute:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">code</span> <span class="o">=</span> <span class="nb">compile</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;exec&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="n">context</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span class='line'><span class="k">exec</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="nb">globals</span><span class="p">(),</span> <span class="n">context</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Functions used here, <code>compile()</code> and <code>exec()</code>, are built-ins. And <code>code</code> is the same object type you can find introspecting <code>func.__code__</code>. By executing in a context we set all the names defined into that dict:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">context</span>
-</span><span class='line'><span class="p">{</span><span class="s">&#39;func&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">function</span> <span class="n">__main__</span><span class="o">.</span><span class="n">func</span><span class="o">&gt;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So if all these were happening in a decorator we can get that function out of the context and substitute original one. Only the meat is left &mdash; walking the tree.</p>
-
-<h2>AST Traversal</h2>
-
-<p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Iterate fields with values</span>
-</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span><span class='line'><span class="p">[(</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">arguments</span> <span class="n">at</span> <span class="o">...&gt;</span><span class="p">),</span>
-</span><span class='line'> <span class="p">(</span><span class="s">&#39;body&#39;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Return</span> <span class="n">at</span> <span class="o">...&gt;</span><span class="p">)]</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Iterate child nodes</span>
-</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_child_nodes</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span><span class='line'><span class="p">[</span><span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">arguments</span> <span class="o">...&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">_ast</span><span class="o">.</span><span class="n">Return</span> <span class="o">...&gt;</span><span class="p">]</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># Just list available fields</span>
-</span><span class='line'><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">_fields</span>
-</span><span class='line'><span class="p">(</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>First of higher level ones is <code>NodeVisitor</code> &mdash; a base class implementing visitor pattern, the idea is to subclass it and define methods like <code>visit_&lt;NodeClass&gt;()</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">NumberFinder</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeVisitor</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">visit_Num</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">print</span> <span class="s">&quot;Found number literal&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">n</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">find_numbers</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">NumberFinder</span><span class="p">()</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This simple example finds all the number literals in given code. Just an example, but it could be grown into some magic number finding tool and wrapped into linter or code editor plugin.</p>
-
-<p>The second base class ast provides is <code>NodeTransformer</code>. It works almost the same, but you can change a tree by returning new nodes from visit methods:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">ExprOptimizer</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeTransformer</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">visit_BinOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
-</span><span class='line'>        <span class="c"># Call .generic_visit() to transform sub-nodes</span>
-</span><span class='line'>        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-</span><span class='line'>        <span class="c"># If both operands are just numbers then precalculate</span>
-</span><span class='line'>        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Num</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">right</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Num</span><span class="p">:</span>
-</span><span class='line'>            <span class="n">op</span> <span class="o">=</span> <span class="n">AST_TO_OP</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">__class__</span><span class="p">]</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">Num</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">op</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">n</span><span class="p">))</span>
-</span><span class='line'>        <span class="k">else</span><span class="p">:</span>
-</span><span class='line'>            <span class="k">return</span> <span class="n">node</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">AST_TO_OP</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>    <span class="n">Add</span><span class="p">:</span> <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
-</span><span class='line'>    <span class="o">...</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This one precalculates any expressions on number literals, quite neat for just a bunch of lines.</p>
-
-<p>And last but not least we can use old and good recursive tree walking. This snippet makes python function return last expression in a way Ruby, CoffeScript and Clojure do:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">def</span> <span class="nf">return_last</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
-</span><span class='line'>    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">return</span>
-</span><span class='line'>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Expr</span><span class="p">):</span>
-</span><span class='line'>        <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">Return</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-</span><span class='line'>    <span class="k">else</span><span class="p">:</span>
-</span><span class='line'>        <span class="n">return_last</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note this code is simplified and hence broken, e.g. it will insert <code>return</code> into the end of while loop if there is an expression there.</p>
-
-<h2>Going Forward</h2>
-
-<p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p>
-
-<p><strong>P.S.</strong> Second part is available <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">here</a>.</p>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
-  
-
-<span class="byline author vcard">Posted by <span class="fn">Alexander Schepanovski</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2015-03-29T20:08:00+07:00" pubdate data-updated="true">Mar 29<span>th</span>, 2015</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/python/'>Python</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/" data-via="hackflow" data-counturl="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-  <div style="clear: both; margin-bottom: 0.6em"></div>
-</div>
-<style type="text/css">
-  .sharing * {float: left !important;}
-</style>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/" title="Previous Post: Boiling React Down to a Few Lines in jQuery">&laquo; Boiling React Down to a Few Lines in jQuery</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/" title="Next Post: Metaprogramming Beyond Decency: Part 2">Metaprogramming Beyond Decency: Part 2 &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments<small style="font-size: 0.65em">, also at
-        
-        
-        <a href="http://www.reddit.com/r/programming/comments/30p2zw/python_metaprogramming_beyond_decency/">Reddit</a>
-    </small>
-    </h1>
-
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</div>
-  </section>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>About Me</h1>
-  <p>
-    <img src="/images/me.jpg" style="float: right; margin: 0 0 0.5em 0.5em" width="60" height="60">
-    I write in python, js and occasionally english.
-    I also borrow ideas from a variety of languages.
-    You might want to <a href="https://twitter.com/hackflow" target="_blank">follow me</a>
-    or look up <a href="http://github.com/Suor">my Github profile</a>.
-  </p>
-</section>
-<section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2023/03/26/ban-1-plus-n-in-django/">Ban 1+N in Django</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/12/metaprogramming-beyond-decency-part-2/">Metaprogramming Beyond Decency: Part 2</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/29/metaprogramming-beyond-decency/">Metaprogramming Beyond Decency: Part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/">Boiling React Down to a Few Lines in jQuery</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/09/07/growing-over-backward-incompatibility/">Growing Over Backward Incompatibility</a>
-      </li>
-    
-  </ul>
-</section>
-
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating...</li>
-  </ul>
-  
-  <a href="https://github.com/Suor">@Suor</a> on GitHub
-  
-  <script type="text/javascript">
-    $(document).ready(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'Suor',
-            count: 5,
-            skip_forks: true,
-            skip: 'Suor.github.io,sublime-text-2-User',
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
-
-
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2023 - Alexander Schepanovski -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'hackflow';
-      
-        
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/';
-        var disqus_url = 'http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/';
-        var disqus_script = 'embed.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = '//platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+A library like this would be useful in that setting.</p><p>Anyway, if you still think this idea is too weird then you should know that there are at least 3 libraries implementing it:</p><ul><li><a href=https://github.com/Suor/whatever>whatever</a></li><li><a href=https://pypi.python.org/pypi/placeholder>placeholder</a></li><li><a href=https://github.com/kachayev/fn.py>fn.py</a></li></ul><p>But let&rsquo;s move to something more interesting.</p><h2 id=pattern-matching>Pattern Matching<a hidden class=anchor aria-hidden=true href=#pattern-matching>#</a></h2><p>Now look at this and think if it is also feasible in python.
+This is supposed to recursively calculate a product of all the list elements:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>def</span> <span class=nf>product</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>[]:</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>[</span><span class=n>x</span><span class=p>]</span> <span class=o>+</span> <span class=n>xs</span><span class=p>:</span> <span class=n>x</span> <span class=o>*</span> <span class=n>product</span><span class=p>(</span><span class=n>xs</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>If you familiar with pattern matching then the code makes sense:</p><ul><li>product is 1 for empty list,</li><li>product is (first element) times (product of the rest of the list) otherwise.</li></ul><p>On the other hand, python doesn&rsquo;t work this way. <code>x</code> and <code>xs</code> are never defined and <code>product()</code> has no arguments. And yes, this really doesn&rsquo;t work. This, however, does:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>patterns</span> <span class=kn>import</span> <span class=n>patterns</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nd>@patterns</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>product</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>[]:</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>[</span><span class=n>x</span><span class=p>]</span> <span class=o>+</span> <span class=n>xs</span><span class=p>:</span> <span class=n>x</span> <span class=o>*</span> <span class=n>product</span><span class=p>(</span><span class=n>xs</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>@patterns</code> here rewrites function into something we meant. It can&rsquo;t obviously be implemented as ordinary decorator, since calling original function will crash. So <code>@patterns</code> reads function code instead, parses it into abstract syntax tree, transforms that to a meaningful one and then compiles back:</p><blockquote><p>Code → AST → New AST → New Code</p></blockquote><p>And after transformation we get something like:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>def</span> <span class=nf>product</span><span class=p>(</span><span class=n>value</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>value</span> <span class=o>==</span> <span class=p>[]:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nb>isinstance</span><span class=p>(</span><span class=n>value</span><span class=p>,</span> <span class=nb>list</span><span class=p>)</span> <span class=ow>and</span> <span class=nb>len</span><span class=p>(</span><span class=n>value</span><span class=p>)</span> <span class=o>&gt;=</span> <span class=mi>1</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>x</span><span class=p>,</span> <span class=n>xs</span> <span class=o>=</span> <span class=n>value</span><span class=p>[</span><span class=mi>0</span><span class=p>],</span> <span class=n>value</span><span class=p>[</span><span class=mi>1</span><span class=p>:]</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>x</span> <span class=o>*</span> <span class=n>product</span><span class=p>(</span><span class=n>xs</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Which looks like normal python code, it is also much more verbose.
+That&rsquo;s why we got into this whole pattern matching thing in the first place.</p><p>And again it was too awkward to use all this magic in production code,
+but I used code inspired by that:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># Use simple pattern matching to construct form field widget</span>
+</span></span><span class=line><span class=cl><span class=n>TYPE_TO_WIDGET</span> <span class=o>=</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=p>[</span><span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>f</span><span class=o>.</span><span class=n>choices</span><span class=p>,</span>           <span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>Select</span><span class=p>(</span><span class=n>choices</span><span class=o>=</span><span class=n>f</span><span class=o>.</span><span class=n>choices</span><span class=p>)],</span>
+</span></span><span class=line><span class=cl>    <span class=p>[</span><span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>f</span><span class=o>.</span><span class=n>type</span> <span class=o>==</span> <span class=s1>&#39;int&#39;</span><span class=p>,</span>     <span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>TextInput</span><span class=p>(</span><span class=n>coerce</span><span class=o>=</span><span class=nb>int</span><span class=p>)],</span>
+</span></span><span class=line><span class=cl>    <span class=p>[</span><span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>f</span><span class=o>.</span><span class=n>type</span> <span class=o>==</span> <span class=s1>&#39;string&#39;</span><span class=p>,</span>  <span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>TextInput</span><span class=p>()],</span>
+</span></span><span class=line><span class=cl>    <span class=p>[</span><span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>f</span><span class=o>.</span><span class=n>type</span> <span class=o>==</span> <span class=s1>&#39;text&#39;</span><span class=p>,</span>    <span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>Textarea</span><span class=p>()],</span>
+</span></span><span class=line><span class=cl>    <span class=p>[</span><span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>f</span><span class=o>.</span><span class=n>type</span> <span class=o>==</span> <span class=s1>&#39;boolean&#39;</span><span class=p>,</span> <span class=k>lambda</span> <span class=n>f</span><span class=p>:</span> <span class=n>Checkbox</span><span class=p>(</span><span class=n>f</span><span class=o>.</span><span class=n>label</span><span class=p>)],</span>
+</span></span><span class=line><span class=cl><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>return</span> <span class=n>first</span><span class=p>(</span><span class=n>do</span><span class=p>(</span><span class=n>field</span><span class=p>)</span> <span class=k>for</span> <span class=n>cond</span><span class=p>,</span> <span class=n>do</span> <span class=ow>in</span> <span class=n>TYPE_TO_WIDGET</span> <span class=k>if</span> <span class=n>cond</span><span class=p>(</span><span class=n>field</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>This actually could be useful for many things: recursive functions, chatbots, binary protocol implementations and other occasions when you resolve to long if-elses or switch-cases.
+The general idea, however, comes beyond pattern matching.</p><h2 id=ast-applications>AST Applications<a hidden class=anchor aria-hidden=true href=#ast-applications>#</a></h2><p>This technique &ndash; abstract syntax tree transformation &ndash; is much more broadly useful.
+And the main reason is that trees capture language structure. Another trees virtue is that they are data structures, which are much more hackable than code strings.</p><p>Anyway, these are some things they facilitate:</p><p><strong>Language extensions.</strong> With pattern matching being only one of them. Other examples are optional (or not) static typing, macros, &mldr; It is only limited by your imagination and tree transformation skills. You obviously need to stay within syntax though, unless you go for separate parser and AST, but this is a separate topic.</p><p><strong>Optimizations</strong>. This is less obvious but we can inline calls, precalculate constant expressions, even make tail call optimization.</p><p><strong>Code analysis</strong>. It&rsquo;s much easier to analyze tree than just code string &lsquo;cause it captures some of semantics of a language. We can implement some linters or editor plugins with the help of AST.
+Generally you won&rsquo;t need to transform a tree for analysis, but imagine some linter suggesting code changes specific to your particular fragment not general advice. That would be cool.</p><p><strong>Translation</strong>. To JavaScript to run things in browser, to SQL to automatically generate queries
+or stored procedures, to Python 3 after all.</p><p>These are various ways it flows:</p><blockquote><p>Code → AST → New AST → New Code<br>Code → AST → JavaScript<br>Bytecode → AST → SQL</p></blockquote><p>Looks like we need to dig a bit more into AST.</p><h2 id=ast>AST<a hidden class=anchor aria-hidden=true href=#ast>#</a></h2><p>First we need a way to get a tree. The easiest way is to first get source and then parse it. Two standard modules will help us with that:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>inspect</span><span class=o>,</span> <span class=nn>ast</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>source</span> <span class=o>=</span> <span class=n>inspect</span><span class=o>.</span><span class=n>getsource</span><span class=p>(</span><span class=n>func</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>tree</span> <span class=o>=</span> <span class=n>ast</span><span class=o>.</span><span class=n>parse</span><span class=p>(</span><span class=n>source</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Sometimes you can&rsquo;t get function source, most common example &ndash; <code>inspect.getsource()</code> doesn&rsquo;t work with lambdas. Then you can still get to AST by decompiling bytecode:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>from</span> <span class=nn>meta.decompiler</span> <span class=kn>import</span> <span class=n>decompile_func</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>tree</span> <span class=o>=</span> <span class=n>decompile_func</span><span class=p>(</span><span class=k>lambda</span> <span class=n>x</span><span class=p>:</span> <span class=n>x</span> <span class=o>+</span> <span class=mi>1</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>We are using third party module <a href=https://github.com/srossross/Meta>meta</a> here, and despite saying that we decompile function it really does inspect and decompile its bytecode. Anyway, we&rsquo;ve got our AST, let&rsquo;s look at it:</p><img src=/slides/metaprogramming/ast-example.dot.svg style=width:100%><p>This is quite a hairy tree for something as simple as <code>lambda x: x + 1</code>. But if we look at it a bit
+more closer we can recognize all the corresponding parts. Left branch is arguments, which have single argument named <code>x</code>, but no kwarg, vararg or defaults. Right branch is a return node returning a result of binary operation with an op of addition and operands of a name <code>x</code> and a number <code>1</code>.</p><p>That makes sense, this is not however what we see as a result in python REPL:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>tree</span>
+</span></span><span class=line><span class=cl><span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>Lambda</span> <span class=n>at</span> <span class=mh>0x7f7e2359e490</span><span class=o>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>Yeah, it&rsquo;s just a <code>Lambda</code> object. We can look up its attributes to get other nodes:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>tree</span><span class=o>.</span><span class=n>body</span>
+</span></span><span class=line><span class=cl><span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>Return</span> <span class=n>at</span> <span class=mh>0x7f3e75f869d0</span><span class=o>&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><p>And this is what python AST actually is: a collection of objects stored in the attributes of each other. In addition I need to say that this objects don&rsquo;t really have behaviour, they are just data.
+You can find full list of available nodes and their attributes in <a href=https://docs.python.org/2/library/ast.html>ast module</a> documentation.</p><p>Inspecting AST this way could be too tiresome, we need some way to get a bigger picture.
+The simplest thing we have is <code>ast.dump()</code> utility:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=nb>print</span> <span class=n>ast</span><span class=o>.</span><span class=n>dump</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>Lambda</span><span class=p>(</span><span class=n>args</span><span class=o>=</span><span class=n>arguments</span><span class=p>(</span><span class=n>args</span><span class=o>=</span><span class=p>[</span><span class=n>Name</span><span class=p>(</span><span class=nb>id</span><span class=o>=</span><span class=s1>&#39;x&#39;</span><span class=p>,</span> <span class=n>ctx</span><span class=o>=</span><span class=n>Param</span><span class=p>())],</span> <span class=n>vararg</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>kwarg</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=n>defaults</span><span class=o>=</span><span class=p>[]),</span> <span class=n>body</span><span class=o>=</span><span class=n>Return</span><span class=p>(</span><span class=n>value</span><span class=o>=</span><span class=n>BinOp</span><span class=p>(</span><span class=n>left</span><span class=o>=</span><span class=n>Name</span><span class=p>(</span><span class=nb>id</span><span class=o>=</span><span class=s1>&#39;x&#39;</span><span class=p>,</span> <span class=n>ctx</span><span class=o>=</span><span class=n>Load</span><span class=p>()),</span> <span class=n>op</span><span class=o>=</span><span class=n>Add</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl><span class=n>right</span><span class=o>=</span><span class=n>Num</span><span class=p>(</span><span class=n>n</span><span class=o>=</span><span class=mi>1</span><span class=p>))))</span>
+</span></span></code></pre></td></tr></table></div></div><p>This is the same thing we saw in the picture, it is also useless for any non-trivial case. One more
+third-party library, <a href=https://github.com/berkerpeksag/astor>astor</a>, could help us out:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=nb>print</span> <span class=n>astor</span><span class=o>.</span><span class=n>dump</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>Lambda</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=n>args</span><span class=o>=</span><span class=n>arguments</span><span class=p>(</span><span class=n>args</span><span class=o>=</span><span class=p>[</span><span class=n>Name</span><span class=p>(</span><span class=nb>id</span><span class=o>=</span><span class=s1>&#39;x&#39;</span><span class=p>)],</span> <span class=n>vararg</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>kwarg</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>defaults</span><span class=o>=</span><span class=p>[]),</span>
+</span></span><span class=line><span class=cl>    <span class=n>body</span><span class=o>=</span><span class=n>Return</span><span class=p>(</span><span class=n>value</span><span class=o>=</span><span class=n>BinOp</span><span class=p>(</span><span class=n>left</span><span class=o>=</span><span class=n>Name</span><span class=p>(</span><span class=nb>id</span><span class=o>=</span><span class=s1>&#39;x&#39;</span><span class=p>),</span> <span class=n>op</span><span class=o>=</span><span class=n>Add</span><span class=p>,</span> <span class=n>right</span><span class=o>=</span><span class=n>Num</span><span class=p>(</span><span class=n>n</span><span class=o>=</span><span class=mi>1</span><span class=p>))))</span>
+</span></span></code></pre></td></tr></table></div></div><p>The same plus indents. It is already useful when you need to look at the AST closer, but for quick print debugging python code would be even better:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=nb>print</span> <span class=n>astor</span><span class=o>.</span><span class=n>to_source</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>(</span><span class=k>lambda</span> <span class=n>x</span><span class=p>:</span> <span class=p>(</span><span class=n>x</span> <span class=o>+</span> <span class=mi>1</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><p>Parentheses are added everywhere to avoid dealing with operator precedence, but otherwise it&rsquo;s the same code we parsed.</p><p>And the last thing we usually do to AST &ndash; compile it back and execute:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>code</span> <span class=o>=</span> <span class=nb>compile</span><span class=p>(</span><span class=n>tree</span><span class=p>,</span> <span class=s1>&#39;&#39;</span><span class=p>,</span> <span class=s1>&#39;exec&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>context</span> <span class=o>=</span> <span class=p>{}</span>
+</span></span><span class=line><span class=cl><span class=n>exec</span><span class=p>(</span><span class=n>code</span><span class=p>,</span> <span class=nb>globals</span><span class=p>(),</span> <span class=n>context</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>Functions used here, <code>compile()</code> and <code>exec()</code>, are built-ins. And <code>code</code> is the same object type you can find introspecting <code>func.__code__</code>. By executing in a context we set all the names defined into that dict:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>context</span>
+</span></span><span class=line><span class=cl><span class=p>{</span><span class=s1>&#39;func&#39;</span><span class=p>:</span> <span class=o>&lt;</span><span class=n>function</span> <span class=n>__main__</span><span class=o>.</span><span class=n>func</span><span class=o>&gt;</span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>So if all these were happening in a decorator we can get that function out of the context and substitute original one. Only the meat is left &ndash; walking the tree.</p><h2 id=ast-traversal>AST Traversal<a hidden class=anchor aria-hidden=true href=#ast-traversal>#</a></h2><p>Built-in ast module continues to aid us in this journey. It provides several utilities to ease tree walking and transformation. The lower level ones let us introspect nodes contents and iterate by them:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># Iterate fields with values</span>
+</span></span><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>ast</span><span class=o>.</span><span class=n>iter_fields</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>[(</span><span class=s1>&#39;args&#39;</span><span class=p>,</span> <span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>arguments</span> <span class=n>at</span> <span class=o>...&gt;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl> <span class=p>(</span><span class=s1>&#39;body&#39;</span><span class=p>,</span> <span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>Return</span> <span class=n>at</span> <span class=o>...&gt;</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Iterate child nodes</span>
+</span></span><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>ast</span><span class=o>.</span><span class=n>iter_child_nodes</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>[</span><span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>arguments</span> <span class=o>...&gt;</span><span class=p>,</span> <span class=o>&lt;</span><span class=n>_ast</span><span class=o>.</span><span class=n>Return</span> <span class=o>...&gt;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># Just list available fields</span>
+</span></span><span class=line><span class=cl><span class=o>&gt;&gt;&gt;</span> <span class=n>tree</span><span class=o>.</span><span class=n>_fields</span>
+</span></span><span class=line><span class=cl><span class=p>(</span><span class=s1>&#39;args&#39;</span><span class=p>,</span> <span class=s1>&#39;body&#39;</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>First of higher level ones is <code>NodeVisitor</code> &ndash; a base class implementing visitor pattern, the idea is to subclass it and define methods like <code>visit_&lt;NodeClass>()</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>NumberFinder</span><span class=p>(</span><span class=n>ast</span><span class=o>.</span><span class=n>NodeVisitor</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>visit_Num</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>node</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span> <span class=s2>&#34;Found number literal&#34;</span><span class=p>,</span> <span class=n>node</span><span class=o>.</span><span class=n>n</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>find_numbers</span><span class=p>(</span><span class=n>tree</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>NumberFinder</span><span class=p>()</span><span class=o>.</span><span class=n>visit</span><span class=p>(</span><span class=n>tree</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>This simple example finds all the number literals in given code. Just an example, but it could be grown into some magic number finding tool and wrapped into linter or code editor plugin.</p><p>The second base class ast provides is <code>NodeTransformer</code>. It works almost the same, but you can change a tree by returning new nodes from visit methods:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>ExprOptimizer</span><span class=p>(</span><span class=n>ast</span><span class=o>.</span><span class=n>NodeTransformer</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>visit_BinOp</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>node</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=c1># Call .generic_visit() to transform sub-nodes</span>
+</span></span><span class=line><span class=cl>        <span class=n>node</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>generic_visit</span><span class=p>(</span><span class=n>node</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=c1># If both operands are just numbers then precalculate</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=nb>type</span><span class=p>(</span><span class=n>node</span><span class=o>.</span><span class=n>left</span><span class=p>)</span> <span class=ow>is</span> <span class=n>Num</span> <span class=ow>and</span> <span class=nb>type</span><span class=p>(</span><span class=n>node</span><span class=o>.</span><span class=n>right</span><span class=p>)</span> <span class=ow>is</span> <span class=n>Num</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>op</span> <span class=o>=</span> <span class=n>AST_TO_OP</span><span class=p>[</span><span class=n>node</span><span class=o>.</span><span class=n>op</span><span class=o>.</span><span class=vm>__class__</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>Num</span><span class=p>(</span><span class=n>n</span><span class=o>=</span><span class=n>op</span><span class=p>(</span><span class=n>node</span><span class=o>.</span><span class=n>left</span><span class=o>.</span><span class=n>n</span><span class=p>,</span> <span class=n>node</span><span class=o>.</span><span class=n>right</span><span class=o>.</span><span class=n>n</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>node</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>AST_TO_OP</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>Add</span><span class=p>:</span> <span class=n>operator</span><span class=o>.</span><span class=n>add</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=o>...</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>This one precalculates any expressions on number literals, quite neat for just a bunch of lines.</p><p>And last but not least we can use old and good recursive tree walking. This snippet makes python function return last expression in a way Ruby, CoffeScript and Clojure do:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>def</span> <span class=nf>return_last</span><span class=p>(</span><span class=n>tree</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=nb>hasattr</span><span class=p>(</span><span class=n>tree</span><span class=p>,</span> <span class=s1>&#39;body&#39;</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span>
+</span></span><span class=line><span class=cl>    <span class=k>elif</span> <span class=nb>isinstance</span><span class=p>(</span><span class=n>tree</span><span class=o>.</span><span class=n>body</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>],</span> <span class=n>Expr</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>tree</span><span class=o>.</span><span class=n>body</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span> <span class=o>=</span> <span class=n>Return</span><span class=p>(</span><span class=n>value</span><span class=o>=</span><span class=n>tree</span><span class=o>.</span><span class=n>body</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>return_last</span><span class=p>(</span><span class=n>tree</span><span class=o>.</span><span class=n>body</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>])</span>
+</span></span></code></pre></td></tr></table></div></div><p>Note this code is simplified and hence broken, e.g. it will insert <code>return</code> into the end of while loop if there is an expression there.</p><h2 id=going-forward>Going Forward<a hidden class=anchor aria-hidden=true href=#going-forward>#</a></h2><p>This was an overview of what you can do with AST, and there were lots of things. This is, however, only a preface to the actual story. Next time I will concentrate on translation and will describe it in detail capturing a real use case.</p><p><strong>P.S.</strong> Second part is available <a href=/blog/2015/04/12/metaprogramming-beyond-decency-part-2/>here</a>.</p></div><footer class=post-footer><ul class=post-tags></ul><nav class=paginav><a class=prev href=https://blog.hackflow.ru/blog/2015/04/12/metaprogramming-beyond-decency-part-2/><span class=title>« Prev</span>
+<span>Metaprogramming Beyond Decency: Part 2</span>
+</a><a class=next href=https://blog.hackflow.ru/blog/2015/03/08/boiling-react-down-to-few-lines-in-jquery/><span class=title>Next »</span>
+<span>Boiling React Down to a Few Lines in jQuery</span></a></nav></footer><section class=comments-section><h2>Comments
+<span class=comments-also-at>also at <a href=http://www.reddit.com/r/programming/comments/30p2zw/python_metaprogramming_beyond_decency/ target=_blank rel=noopener>Reddit</a></span></h2><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://blog.hackflow.ru/blog/2015/03/29/metaprogramming-beyond-decency/",this.page.identifier="http://suor.github.io/blog/2015/03/29/metaprogramming-beyond-decency/"};(function(){var e=document,t=e.createElement("script");t.src="https://hackflow.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script></section></article></main><footer class=footer><span>&copy; 2026 <a href=https://blog.hackflow.ru/>Hackflow</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top id=top-link class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey=g><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var toplink=document.getElementById("top-link");window.onscroll=function(){const e=window.innerHeight;document.body.scrollTop>e||document.documentElement.scrollTop>e?toplink.classList.remove("hidden"):toplink.classList.add("hidden")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: 
-
-Sitemap: http://suor.github.io/sitemap.xml 
